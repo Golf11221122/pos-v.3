@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>จัดการหมวดหมู่ | JOKJUNG POS</title>
+
+    <link rel="stylesheet" href="./css/categories.css">
+</head>
+
+<body>
+
+    <!-- TOPBAR -->
+    <header class="topbar">
+
+        <div class="topbar-left">
+
+            <button id="backBtn" class="icon-btn" type="button">
+                ←
+            </button>
+
+            <div>
+                <h1>จัดการหมวดหมู่</h1>
+
+                <small id="branchText">
+                    กำลังโหลดสาขา...
+                </small>
+            </div>
+
+        </div>
+
+
+        <div class="topbar-right">
+
+            <span id="userName">
+                ผู้ใช้งาน
+            </span>
+
+            <button id="logoutBtn" class="outline-btn" type="button">
+                ออกจากระบบ
+            </button>
+
+        </div>
+
+    </header>
+
+
+    <main class="page">
+
+        <!-- HEADER ACTION -->
+        <section class="page-header">
+
+            <div>
+                <h2>หมวดหมู่สินค้า</h2>
+
+                <p>
+                    ใช้แบ่งประเภทอาหารและเครื่องดื่มในหน้าขาย POS
+                </p>
+            </div>
+
+
+            <button id="addCategoryBtn" class="primary-btn" type="button">
+                ＋ เพิ่มหมวดหมู่
+            </button>
+
+        </section>
+
+
+        <!-- SUMMARY -->
+        <section class="summary-grid">
+
+            <article class="summary-card">
+
+                <span>
+                    หมวดหมู่ทั้งหมด
+                </span>
+
+                <strong id="totalCategoryCount">
+                    0
+                </strong>
+
+            </article>
+
+
+            <article class="summary-card">
+
+                <span>
+                    เปิดใช้งาน
+                </span>
+
+                <strong id="activeCategoryCount">
+                    0
+                </strong>
+
+            </article>
+
+
+            <article class="summary-card">
+
+                <span>
+                    ปิดใช้งาน
+                </span>
+
+                <strong id="inactiveCategoryCount">
+                    0
+                </strong>
+
+            </article>
+
+        </section>
+
+
+        <!-- FILTER -->
+        <section class="filter-card">
+
+            <input id="searchInput" type="search" placeholder="ค้นหาชื่อหมวดหมู่">
+
+            <select id="statusFilter">
+
+                <option value="">
+                    ทุกสถานะ
+                </option>
+
+                <option value="active">
+                    เปิดใช้งาน
+                </option>
+
+                <option value="inactive">
+                    ปิดใช้งาน
+                </option>
+
+            </select>
+
+
+            <button id="refreshBtn" class="outline-btn" type="button">
+                ↻ รีเฟรช
+            </button>
+
+        </section>
+
+
+        <!-- LIST -->
+        <section class="category-card">
+
+            <div class="list-header">
+
+                <div>
+                    <h3>รายการหมวดหมู่</h3>
+
+                    <small id="resultCount">
+                        0 รายการ
+                    </small>
+                </div>
+
+            </div>
+
+
+            <div id="loadingState" class="state">
+                กำลังโหลดข้อมูล...
+            </div>
+
+
+            <div id="emptyState" class="state hidden">
+                ยังไม่มีหมวดหมู่
+            </div>
+
+
+            <div id="tableWrap" class="table-wrap hidden">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                ลำดับ
+                            </th>
+
+                            <th>
+                                ชื่อหมวดหมู่
+                            </th>
+
+                            <th>
+                                สถานะ
+                            </th>
+
+                            <th class="text-right">
+                                จัดการ
+                            </th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="categoryTableBody">
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+
+        <p id="pageMessage" class="message"></p>
+
+    </main>
+
+
+    <!-- MODAL -->
+    <div id="categoryModal" class="modal hidden">
+
+        <div class="modal-card">
+
+            <div class="modal-head">
+
+                <div>
+
+                    <h2 id="modalTitle">
+                        เพิ่มหมวดหมู่
+                    </h2>
+
+                    <p>
+                        กรอกข้อมูลหมวดหมู่สินค้า
+                    </p>
+
+                </div>
+
+
+                <button id="closeModalBtn" class="icon-btn" type="button">
+                    ×
+                </button>
+
+            </div>
+
+
+            <form id="categoryForm">
+
+                <input id="categoryId" type="hidden">
+
+
+                <div class="field">
+
+                    <label for="categoryName">
+                        ชื่อหมวดหมู่
+                    </label>
+
+                    <input id="categoryName" type="text" maxlength="100" placeholder="เช่น ก๋วยเตี๋ยว" required>
+
+                </div>
+
+
+                <div class="field">
+
+                    <label for="displayOrder">
+                        ลำดับการแสดงผล
+                    </label>
+
+                    <input id="displayOrder" type="number" min="0" step="1" value="0">
+
+                    <small>
+                        ตัวเลขน้อยจะแสดงก่อน
+                    </small>
+
+                </div>
+
+
+                <label class="switch-row">
+
+                    <div>
+                        <strong>
+                            เปิดใช้งาน
+                        </strong>
+
+                        <small>
+                            หมวดหมู่นี้จะแสดงในหน้าขาย POS
+                        </small>
+                    </div>
+
+                    <input id="categoryActive" type="checkbox" checked>
+
+                </label>
+
+
+                <p id="formMessage" class="message"></p>
+
+
+                <div class="modal-actions">
+
+                    <button id="cancelBtn" class="outline-btn" type="button">
+                        ยกเลิก
+                    </button>
+
+                    <button id="saveCategoryBtn" class="primary-btn" type="submit">
+                        บันทึกหมวดหมู่
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <script type="module" src="./js/categories.js"></script>
+
+</body>
+
+</html>
