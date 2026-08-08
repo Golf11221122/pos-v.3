@@ -121,7 +121,9 @@ const el = {
 }
 
 
-/* HELPERS */
+/* ========================================
+   HELPERS
+======================================== */
 
 function esc(value) {
     return String(value ?? '')
@@ -222,7 +224,9 @@ function isPositiveMovement(type) {
 }
 
 
-/* SESSION */
+/* ========================================
+   SESSION
+======================================== */
 
 async function requireSession() {
     const {
@@ -251,7 +255,9 @@ async function requireSession() {
 }
 
 
-/* PROFILE */
+/* ========================================
+   PROFILE
+======================================== */
 
 async function loadProfile(userId) {
     const {
@@ -286,7 +292,9 @@ async function loadProfile(userId) {
 }
 
 
-/* BRANCH */
+/* ========================================
+   BRANCH
+======================================== */
 
 async function loadBranch() {
     const {
@@ -327,7 +335,9 @@ async function loadBranch() {
 }
 
 
-/* INGREDIENTS */
+/* ========================================
+   INGREDIENTS
+======================================== */
 
 async function loadIngredients() {
     const {
@@ -385,7 +395,10 @@ function renderIngredientOptions() {
 }
 
 
-/* MOVEMENTS */
+/* ========================================
+   MOVEMENTS
+   ใช้ RPC แทนการอ่าน table ตรง
+======================================== */
 
 async function loadMovements() {
     el.loadingState
@@ -400,57 +413,48 @@ async function loadMovements() {
         .classList
         .add('hidden')
 
+    message(
+        el.pageMessage,
+        ''
+    )
+
     try {
         const {
             data,
             error
         } =
-            await supabase
-                .from(
-                    'ingredient_stock_movements'
-                )
-                .select(`
-                    id,
-                    branch_id,
-                    ingredient_id,
-                    movement_type,
-                    quantity,
-                    stock_before,
-                    stock_after,
-                    unit_cost,
-                    note,
-                    created_by,
-                    created_at
-                `)
-                .eq(
-                    'branch_id',
-                    state.profile.branch_id
-                )
-                .order(
-                    'created_at',
-                    {
-                        ascending: false
-                    }
-                )
-                .limit(1000)
+            await supabase.rpc(
+                'get_ingredient_stock_movements',
+                {
+                    p_branch_id:
+                        state.profile.branch_id
+                }
+            )
 
         if (error) {
             throw error
         }
+
+        console.log(
+            'Stock movements:',
+            data
+        )
 
         state.movements =
             (data || []).map(
                 movement => ({
                     ...movement,
 
-                    ingredient:
-                        state.ingredients.find(
-                            item =>
-                                item.id ===
-                                movement.ingredient_id
-                        )
-                        ||
-                        null
+                    ingredient: {
+                        id:
+                            movement.ingredient_id,
+
+                        name:
+                            movement.ingredient_name,
+
+                        unit:
+                            movement.unit
+                    }
                 })
             )
 
@@ -462,6 +466,15 @@ async function loadMovements() {
             'Load stock movements error:',
             error
         )
+
+        state.movements =
+            []
+
+        state.filteredMovements =
+            []
+
+        renderMovements()
+        renderSummary()
 
         message(
             el.pageMessage,
@@ -477,7 +490,9 @@ async function loadMovements() {
 }
 
 
-/* FILTER */
+/* ========================================
+   FILTER
+======================================== */
 
 function applyFilters() {
     const keyword =
@@ -577,7 +592,9 @@ function applyFilters() {
 }
 
 
-/* RENDER */
+/* ========================================
+   RENDER MOVEMENTS
+======================================== */
 
 function renderMovements() {
     const list =
@@ -597,6 +614,9 @@ function renderMovements() {
         el.tableWrap
             .classList
             .add('hidden')
+
+        el.movementTableBody.innerHTML =
+            ''
 
         return
     }
@@ -735,7 +755,9 @@ function renderMovements() {
 }
 
 
-/* SUMMARY */
+/* ========================================
+   SUMMARY
+======================================== */
 
 function startOfToday() {
     const date =
@@ -825,7 +847,9 @@ function renderSummary() {
 }
 
 
-/* MODAL */
+/* ========================================
+   MODAL
+======================================== */
 
 function openModal() {
     el.movementForm.reset()
@@ -871,7 +895,9 @@ function closeModal() {
 }
 
 
-/* INGREDIENT CHANGE */
+/* ========================================
+   INGREDIENT CHANGE
+======================================== */
 
 function updateIngredientInfo() {
     const ingredient =
@@ -912,7 +938,9 @@ function updateIngredientInfo() {
 }
 
 
-/* COST FIELD */
+/* ========================================
+   COST FIELD
+======================================== */
 
 function updateCostVisibility() {
     const type =
@@ -927,7 +955,9 @@ function updateCostVisibility() {
 }
 
 
-/* SAVE MOVEMENT */
+/* ========================================
+   SAVE MOVEMENT
+======================================== */
 
 async function saveMovement(
     event
@@ -949,6 +979,7 @@ async function saveMovement(
     let unitCost =
         null
 
+
     if (
         movementType ===
         'stock_in'
@@ -961,7 +992,9 @@ async function saveMovement(
             rawCost !== ''
         ) {
             unitCost =
-                Number(rawCost)
+                Number(
+                    rawCost
+                )
 
             if (
                 !Number.isFinite(
@@ -1091,6 +1124,7 @@ async function saveMovement(
 
 
         await loadIngredients()
+
         await loadMovements()
 
 
@@ -1157,7 +1191,9 @@ async function saveMovement(
 }
 
 
-/* FILTER HELPERS */
+/* ========================================
+   FILTER HELPERS
+======================================== */
 
 function getLocalDateValue(
     date
@@ -1221,7 +1257,9 @@ function clearFilters() {
 }
 
 
-/* LOGOUT */
+/* ========================================
+   LOGOUT
+======================================== */
 
 async function logout() {
     await supabase
@@ -1234,7 +1272,9 @@ async function logout() {
 }
 
 
-/* INIT */
+/* ========================================
+   INIT
+======================================== */
 
 async function init() {
     try {
@@ -1276,7 +1316,9 @@ async function init() {
 }
 
 
-/* EVENTS */
+/* ========================================
+   EVENTS
+======================================== */
 
 el.backBtn.onclick =
     () => {
@@ -1339,8 +1381,29 @@ el.clearFilterBtn.onclick =
 
 el.refreshBtn.onclick =
     async () => {
-        await loadIngredients()
-        await loadMovements()
+
+        try {
+            await loadIngredients()
+
+            await loadMovements()
+
+            message(
+                el.pageMessage,
+                ''
+            )
+
+        } catch (error) {
+            console.error(
+                'Refresh stock movement error:',
+                error
+            )
+
+            message(
+                el.pageMessage,
+                error.message ||
+                'รีเฟรชข้อมูลไม่สำเร็จ'
+            )
+        }
     }
 
 
@@ -1393,5 +1456,9 @@ supabase.auth.onAuthStateChange(
     }
 )
 
+
+/* ========================================
+   START
+======================================== */
 
 init()
