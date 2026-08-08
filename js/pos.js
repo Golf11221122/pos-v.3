@@ -27,6 +27,9 @@ const state = {
 const $ = id => document.getElementById(id)
 
 const el = {
+    promptpayQr: $('promptpayQr'),
+    qrAmountText: $('qrAmountText'),
+    
     backBtn: $('backBtn'),
     logoutBtn: $('logoutBtn'),
 
