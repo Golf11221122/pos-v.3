@@ -4,7 +4,7 @@ import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js
 // Supabase Configuration
 // ===============================
 
-const SUPABASE_URL = 'https://fzjrnpoemivbthzghuz.supabase.co'
+const SUPABASE_URL = 'https://fzijrnpoemivbthzghuz.supabase.co'
 
 // ใส่ Publishable Key ของโปรเจกต์ Supabase ตรงนี้
 const SUPABASE_KEY = 'sb_publishable_macbRV6oHAwutZuOPgIBjQ_oRoO2eKo'
