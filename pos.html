@@ -61,7 +61,49 @@
         <div id="quickCash" class="quick-cash"></div>
         <div class="change"><span>เงินทอน</span><strong id="changeText">฿0.00</strong></div>
       </div>
-      <div id="qrSection" class="qr hidden">ตรวจสอบยอดในแอปธนาคารก่อนยืนยัน</div>
+      <div id="qrSection" class="qr hidden">
+
+  <div style="text-align:center; padding:15px;">
+
+    <h3>สแกนเพื่อชำระเงิน</h3>
+
+    <p style="margin-top:5px;">
+      PromptPay
+    </p>
+
+    <div
+      id="promptpayQr"
+      style="
+        width:240px;
+        min-height:240px;
+        margin:15px auto;
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        background:white;
+        border-radius:12px;
+      "
+    ></div>
+
+    <div
+      id="qrAmountText"
+      style="
+        font-size:28px;
+        font-weight:bold;
+        margin-top:10px;
+      "
+    >
+      ฿0.00
+    </div>
+
+    <p style="margin-top:10px; font-size:13px;">
+      กรุณาตรวจสอบชื่อผู้รับและยอดเงิน
+      ก่อนยืนยันการชำระเงิน
+    </p>
+
+  </div>
+
+</div>
       <label>หมายเหตุ</label>
       <textarea id="saleNote" rows="2"></textarea>
       <p id="paymentMessage" class="message"></p>
