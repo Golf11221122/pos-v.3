@@ -175,6 +175,16 @@
 
     <hr>
 
+    <div class="receipt-center receipt-contact">
+      <div><strong>ติดต่อร้าน</strong></div>
+      <div>โทร: 082-3804188</div>
+      <div style="margin-top:6px;">LINE ร้าน</div>
+      <img src="./assets/line-qr.jpg" alt="LINE ร้าน" class="receipt-line-qr">
+      <div style="font-size:10px; margin-top:3px;">สแกน QR เพื่อเพิ่ม LINE ร้าน</div>
+    </div>
+
+    <hr>
+
     <div class="receipt-center receipt-thanks">
       ขอบคุณที่ใช้บริการ
     </div>
@@ -248,6 +258,18 @@
       .receipt-total {
         font-size: 14px;
         margin: 4px 0;
+      }
+
+      .receipt-contact {
+        margin: 8px 0;
+      }
+
+      .receipt-line-qr {
+        display: block;
+        width: 30mm;
+        height: 30mm;
+        object-fit: contain;
+        margin: 5px auto 0;
       }
 
       .receipt-thanks {
