@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>POS | JOKJUNG POS</title>
+  <link rel="stylesheet" href="./css/pos.css">
+</head>
+
+<body>
+  <header class="topbar">
+    <div><button id="backBtn" class="icon-btn">←</button><strong>JOKJUNG POS</strong><small
+        id="branchText">กำลังโหลด...</small></div>
+    <div><span id="userName">ผู้ใช้งาน</span><button id="logoutBtn" class="outline-btn">ออกจากระบบ</button></div>
+  </header>
+
+  <main class="layout">
+    <section class="catalog">
+      <div class="toolbar">
+        <input id="searchInput" type="search" placeholder="ค้นหาชื่อสินค้า SKU หรือบาร์โค้ด">
+        <button id="refreshBtn" class="outline-btn">รีเฟรช</button>
+      </div>
+      <div id="categoryTabs" class="tabs"></div>
+      <div id="loading" class="state">กำลังโหลดสินค้า...</div>
+      <div id="empty" class="state hidden">ไม่พบสินค้า</div>
+      <div id="productGrid" class="product-grid hidden"></div>
+    </section>
+
+    <aside class="cart">
+      <div class="cart-head">
+        <div>
+          <h2>ตะกร้าสินค้า</h2><small id="cartCount">0 รายการ</small>
+        </div><button id="clearCartBtn" class="danger-link">ล้างตะกร้า</button>
+      </div>
+      <div id="emptyCart" class="state">ยังไม่มีสินค้า</div>
+      <div id="cartItems" class="cart-items hidden"></div>
+      <div class="summary">
+        <div><span>ยอดก่อนลด</span><strong id="subtotalText">฿0.00</strong></div>
+        <label><span>ส่วนลด</span><input id="discountInput" type="number" min="0" step="0.01" value="0"></label>
+        <div class="total"><span>ยอดสุทธิ</span><strong id="totalText">฿0.00</strong></div>
+        <button id="checkoutBtn" class="primary-btn" disabled>ชำระเงิน</button>
+        <p id="pageMessage" class="message"></p>
+      </div>
+    </aside>
+  </main>
+
+  <div id="paymentModal" class="modal hidden">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h2>ชำระเงิน</h2><button id="closePaymentBtn" class="icon-btn">×</button>
+      </div>
+      <div class="pay-total"><span>ยอดที่ต้องชำระ</span><strong id="paymentTotalText">฿0.00</strong></div>
+      <div class="methods">
+        <button class="method active" data-method="cash">💵 เงินสด</button>
+        <button class="method" data-method="qr">📱 QR</button>
+      </div>
+      <div id="cashSection">
+        <label>รับเงินมา</label>
+        <input id="receivedInput" class="money" type="number" min="0" step="0.01" placeholder="0.00">
+        <div id="quickCash" class="quick-cash"></div>
+        <div class="change"><span>เงินทอน</span><strong id="changeText">฿0.00</strong></div>
+      </div>
+      <div id="qrSection" class="qr hidden">ตรวจสอบยอดในแอปธนาคารก่อนยืนยัน</div>
+      <label>หมายเหตุ</label>
+      <textarea id="saleNote" rows="2"></textarea>
+      <p id="paymentMessage" class="message"></p>
+      <div class="actions"><button id="cancelPaymentBtn" class="outline-btn">ยกเลิก</button><button
+          id="confirmPaymentBtn" class="primary-btn">ยืนยันการชำระเงิน</button></div>
+    </div>
+  </div>
+
+  <div id="successModal" class="modal hidden">
+    <div class="modal-card success">
+      <div class="success-icon">✓</div>
+      <h2>บันทึกการขายสำเร็จ</h2>
+      <p>เลขที่ใบเสร็จ</p><strong id="invoiceText">-</strong>
+      <div class="success-box">
+        <div><span>ยอดสุทธิ</span><strong id="successTotal">฿0.00</strong></div>
+        <div><span>เงินทอน</span><strong id="successChange">฿0.00</strong></div>
+      </div>
+      <button id="newSaleBtn" class="primary-btn">เริ่มบิลใหม่</button>
+    </div>
+  </div>
+
+  <script type="module" src="./js/pos.js"></script>
+</body>
+
+</html>
