@@ -79,9 +79,140 @@
         <div><span>ยอดสุทธิ</span><strong id="successTotal">฿0.00</strong></div>
         <div><span>เงินทอน</span><strong id="successChange">฿0.00</strong></div>
       </div>
-      <button id="newSaleBtn" class="primary-btn">เริ่มบิลใหม่</button>
+      <div class="actions">
+        <button id="printReceiptBtn" class="outline-btn">🧾 พิมพ์ใบเสร็จ</button>
+        <button id="newSaleBtn" class="primary-btn">เริ่มบิลใหม่</button>
+      </div>
     </div>
   </div>
+
+
+  <!-- ใบเสร็จสำหรับพิมพ์ 80mm -->
+  <section id="receiptPrint" class="receipt-print">
+    <div class="receipt-center">
+      <h2>JOKJUNG POS</h2>
+      <div id="receiptBranch">-</div>
+    </div>
+
+    <hr>
+
+    <div>เลขที่บิล: <span id="receiptInvoice">-</span></div>
+    <div>วันที่: <span id="receiptDate">-</span></div>
+    <div>พนักงาน: <span id="receiptCashier">-</span></div>
+
+    <hr>
+
+    <div id="receiptItems"></div>
+
+    <hr>
+
+    <div class="receipt-row">
+      <span>ยอดก่อนลด</span>
+      <strong id="receiptSubtotal">฿0.00</strong>
+    </div>
+    <div class="receipt-row">
+      <span>ส่วนลด</span>
+      <strong id="receiptDiscount">฿0.00</strong>
+    </div>
+    <div class="receipt-row receipt-total">
+      <span>ยอดสุทธิ</span>
+      <strong id="receiptTotal">฿0.00</strong>
+    </div>
+    <div class="receipt-row">
+      <span>รับเงิน</span>
+      <strong id="receiptReceived">฿0.00</strong>
+    </div>
+    <div class="receipt-row">
+      <span>เงินทอน</span>
+      <strong id="receiptChange">฿0.00</strong>
+    </div>
+    <div class="receipt-row">
+      <span>ชำระโดย</span>
+      <strong id="receiptPayment">-</strong>
+    </div>
+
+    <hr>
+
+    <div class="receipt-center receipt-thanks">
+      ขอบคุณที่ใช้บริการ
+    </div>
+  </section>
+
+  <style>
+    .receipt-print {
+      display: none;
+    }
+
+    @media print {
+      @page {
+        size: 80mm auto;
+        margin: 4mm;
+      }
+
+      body * {
+        visibility: hidden !important;
+      }
+
+      #receiptPrint,
+      #receiptPrint * {
+        visibility: visible !important;
+      }
+
+      #receiptPrint {
+        display: block !important;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 72mm;
+        padding: 0;
+        margin: 0;
+        color: #000;
+        background: #fff;
+        font-family: Arial, "Noto Sans Thai", sans-serif;
+        font-size: 12px;
+        line-height: 1.4;
+      }
+
+      #receiptPrint h2 {
+        margin: 0 0 4px;
+        font-size: 18px;
+      }
+
+      #receiptPrint hr {
+        border: 0;
+        border-top: 1px dashed #000;
+        margin: 8px 0;
+      }
+
+      .receipt-center {
+        text-align: center;
+      }
+
+      .receipt-row,
+      .receipt-item-line {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .receipt-item {
+        margin-bottom: 6px;
+      }
+
+      .receipt-item-name {
+        font-weight: 700;
+      }
+
+      .receipt-total {
+        font-size: 14px;
+        margin: 4px 0;
+      }
+
+      .receipt-thanks {
+        margin-top: 10px;
+      }
+    }
+  </style>
 
   <script type="module" src="./js/pos.js"></script>
 </body>
