@@ -1,4 +1,5 @@
 import { supabase } from './supabase.js'
+import { PROMPTPAY_PHONE } from './config.js'
 
 // ========================================
 // STATE
