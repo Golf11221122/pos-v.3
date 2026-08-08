@@ -100,16 +100,10 @@ const subtotal = () =>
     )
 
 const discount = () =>
-    Math.max(
-        Number(el.discountInput.value || 0),
-        0
-    )
+    Math.max(Number(el.discountInput.value || 0), 0)
 
 const total = () =>
-    Math.max(
-        subtotal() - discount(),
-        0
-    )
+    Math.max(subtotal() - discount(), 0)
 
 function msg(target, text = '') {
     if (!target) return
