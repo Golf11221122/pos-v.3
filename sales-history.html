@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>ประวัติการขาย | JOKJUNG POS</title>
+
+    <link rel="stylesheet" href="./css/sales-history.css">
+</head>
+
+<body>
+
+    <header class="topbar">
+
+        <div class="topbar-left">
+            <button id="backBtn" class="icon-btn" type="button">
+                ←
+            </button>
+
+            <div>
+                <h1>ประวัติการขาย</h1>
+                <small id="branchText">
+                    กำลังโหลดสาขา...
+                </small>
+            </div>
+        </div>
+
+        <div class="topbar-right">
+
+            <span id="userName">
+                ผู้ใช้งาน
+            </span>
+
+            <button id="logoutBtn" class="outline-btn" type="button">
+                ออกจากระบบ
+            </button>
+
+        </div>
+
+    </header>
+
+
+    <main class="page">
+
+        <!-- SUMMARY -->
+
+        <section class="summary-grid">
+
+            <div class="summary-card">
+                <span>ยอดขายที่แสดง</span>
+                <strong id="summaryTotal">
+                    ฿0.00
+                </strong>
+            </div>
+
+            <div class="summary-card">
+                <span>จำนวนบิล</span>
+                <strong id="summaryBills">
+                    0
+                </strong>
+            </div>
+
+            <div class="summary-card">
+                <span>เงินสด</span>
+                <strong id="summaryCash">
+                    ฿0.00
+                </strong>
+            </div>
+
+            <div class="summary-card">
+                <span>QR</span>
+                <strong id="summaryQr">
+                    ฿0.00
+                </strong>
+            </div>
+
+        </section>
+
+
+        <!-- FILTER -->
+
+        <section class="filter-card">
+
+            <div class="filter-grid">
+
+                <div class="field">
+                    <label for="searchInput">
+                        ค้นหาเลขบิล
+                    </label>
+
+                    <input id="searchInput" type="search" placeholder="เช่น INV-2026...">
+                </div>
+
+
+                <div class="field">
+
+                    <label for="dateFrom">
+                        วันที่เริ่ม
+                    </label>
+
+                    <input id="dateFrom" type="date">
+
+                </div>
+
+
+                <div class="field">
+
+                    <label for="dateTo">
+                        วันที่สิ้นสุด
+                    </label>
+
+                    <input id="dateTo" type="date">
+
+                </div>
+
+
+                <div class="field">
+
+                    <label for="paymentFilter">
+                        วิธีชำระ
+                    </label>
+
+                    <select id="paymentFilter">
+
+                        <option value="">
+                            ทั้งหมด
+                        </option>
+
+                        <option value="cash">
+                            เงินสด
+                        </option>
+
+                        <option value="qr">
+                            QR
+                        </option>
+
+                    </select>
+
+                </div>
+
+            </div>
+
+
+            <div class="filter-actions">
+
+                <button id="todayBtn" class="outline-btn" type="button">
+                    วันนี้
+                </button>
+
+                <button id="clearFilterBtn" class="outline-btn" type="button">
+                    ล้างตัวกรอง
+                </button>
+
+                <button id="refreshBtn" class="primary-btn" type="button">
+                    รีเฟรช
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- SALES LIST -->
+
+        <section class="sales-card">
+
+            <div class="sales-header">
+
+                <div>
+                    <h2>รายการขาย</h2>
+                    <small id="resultCount">
+                        0 รายการ
+                    </small>
+                </div>
+
+            </div>
+
+
+            <div id="loadingState" class="state">
+                กำลังโหลดข้อมูล...
+            </div>
+
+
+            <div id="emptyState" class="state hidden">
+                ไม่พบรายการขาย
+            </div>
+
+
+            <div id="salesTableWrap" class="table-wrap hidden">
+
+                <table>
+
+                    <thead>
+
+                        <tr>
+
+                            <th>
+                                วันที่ / เวลา
+                            </th>
+
+                            <th>
+                                เลขที่บิล
+                            </th>
+
+                            <th>
+                                พนักงาน
+                            </th>
+
+                            <th>
+                                วิธีชำระ
+                            </th>
+
+                            <th class="text-right">
+                                ยอดสุทธิ
+                            </th>
+
+                            <th>
+                                สถานะ
+                            </th>
+
+                            <th></th>
+
+                        </tr>
+
+                    </thead>
+
+
+                    <tbody id="salesTableBody">
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- DETAIL MODAL -->
+
+    <div id="detailModal" class="modal hidden">
+
+        <div class="modal-card detail-modal">
+
+            <div class="modal-head">
+
+                <div>
+
+                    <h2>
+                        รายละเอียดบิล
+                    </h2>
+
+                    <small id="detailInvoice">
+                        -
+                    </small>
+
+                </div>
+
+
+                <button id="closeDetailBtn" class="icon-btn" type="button">
+                    ×
+                </button>
+
+            </div>
+
+
+            <div class="detail-info-grid">
+
+                <div>
+                    <span>วันที่</span>
+                    <strong id="detailDate">
+                        -
+                    </strong>
+                </div>
+
+                <div>
+                    <span>พนักงาน</span>
+                    <strong id="detailCashier">
+                        -
+                    </strong>
+                </div>
+
+                <div>
+                    <span>วิธีชำระ</span>
+                    <strong id="detailPayment">
+                        -
+                    </strong>
+                </div>
+
+                <div>
+                    <span>สถานะ</span>
+                    <strong id="detailStatus">
+                        -
+                    </strong>
+                </div>
+
+            </div>
+
+
+            <div class="detail-items">
+
+                <h3>
+                    รายการสินค้า
+                </h3>
+
+                <div id="detailItems">
+                </div>
+
+            </div>
+
+
+            <div class="detail-summary">
+
+                <div>
+                    <span>
+                        ยอดก่อนลด
+                    </span>
+
+                    <strong id="detailSubtotal">
+                        ฿0.00
+                    </strong>
+                </div>
+
+
+                <div>
+                    <span>
+                        ส่วนลด
+                    </span>
+
+                    <strong id="detailDiscount">
+                        ฿0.00
+                    </strong>
+                </div>
+
+
+                <div class="grand-total">
+                    <span>
+                        ยอดสุทธิ
+                    </span>
+
+                    <strong id="detailTotal">
+                        ฿0.00
+                    </strong>
+                </div>
+
+
+                <div>
+                    <span>
+                        รับเงิน
+                    </span>
+
+                    <strong id="detailReceived">
+                        ฿0.00
+                    </strong>
+                </div>
+
+
+                <div>
+                    <span>
+                        เงินทอน
+                    </span>
+
+                    <strong id="detailChange">
+                        ฿0.00
+                    </strong>
+                </div>
+
+            </div>
+
+
+            <div id="detailNoteWrap" class="note-box hidden">
+
+                <strong>
+                    หมายเหตุ
+                </strong>
+
+                <p id="detailNote">
+                </p>
+
+            </div>
+
+
+            <div class="modal-actions">
+
+                <button id="printReceiptBtn" class="outline-btn" type="button">
+                    🧾 พิมพ์ใบเสร็จซ้ำ
+                </button>
+
+                <button id="closeDetailBottomBtn" class="primary-btn" type="button">
+                    ปิด
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- RECEIPT PRINT -->
+
+    <section id="receiptPrint" class="receipt-print">
+
+        <div class="receipt-center">
+
+            <h2>
+                JOKJUNG POS
+            </h2>
+
+            <div id="receiptBranch">
+                -
+            </div>
+
+            <div>
+                โทร: 082-3804188
+            </div>
+
+        </div>
+
+
+        <hr>
+
+
+        <div>
+            เลขที่บิล:
+            <span id="receiptInvoice">
+                -
+            </span>
+        </div>
+
+        <div>
+            วันที่:
+            <span id="receiptDate">
+                -
+            </span>
+        </div>
+
+        <div>
+            พนักงาน:
+            <span id="receiptCashier">
+                -
+            </span>
+        </div>
+
+
+        <hr>
+
+
+        <div id="receiptItems">
+        </div>
+
+
+        <hr>
+
+
+        <div class="receipt-row">
+
+            <span>
+                ยอดก่อนลด
+            </span>
+
+            <strong id="receiptSubtotal">
+                ฿0.00
+            </strong>
+
+        </div>
+
+
+        <div class="receipt-row">
+
+            <span>
+                ส่วนลด
+            </span>
+
+            <strong id="receiptDiscount">
+                ฿0.00
+            </strong>
+
+        </div>
+
+
+        <div class="receipt-row receipt-total">
+
+            <span>
+                ยอดสุทธิ
+            </span>
+
+            <strong id="receiptTotal">
+                ฿0.00
+            </strong>
+
+        </div>
+
+
+        <div class="receipt-row">
+
+            <span>
+                รับเงิน
+            </span>
+
+            <strong id="receiptReceived">
+                ฿0.00
+            </strong>
+
+        </div>
+
+
+        <div class="receipt-row">
+
+            <span>
+                เงินทอน
+            </span>
+
+            <strong id="receiptChange">
+                ฿0.00
+            </strong>
+
+        </div>
+
+
+        <div class="receipt-row">
+
+            <span>
+                ชำระโดย
+            </span>
+
+            <strong id="receiptPayment">
+                -
+            </strong>
+
+        </div>
+
+
+        <hr>
+
+
+        <div class="receipt-center">
+
+            <div>
+                LINE ร้าน
+            </div>
+
+            <img src="./assets/line-qr.jpg" alt="LINE ร้าน" class="receipt-line-qr">
+
+            <small>
+                สแกน QR เพื่อเพิ่ม LINE ร้าน
+            </small>
+
+        </div>
+
+
+        <hr>
+
+
+        <div class="receipt-center">
+            ขอบคุณที่ใช้บริการ
+        </div>
+
+    </section>
+
+
+    <script type="module" src="./js/sales-history.js"></script>
+
+</body>
+
+</html>
