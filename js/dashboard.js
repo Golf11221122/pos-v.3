@@ -1768,20 +1768,6 @@ elements.refreshDashboardBtn
     )
 
 
-elements.categoriesMenu
-    ?.addEventListener(
-        'click',
-        event => {
-
-            event.preventDefault()
-
-            alert(
-                'หน้าจัดการหมวดหมู่จะทำในขั้นตอนถัดไปครับ'
-            )
-        }
-    )
-
-
 elements.stockMenu
     ?.addEventListener(
         'click',
