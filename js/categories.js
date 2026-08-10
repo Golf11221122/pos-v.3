@@ -1,4 +1,5 @@
 import { supabase } from './supabase.js'
+import { applyRoleGuard } from './role-guard.js'
 
 
 const state = {
@@ -1074,7 +1075,24 @@ async function logout() {
 ======================================== */
 
 async function init() {
+
     try {
+
+        /*
+         * ROLE GUARD
+         *
+         * Admin   = เข้าได้
+         * Manager = เข้าได้
+         * Staff   = เข้าไม่ได้
+         */
+        const guard =
+            await applyRoleGuard()
+
+        if (!guard) {
+            return
+        }
+
+
         const session =
             await requireSession()
 
@@ -1097,7 +1115,9 @@ async function init() {
 
         await loadCategories()
 
+
     } catch (error) {
+
         console.error(
             'Categories init error:',
             error
@@ -1115,7 +1135,8 @@ async function init() {
 
 
         el.emptyState.textContent =
-            error.message ||
+            error.message
+            ||
             'โหลดข้อมูลไม่สำเร็จ'
     }
 }
