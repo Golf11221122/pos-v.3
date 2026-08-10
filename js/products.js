@@ -1,4 +1,5 @@
 import { supabase } from './supabase.js'
+import { applyRoleGuard } from './role-guard.js'
 
 
 /* ========================================
@@ -3112,6 +3113,21 @@ async function initializePage() {
 
     try {
 
+        /*
+         * ตรวจสิทธิ์ก่อนโหลดหน้าสินค้า
+         *
+         * admin   = เข้าได้
+         * manager = เข้าได้
+         * staff   = เข้าไม่ได้
+         */
+        const guard =
+            await applyRoleGuard()
+
+        if (!guard) {
+            return
+        }
+
+
         showLoading()
 
 
@@ -3148,7 +3164,6 @@ async function initializePage() {
 
 
     } catch (error) {
-
 
         hideLoading()
 
