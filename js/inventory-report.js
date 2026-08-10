@@ -1,4 +1,5 @@
 import { supabase } from './supabase.js'
+import { applyRoleGuard } from './role-guard.js'
 
 
 const state = {
@@ -947,7 +948,25 @@ async function logout() {
 ======================================== */
 
 async function init() {
+
     try {
+
+        /*
+         * ROLE GUARD
+         *
+         * Admin   = เข้าได้
+         * Manager = เข้าได้
+         * Staff   = เข้าไม่ได้
+         */
+        const guard =
+            await applyRoleGuard()
+
+
+        if (!guard) {
+            return
+        }
+
+
         const session =
             await requireSession()
 
@@ -987,6 +1006,7 @@ async function init() {
 
 
     } catch (error) {
+
         console.error(
             'Inventory report init error:',
             error
