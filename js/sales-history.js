@@ -1,4 +1,5 @@
 import { supabase } from './supabase.js'
+import { applyRoleGuard } from './role-guard.js'
 
 
 const state = {
@@ -1892,9 +1893,26 @@ async function logout() {
 /* ========================================
    INIT
 ======================================== */
-
 async function init() {
+
     try {
+
+        /*
+         * ROLE GUARD
+         *
+         * Admin   = เข้าได้
+         * Manager = เข้าได้
+         * Staff   = เข้าไม่ได้
+         */
+        const guard =
+            await applyRoleGuard()
+
+
+        if (!guard) {
+            return
+        }
+
+
         const session =
             await requireSession()
 
@@ -1912,15 +1930,31 @@ async function init() {
         await loadBranch()
 
 
-        renderUser()
+        /*
+         * เปิดหน้าครั้งแรก
+         * ให้รายงานวันนี้
+         */
+        const today =
+            getLocalDateValue(
+                new Date()
+            )
 
 
-        await loadSales()
+        el.dateFrom.value =
+            today
+
+
+        el.dateTo.value =
+            today
+
+
+        await loadInventoryReport()
 
 
     } catch (error) {
+
         console.error(
-            'Sales history init error:',
+            'Inventory report init error:',
             error
         )
 
@@ -1930,14 +1964,12 @@ async function init() {
             .add('hidden')
 
 
-        el.emptyState
-            .classList
-            .remove('hidden')
-
-
-        el.emptyState.textContent =
-            error.message ||
+        message(
+            el.pageMessage,
+            error.message
+            ||
             'โหลดข้อมูลไม่สำเร็จ'
+        )
     }
 }
 
