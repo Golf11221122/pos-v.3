@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>จัดการวัตถุดิบ | JOKJUNG POS</title>
+
+    <link rel="stylesheet" href="./css/ingredients.css">
+</head>
+
+<body>
+
+    <div class="app">
+
+        <!-- HEADER -->
+        <header class="header">
+
+            <div>
+                <a href="./dashboard.html" class="back-btn">
+                    ←
+                </a>
+
+                <div class="header-title">
+                    <h1>จัดการวัตถุดิบ</h1>
+                    <p id="branchName">กำลังโหลดข้อมูลสาขา...</p>
+                </div>
+            </div>
+
+            <button id="logoutBtn" class="logout-btn">
+                ออกจากระบบ
+            </button>
+
+        </header>
+
+
+        <!-- CONTENT -->
+        <main class="content">
+
+            <!-- TITLE -->
+            <section class="page-heading">
+
+                <div>
+                    <h2>รายการวัตถุดิบ</h2>
+                    <p>
+                        เพิ่ม แก้ไข และตรวจสอบสต็อกวัตถุดิบ
+                    </p>
+                </div>
+
+                <button id="addIngredientBtn" class="primary-btn" type="button">
+                    + เพิ่มวัตถุดิบ
+                </button>
+
+            </section>
+
+
+            <!-- SUMMARY -->
+            <section class="summary-grid">
+
+                <div class="summary-card">
+
+                    <div class="summary-icon">
+                        📦
+                    </div>
+
+                    <div>
+                        <span>วัตถุดิบทั้งหมด</span>
+
+                        <strong id="totalIngredients">
+                            0
+                        </strong>
+                    </div>
+
+                </div>
+
+
+                <div class="summary-card">
+
+                    <div class="summary-icon">
+                        ⚠️
+                    </div>
+
+                    <div>
+                        <span>ใกล้หมด</span>
+
+                        <strong id="lowStockCount">
+                            0
+                        </strong>
+                    </div>
+
+                </div>
+
+
+                <div class="summary-card">
+
+                    <div class="summary-icon">
+                        ❌
+                    </div>
+
+                    <div>
+                        <span>หมดสต็อก</span>
+
+                        <strong id="outOfStockCount">
+                            0
+                        </strong>
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- SEARCH -->
+            <section class="toolbar">
+
+                <input id="searchInput" type="search" placeholder="ค้นหาวัตถุดิบ..." autocomplete="off">
+
+                <select id="stockFilter">
+
+                    <option value="all">
+                        ทั้งหมด
+                    </option>
+
+                    <option value="normal">
+                        สต็อกปกติ
+                    </option>
+
+                    <option value="low">
+                        ใกล้หมด
+                    </option>
+
+                    <option value="out">
+                        หมดสต็อก
+                    </option>
+
+                </select>
+
+            </section>
+
+
+            <!-- MESSAGE -->
+            <div id="pageMessage" class="page-message"></div>
+
+
+            <!-- INGREDIENT LIST -->
+            <section id="ingredientList" class="ingredient-list">
+
+                <div class="loading">
+                    กำลังโหลดวัตถุดิบ...
+                </div>
+
+            </section>
+
+        </main>
+
+    </div>
+
+
+    <!-- ========================================= -->
+    <!-- INGREDIENT MODAL -->
+    <!-- ========================================= -->
+
+    <div id="ingredientModal" class="modal" aria-hidden="true">
+
+        <div class="modal-backdrop"></div>
+
+
+        <div class="modal-panel">
+
+            <div class="modal-header">
+
+                <div>
+                    <h2 id="modalTitle">
+                        เพิ่มวัตถุดิบ
+                    </h2>
+
+                    <p>
+                        กรอกข้อมูลวัตถุดิบให้ครบถ้วน
+                    </p>
+                </div>
+
+
+                <button id="closeModalBtn" class="close-btn" type="button">
+                    ×
+                </button>
+
+            </div>
+
+
+            <form id="ingredientForm">
+
+                <input id="ingredientId" type="hidden">
+
+
+                <!-- NAME -->
+
+                <div class="form-group">
+
+                    <label for="ingredientName">
+                        ชื่อวัตถุดิบ
+                    </label>
+
+                    <input id="ingredientName" type="text" placeholder="เช่น เส้นบะหมี่" required>
+
+                </div>
+
+
+                <!-- UNIT -->
+
+                <div class="form-group">
+
+                    <label for="ingredientUnit">
+                        หน่วยนับ
+                    </label>
+
+                    <select id="ingredientUnit" required>
+
+                        <option value="">
+                            เลือกหน่วย
+                        </option>
+
+                        <option value="กรัม">
+                            กรัม
+                        </option>
+
+                        <option value="กิโลกรัม">
+                            กิโลกรัม
+                        </option>
+
+                        <option value="มิลลิลิตร">
+                            มิลลิลิตร
+                        </option>
+
+                        <option value="ลิตร">
+                            ลิตร
+                        </option>
+
+                        <option value="ชิ้น">
+                            ชิ้น
+                        </option>
+
+                        <option value="ลูก">
+                            ลูก
+                        </option>
+
+                        <option value="ฟอง">
+                            ฟอง
+                        </option>
+
+                        <option value="ห่อ">
+                            ห่อ
+                        </option>
+
+                        <option value="แพ็ค">
+                            แพ็ค
+                        </option>
+
+                        <option value="ขวด">
+                            ขวด
+                        </option>
+
+                    </select>
+
+                </div>
+
+
+                <div class="form-grid">
+
+                    <!-- COST -->
+
+                    <div class="form-group">
+
+                        <label for="ingredientCost">
+                            ต้นทุนต่อหน่วย
+                        </label>
+
+                        <div class="input-unit">
+
+                            <input id="ingredientCost" type="number" min="0" step="0.01" value="0" required>
+
+                            <span>บาท</span>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- CURRENT STOCK -->
+
+                    <div class="form-group">
+
+                        <label for="ingredientStock">
+                            สต็อกปัจจุบัน
+                        </label>
+
+                        <input id="ingredientStock" type="number" min="0" step="0.001" value="0" required>
+
+                    </div>
+
+                </div>
+
+
+                <!-- MIN STOCK -->
+
+                <div class="form-group">
+
+                    <label for="ingredientMinStock">
+                        แจ้งเตือนเมื่อเหลือน้อยกว่า
+                    </label>
+
+                    <input id="ingredientMinStock" type="number" min="0" step="0.001" value="0" required>
+
+                    <small>
+                        ระบบจะแสดงสถานะใกล้หมดเมื่อสต็อกถึงจำนวนนี้
+                    </small>
+
+                </div>
+
+
+                <!-- ACTIVE -->
+
+                <div class="switch-row">
+
+                    <div>
+                        <strong>
+                            เปิดใช้งาน
+                        </strong>
+
+                        <p>
+                            วัตถุดิบนี้สามารถนำไปใช้ในสูตรสินค้าได้
+                        </p>
+                    </div>
+
+
+                    <label class="switch">
+
+                        <input id="ingredientActive" type="checkbox" checked>
+
+                        <span class="slider"></span>
+
+                    </label>
+
+                </div>
+
+
+                <!-- FORM MESSAGE -->
+
+                <div id="formMessage" class="form-message"></div>
+
+
+                <!-- BUTTONS -->
+
+                <div class="modal-actions">
+
+                    <button id="cancelBtn" type="button" class="secondary-btn">
+                        ยกเลิก
+                    </button>
+
+
+                    <button id="saveIngredientBtn" type="submit" class="primary-btn">
+                        บันทึกวัตถุดิบ
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+
+    <!-- SUPABASE / PAGE SCRIPT -->
+
+    <script type="module" src="./js/ingredients.js"></script>
+
+</body>
+
+</html>
