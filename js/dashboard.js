@@ -1,4 +1,5 @@
 import { supabase } from './supabase.js'
+import { applyRoleGuard } from './role-guard.js'
 
 
 const elements = {
@@ -1486,6 +1487,21 @@ function escapeHtml(value) {
 
 async function loadDashboard() {
 
+    /*
+     * ตรวจ Role ก่อนโหลด Dashboard
+     *
+     * admin   = เข้าได้
+     * manager = เข้าได้
+     * staff   = เด้งไป POS
+     */
+    const guard =
+        await applyRoleGuard()
+
+    if (!guard) {
+        return
+    }
+
+
     showStatus(
         'กำลังโหลดข้อมูล...',
         false
@@ -1768,18 +1784,6 @@ elements.refreshDashboardBtn
     )
 
 
-elements.stockMenu
-    ?.addEventListener(
-        'click',
-        event => {
-
-            event.preventDefault()
-
-            alert(
-                'ระบบวัตถุดิบและสต็อกจะทำในขั้นตอนถัดไปครับ'
-            )
-        }
-    )
 
 
 elements.settingsMenu
