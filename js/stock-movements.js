@@ -1297,6 +1297,9 @@ async function init() {
         }
 
 
+        /*
+         * ตรวจสอบ Session
+         */
         const session =
             await requireSession()
 
@@ -1306,53 +1309,59 @@ async function init() {
         }
 
 
+        /*
+         * โหลด Profile
+         */
         await loadProfile(
             session.user.id
         )
 
 
+        /*
+         * โหลดข้อมูลสาขา
+         */
         await loadBranch()
 
 
         /*
-         * เปิดหน้าครั้งแรก
-         * ให้รายงานวันนี้
+         * โหลดรายการวัตถุดิบ
+         * สำหรับ Dropdown ทำรายการสต๊อก
          */
-        const today =
-            getLocalDateValue(
-                new Date()
-            )
+        await loadIngredients()
 
 
-        el.dateFrom.value =
-            today
-
-
-        el.dateTo.value =
-            today
-
-
-        await loadInventoryReport()
+        /*
+         * โหลดประวัติการเคลื่อนไหวสต๊อก
+         */
+        await loadMovements()
 
 
     } catch (error) {
 
         console.error(
-            'Inventory report init error:',
+            'Stock movements init error:',
             error
         )
 
 
-        el.loadingState
-            .classList
-            .add('hidden')
+        /*
+         * ซ่อน Loading
+         */
+        if (el.loadingState) {
+
+            el.loadingState
+                .classList
+                .add('hidden')
+        }
 
 
+        /*
+         * แสดง Error
+         */
         message(
             el.pageMessage,
-            error.message
-            ||
-            'โหลดข้อมูลไม่สำเร็จ'
+            error.message ||
+            'โหลดข้อมูลสต๊อกไม่สำเร็จ'
         )
     }
 }
