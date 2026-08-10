@@ -124,6 +124,9 @@ const el = {
     voidReasonInput:
         $('voidReasonInput'),
 
+    voidPinInput:
+        $('voidPinInput'),
+
     voidMessage:
         $('voidMessage'),
 
@@ -716,8 +719,8 @@ function renderSales() {
 
                 const paymentClass =
                     sale.payment_method
-                    ===
-                    'qr'
+                        ===
+                        'qr'
                         ? 'badge-qr'
                         : 'badge-cash'
 
@@ -736,39 +739,35 @@ function renderSales() {
 
                 return `
                     <tr
-                        ${
-                            cancelled
-                                ? 'style="opacity:.65;"'
-                                : ''
-                        }
+                        ${cancelled
+                        ? 'style="opacity:.65;"'
+                        : ''
+                    }
                     >
 
                         <td>
-                            ${
-                                formatDateTime(
-                                    sale.created_at
-                                )
-                            }
+                            ${formatDateTime(
+                        sale.created_at
+                    )
+                    }
                         </td>
 
 
                         <td class="invoice-number">
 
-                            ${
-                                esc(
-                                    sale.invoice_no
-                                )
-                            }
+                            ${esc(
+                        sale.invoice_no
+                    )
+                    }
 
                         </td>
 
 
                         <td>
-                            ${
-                                esc(
-                                    cashier
-                                )
-                            }
+                            ${esc(
+                        cashier
+                    )
+                    }
                         </td>
 
 
@@ -780,22 +779,20 @@ function renderSales() {
                                     ${paymentClass}
                                 "
                             >
-                                ${
-                                    paymentLabel(
-                                        sale.payment_method
-                                    )
-                                }
+                                ${paymentLabel(
+                        sale.payment_method
+                    )
+                    }
                             </span>
 
                         </td>
 
 
                         <td class="sale-total">
-                            ${
-                                money(
-                                    sale.total
-                                )
-                            }
+                            ${money(
+                        sale.total
+                    )
+                    }
                         </td>
 
 
@@ -807,11 +804,10 @@ function renderSales() {
                                     ${statusClass}
                                 "
                             >
-                                ${
-                                    statusLabel(
-                                        sale.status
-                                    )
-                                }
+                                ${statusLabel(
+                        sale.status
+                    )
+                    }
                             </span>
 
                         </td>
@@ -822,11 +818,10 @@ function renderSales() {
                             <button
                                 type="button"
                                 class="view-btn"
-                                data-sale-id="${
-                                    esc(
-                                        sale.id
-                                    )
-                                }"
+                                data-sale-id="${esc(
+                        sale.id
+                    )
+                    }"
                             >
                                 ดูรายละเอียด
                             </button>
@@ -1202,32 +1197,29 @@ function renderSaleItems() {
                     <div>
 
                         <strong>
-                            ${
-                                esc(
-                                    item.product_name ||
-                                    'สินค้า'
-                                )
-                            }
+                            ${esc(
+                item.product_name ||
+                'สินค้า'
+            )
+                }
                         </strong>
 
                         <small>
 
-                            ${
-                                Number(
-                                    item.quantity
-                                )
-                                .toLocaleString(
-                                    'th-TH'
-                                )
-                            }
+                            ${Number(
+                    item.quantity
+                )
+                    .toLocaleString(
+                        'th-TH'
+                    )
+                }
 
                             ×
 
-                            ${
-                                money(
-                                    item.unit_price
-                                )
-                            }
+                            ${money(
+                    item.unit_price
+                )
+                }
 
                         </small>
 
@@ -1235,11 +1227,10 @@ function renderSaleItems() {
 
 
                     <strong>
-                        ${
-                            money(
-                                item.total_price
-                            )
-                        }
+                        ${money(
+                    item.total_price
+                )
+                }
                     </strong>
 
                 </div>
@@ -1283,6 +1274,9 @@ function openVoidModal() {
     el.voidReasonInput.value =
         ''
 
+    el.voidPinInput.value =
+        ''
+
 
     message(
         el.voidMessage,
@@ -1312,6 +1306,9 @@ function closeVoidModal() {
 
 
     el.voidReasonInput.value =
+        ''
+
+    el.voidPinInput.value =
         ''
 
 
@@ -1359,6 +1356,11 @@ async function confirmVoidSale() {
             .trim()
 
 
+    const managerPin =
+        el.voidPinInput.value
+            .trim()
+
+
     if (!reason) {
         message(
             el.voidMessage,
@@ -1372,9 +1374,39 @@ async function confirmVoidSale() {
     }
 
 
+    if (!managerPin) {
+        message(
+            el.voidMessage,
+            'กรุณากรอก PIN ผู้อนุมัติ'
+        )
+
+        el.voidPinInput
+            .focus()
+
+        return
+    }
+
+
+    if (
+        !/^\d{6}$/.test(
+            managerPin
+        )
+    ) {
+        message(
+            el.voidMessage,
+            'PIN ผู้อนุมัติต้องเป็นตัวเลข 6 หลัก'
+        )
+
+        el.voidPinInput
+            .focus()
+
+        return
+    }
+
+
     const confirmed =
         confirm(
-            `ยืนยัน VOID บิล ${sale.invoice_no} หรือไม่?\n\nระบบจะคืนวัตถุดิบของบิลนี้กลับเข้าสต็อก`
+            `ยืนยัน VOID บิล ${sale.invoice_no} หรือไม่?\n\nระบบจะตรวจสอบ PIN ผู้อนุมัติ และคืนวัตถุดิบของบิลนี้กลับเข้าสต็อก`
         )
 
 
@@ -1392,7 +1424,7 @@ async function confirmVoidSale() {
 
 
     el.confirmVoidBtn.textContent =
-        'กำลัง VOID...'
+        'กำลังตรวจสอบ...'
 
 
     message(
@@ -1413,7 +1445,10 @@ async function confirmVoidSale() {
                         saleId,
 
                     p_reason:
-                        reason
+                        reason,
+
+                    p_manager_pin:
+                        managerPin
                 }
             )
 
@@ -1434,14 +1469,13 @@ async function confirmVoidSale() {
 
         /*
          * โหลดรายการขายใหม่
-         * เพื่อให้ยอด Summary ลดลงทันที
+         * เพื่อให้ Summary อัปเดต
          */
         await loadSales()
 
 
         /*
          * เปิดรายละเอียดบิลเดิมใหม่
-         * ตอนนี้สถานะควรเป็น cancelled
          */
         await openSaleDetail(
             saleId
@@ -1449,7 +1483,9 @@ async function confirmVoidSale() {
 
 
         alert(
-            `VOID บิล ${data?.invoice_no || sale.invoice_no} สำเร็จ\nคืนวัตถุดิบเข้าสต็อกแล้ว`
+            `VOID บิล ${data?.invoice_no ||
+            sale.invoice_no
+            } สำเร็จ\nคืนวัตถุดิบเข้าสต็อกแล้ว`
         )
 
 
@@ -1472,6 +1508,50 @@ async function confirmVoidSale() {
         ) {
             text =
                 'กรุณาระบุเหตุผลในการ VOID'
+        }
+
+
+        if (
+            text.includes(
+                'MANAGER_PIN_REQUIRED'
+            )
+        ) {
+            text =
+                'กรุณากรอก PIN ผู้อนุมัติ'
+        }
+
+
+        if (
+            text.includes(
+                'INVALID_MANAGER_PIN_FORMAT'
+            )
+        ) {
+            text =
+                'รูปแบบ PIN ผู้อนุมัติไม่ถูกต้อง'
+        }
+
+
+        if (
+            text.includes(
+                'INVALID_MANAGER_PIN'
+            )
+            ||
+            text.includes(
+                'MANAGER_PIN_INVALID'
+            )
+        ) {
+            text =
+                'PIN ผู้อนุมัติไม่ถูกต้อง'
+        }
+
+
+        if (
+            text.includes(
+                'MANAGER_NOT_FOUND'
+            )
+        ) {
+            text =
+                'ไม่พบผู้จัดการหรือผู้ดูแลที่มีสิทธิ์อนุมัติ'
         }
 
 
@@ -1590,12 +1670,11 @@ function buildReceipt() {
                                 receipt-item-name
                             "
                         >
-                            ${
-                                esc(
-                                    item.product_name ||
-                                    'สินค้า'
-                                )
-                            }
+                            ${esc(
+                    item.product_name ||
+                    'สินค้า'
+                )
+                    }
                         </div>
 
 
@@ -1607,32 +1686,29 @@ function buildReceipt() {
 
                             <span>
 
-                                ${
-                                    Number(
-                                        item.quantity
-                                    )
-                                    .toLocaleString(
-                                        'th-TH'
-                                    )
-                                }
+                                ${Number(
+                        item.quantity
+                    )
+                        .toLocaleString(
+                            'th-TH'
+                        )
+                    }
 
                                 ×
 
-                                ${
-                                    money(
-                                        item.unit_price
-                                    )
-                                }
+                                ${money(
+                        item.unit_price
+                    )
+                    }
 
                             </span>
 
 
                             <strong>
-                                ${
-                                    money(
-                                        item.total_price
-                                    )
-                                }
+                                ${money(
+                        item.total_price
+                    )
+                    }
                             </strong>
 
                         </div>
@@ -1736,20 +1812,20 @@ function getLocalDateInputValue(
             date.getMonth() +
             1
         )
-        .padStart(
-            2,
-            '0'
-        )
+            .padStart(
+                2,
+                '0'
+            )
 
 
     const day =
         String(
             date.getDate()
         )
-        .padStart(
-            2,
-            '0'
-        )
+            .padStart(
+                2,
+                '0'
+            )
 
 
     return `${year}-${month}-${day}`
