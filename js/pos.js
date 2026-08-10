@@ -2217,54 +2217,40 @@ async function logout() {
 
 async function init() {
     try {
-        const session =
-            await requireSession()
+
+        // POS อนุญาต Admin / Manager / Staff
+        const session = await requireSession()
 
         if (!session) {
             return
         }
 
-        await loadProfile(
-            session.user.id
-        )
+        await loadProfile(session.user.id)
 
         await loadBranch()
 
         renderUser()
 
-        /*
-         * loadCatalog()
-         * จะโหลด:
-         * - categories
-         * - products
-         * - availability
-         */
         await loadCatalog()
 
         renderCart()
 
     } catch (error) {
+
         console.error(
             'POS init error:',
             error
         )
 
-        el.loading
-            .classList
-            .add(
-                'hidden'
-            )
-
-        el.empty
-            .classList
-            .remove(
-                'hidden'
-            )
-
-        el.empty.textContent =
-            error.message
-            ||
+        msg(
+            el.pageMessage,
+            error.message ||
             'โหลดข้อมูล POS ไม่สำเร็จ'
+        )
+
+        if (el.loading) {
+            el.loading.classList.add('hidden')
+        }
     }
 }
 
