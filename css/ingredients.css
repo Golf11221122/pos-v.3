@@ -347,213 +347,369 @@ button {
    INGREDIENT LIST
 ======================================== */
 
+/* ========================================
+   INGREDIENT TABLE
+======================================== */
+
 .ingredient-list {
-    display: grid;
-
-    grid-template-columns:
-        repeat(
-            auto-fill,
-            minmax(280px, 1fr)
-        );
-
-    gap: 15px;
+    display: block;
+    width: 100%;
 }
 
-.ingredient-card {
-    display: flex;
 
-    flex-direction: column;
+/* ========================================
+   TABLE WRAPPER
+======================================== */
 
-    gap: 14px;
+.ingredient-table-wrap {
+    width: 100%;
 
-    padding: 18px;
+    overflow-x: auto;
 
     border: 1px solid var(--border);
-    border-radius: 16px;
+    border-radius: 14px 14px 0 0;
 
     background: white;
 
-    box-shadow: var(--shadow);
+    box-shadow:
+        0 6px 20px rgba(32, 33, 36, 0.06);
 }
 
-.ingredient-card.inactive {
-    opacity: 0.65;
+
+/* ========================================
+   TABLE
+======================================== */
+
+.ingredient-table {
+    width: 100%;
+
+    min-width: 1050px;
+
+    border-collapse: collapse;
 }
 
-.ingredient-card.low-stock {
-    border-color: #f4c430;
+
+/* ========================================
+   TABLE HEADER
+======================================== */
+
+.ingredient-table thead {
+    background: #fafafa;
 }
 
-.ingredient-card.out-stock {
-    border-color: var(--danger);
+
+.ingredient-table th {
+    padding: 14px 12px;
+
+    border-bottom:
+        1px solid var(--border);
+
+    color: #3c4043;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    text-align: left;
+
+    white-space: nowrap;
 }
 
-.ingredient-head {
-    display: flex;
 
-    align-items: flex-start;
-    justify-content: space-between;
+/* ========================================
+   TABLE BODY
+======================================== */
 
-    gap: 10px;
+.ingredient-table td {
+    padding: 12px;
+
+    border-bottom:
+        1px solid #eeeeee;
+
+    color: var(--text);
+
+    font-size: 13px;
+
+    vertical-align: middle;
 }
 
-.ingredient-head h3 {
-    font-size: 18px;
+
+.ingredient-table tbody tr:last-child td {
+    border-bottom: none;
 }
 
-.ingredient-head small {
+
+.ingredient-table tbody tr {
+    transition:
+        background 0.15s ease;
+}
+
+
+.ingredient-table tbody tr:hover {
+    background: #fffdf5;
+}
+
+
+/* ========================================
+   ALIGNMENT
+======================================== */
+
+.text-right {
+    text-align: right !important;
+}
+
+
+.text-center {
+    text-align: center !important;
+}
+
+
+.col-number {
+    width: 45px;
+}
+
+
+.col-actions {
+    min-width: 195px;
+}
+
+
+/* ========================================
+   INGREDIENT NAME
+======================================== */
+
+.ingredient-table-name {
     display: block;
 
-    margin-top: 4px;
+    min-width: 135px;
 
+    color: var(--text);
+
+    font-size: 14px;
+    font-weight: 700;
+
+    white-space: nowrap;
+}
+
+
+/* ========================================
+   STOCK
+======================================== */
+
+.stock-number {
+    font-size: 14px !important;
+    font-weight: 700;
+}
+
+
+.warning-number {
     color: var(--text-light);
 }
+
+
+/* ========================================
+   STATUS
+======================================== */
 
 .status-badge {
     display: inline-flex;
 
     align-items: center;
+    justify-content: center;
 
-    padding: 5px 9px;
+    min-width: 58px;
+
+    padding: 5px 10px;
 
     border-radius: 999px;
 
     font-size: 11px;
-
     font-weight: 700;
+
+    white-space: nowrap;
 }
+
 
 .status-normal {
     background: var(--success-light);
     color: var(--success);
 }
 
+
 .status-low {
     background: var(--warning-light);
     color: var(--warning);
 }
+
 
 .status-out {
     background: var(--danger-light);
     color: var(--danger);
 }
 
+
 .status-off {
     background: #eeeeee;
     color: #5f6368;
 }
 
-.stock-section {
-    padding: 13px;
 
-    border-radius: 12px;
+/* ========================================
+   ROW STATUS
+======================================== */
 
-    background: #f7f8f9;
+.ingredient-table tr.row-low {
+    background: #fffdf5;
 }
 
-.stock-label {
+
+.ingredient-table tr.row-out {
+    background: #fff8f7;
+}
+
+
+.ingredient-table tr.row-inactive {
+    opacity: 0.6;
+    background: #fafafa;
+}
+
+
+/* ========================================
+   ACTIONS
+======================================== */
+
+.table-actions {
     display: flex;
 
     align-items: center;
-    justify-content: space-between;
-
-    gap: 10px;
-
-    color: var(--text-light);
-
-    font-size: 12px;
-}
-
-.stock-value {
-    display: flex;
-
-    align-items: baseline;
+    justify-content: center;
 
     gap: 6px;
 
-    margin-top: 5px;
+    white-space: nowrap;
 }
 
-.stock-value strong {
-    font-size: 25px;
-}
 
-.stock-value span {
-    color: var(--text-light);
+.table-action-btn {
+    min-height: 32px;
 
-    font-size: 13px;
-}
+    padding: 5px 10px;
 
-.ingredient-info {
-    display: grid;
+    border:
+        1px solid var(--border);
 
-    grid-template-columns:
-        repeat(2, 1fr);
-
-    gap: 10px;
-}
-
-.info-box {
-    padding: 10px;
-
-    border: 1px solid var(--border);
-    border-radius: 10px;
-}
-
-.info-box span {
-    display: block;
-
-    color: var(--text-light);
-
-    font-size: 11px;
-}
-
-.info-box strong {
-    display: block;
-
-    margin-top: 4px;
-
-    font-size: 14px;
-}
-
-.ingredient-actions {
-    display: flex;
-
-    gap: 8px;
-
-    margin-top: auto;
-}
-
-.ingredient-actions button {
-    flex: 1;
-
-    min-height: 38px;
-
-    border: 1px solid var(--border);
-    border-radius: 9px;
+    border-radius: 8px;
 
     background: white;
 
+    color: var(--text);
+
+    font-size: 11px;
     font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        background 0.15s ease,
+        border-color 0.15s ease;
+}
+
+
+.table-action-btn:hover {
+    border-color: var(--primary);
+
+    background:
+        var(--primary-light);
+}
+
+
+.table-action-btn.edit:hover {
+    border-color:
+        var(--primary);
+}
+
+
+.table-action-btn.toggle:hover {
+    border-color: #9aa0a6;
+
+    background: #f8f9fa;
+}
+
+
+/* ========================================
+   TABLE FOOTER
+======================================== */
+
+.ingredient-table-footer {
+    padding: 12px 16px;
+
+    border:
+        1px solid var(--border);
+
+    border-top: none;
+
+    border-radius:
+        0 0 14px 14px;
+
+    background: white;
+
+    color: var(--text-light);
 
     font-size: 12px;
 }
 
-.ingredient-actions button:hover {
-    border-color: var(--primary);
 
-    background: var(--primary-light);
-}
+/* ========================================
+   LOADING / EMPTY
+======================================== */
 
 .loading,
 .empty-state {
-    grid-column: 1 / -1;
+    width: 100%;
 
     padding: 60px 20px;
 
-    color: var(--text-light);
+    border:
+        1px solid var(--border);
+
+    border-radius: 14px;
+
+    background: white;
+
+    color:
+        var(--text-light);
 
     text-align: center;
+}
+
+
+/* ========================================
+   RESPONSIVE TABLE
+======================================== */
+
+@media (max-width: 750px) {
+
+    .ingredient-table-wrap {
+        border-radius:
+            12px 12px 0 0;
+    }
+
+
+    .ingredient-table {
+        min-width: 950px;
+    }
+
+
+    .ingredient-table th,
+    .ingredient-table td {
+        padding: 10px 9px;
+    }
+
+
+    .table-action-btn {
+        padding: 5px 8px;
+
+        font-size: 10px;
+    }
 }
 
 
