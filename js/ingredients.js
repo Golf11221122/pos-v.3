@@ -1,4 +1,5 @@
 import { supabase } from './supabase.js'
+import { applyRoleGuard } from './role-guard.js'
 
 
 const state = {
@@ -548,11 +549,13 @@ function renderSummary() {
 ======================================== */
 
 function renderIngredients() {
+
     const list =
         state.filteredIngredients
 
 
     if (!list.length) {
+
         el.ingredientList.innerHTML = `
             <div class="empty-state">
                 ไม่พบวัตถุดิบ
@@ -563,202 +566,289 @@ function renderIngredients() {
     }
 
 
-    el.ingredientList.innerHTML =
-        list.map(
-            ingredient => {
+    el.ingredientList.innerHTML = `
 
-                const status =
-                    getStockStatus(
-                        ingredient
-                    )
+        <div class="ingredient-table-wrap">
 
+            <table class="ingredient-table">
 
-                const cardClass =
-                    status.key === 'low'
-                        ? 'low-stock'
-                        : status.key === 'out'
-                            ? 'out-stock'
-                            : status.key === 'inactive'
-                                ? 'inactive'
-                                : ''
+                <thead>
 
+                    <tr>
 
-                return `
-                    <article
-                        class="
-                            ingredient-card
-                            ${cardClass}
-                        "
-                    >
+                        <th class="col-number text-center">
+                            #
+                        </th>
 
-                        <div
-                            class="ingredient-head"
-                        >
+                        <th>
+                            วัตถุดิบ
+                        </th>
 
-                            <div>
+                        <th>
+                            หน่วย
+                        </th>
 
-                                <h3>
-                                    ${esc(
-                    ingredient.name
-                )
-                    }
-                                </h3>
+                        <th class="text-right">
+                            สต๊อกปัจจุบัน
+                        </th>
 
-                                <small>
-                                    หน่วย:
-                                    ${esc(
-                        ingredient.unit
-                    )
-                    }
-                                </small>
+                        <th class="text-right">
+                            จุดแจ้งเตือน
+                        </th>
 
-                            </div>
+                        <th class="text-right">
+                            ต้นทุนต่อหน่วย
+                        </th>
 
+                        <th class="text-right">
+                            มูลค่าสต๊อก
+                        </th>
 
-                            <span
-                                class="
-                                    status-badge
-                                    ${status.className}
-                                "
-                            >
-                                ${status.text
-                    }
-                            </span>
+                        <th class="text-center">
+                            สถานะ
+                        </th>
 
-                        </div>
+                        <th class="text-center col-actions">
+                            จัดการ
+                        </th>
+
+                    </tr>
+
+                </thead>
 
 
-                        <div
-                            class="stock-section"
-                        >
+                <tbody>
 
-                            <div
-                                class="stock-label"
-                            >
-                                <span>
-                                    สต็อกปัจจุบัน
-                                </span>
+                    ${list.map(
+                        (
+                            ingredient,
+                            index
+                        ) => {
 
-                                <span>
-                                    แจ้งเตือน ≤
-                                    ${number(
-                        ingredient.min_stock
-                    )
-                    }
-                                </span>
-                            </div>
+                            const status =
+                                getStockStatus(
+                                    ingredient
+                                )
 
 
-                            <div
-                                class="stock-value"
-                            >
-
-                                <strong>
-                                    ${number(
-                        ingredient.current_stock
-                    )
-                    }
-                                </strong>
-
-                                <span>
-                                    ${esc(
-                        ingredient.unit
-                    )
-                    }
-                                </span>
-
-                            </div>
-
-                        </div>
+                            const stock =
+                                Number(
+                                    ingredient.current_stock ||
+                                    0
+                                )
 
 
-                        <div
-                            class="ingredient-info"
-                        >
-
-                            <div
-                                class="info-box"
-                            >
-
-                                <span>
-                                    ต้นทุนต่อหน่วย
-                                </span>
-
-                                <strong>
-                                    ${money(
-                        ingredient.cost_per_unit
-                    )
-                    }
-                                </strong>
-
-                            </div>
+                            const minStock =
+                                Number(
+                                    ingredient.min_stock ||
+                                    0
+                                )
 
 
-                            <div
-                                class="info-box"
-                            >
-
-                                <span>
-                                    มูลค่าสต็อก
-                                </span>
-
-                                <strong>
-                                    ${money(
-                        Number(
-                            ingredient.cost_per_unit ||
-                            0
-                        )
-                        *
-                        Number(
-                            ingredient.current_stock ||
-                            0
-                        )
-                    )
-                    }
-                                </strong>
-
-                            </div>
-
-                        </div>
+                            const cost =
+                                Number(
+                                    ingredient.cost_per_unit ||
+                                    0
+                                )
 
 
-                        <div
-                            class="ingredient-actions"
-                        >
-
-                            <button
-                                type="button"
-                                data-action="edit"
-                                data-id="${esc(
-                        ingredient.id
-                    )
-                    }"
-                            >
-                                ✏️ แก้ไข
-                            </button>
+                            const stockValue =
+                                stock * cost
 
 
-                            <button
-                                type="button"
-                                data-action="toggle"
-                                data-id="${esc(
-                        ingredient.id
-                    )
-                    }"
-                            >
-                                ${ingredient.is_active
-                        ? '⏸ ปิดใช้งาน'
-                        : '▶ เปิดใช้งาน'
-                    }
-                            </button>
+                            let rowClass =
+                                ''
 
-                        </div>
 
-                    </article>
-                `
+                            if (
+                                status.key ===
+                                'low'
+                            ) {
 
-            }
-        ).join('')
+                                rowClass =
+                                    'row-low'
+                            }
+
+
+                            if (
+                                status.key ===
+                                'out'
+                            ) {
+
+                                rowClass =
+                                    'row-out'
+                            }
+
+
+                            if (
+                                status.key ===
+                                'inactive'
+                            ) {
+
+                                rowClass =
+                                    'row-inactive'
+                            }
+
+
+                            return `
+
+                                <tr class="${rowClass}">
+
+                                    <td
+                                        class="
+                                            col-number
+                                            text-center
+                                        "
+                                    >
+                                        ${index + 1}
+                                    </td>
+
+
+                                    <td>
+
+                                        <strong
+                                            class="ingredient-table-name"
+                                        >
+                                            ${esc(
+                                                ingredient.name
+                                            )}
+                                        </strong>
+
+                                    </td>
+
+
+                                    <td>
+                                        ${esc(
+                                            ingredient.unit
+                                        )}
+                                    </td>
+
+
+                                    <td
+                                        class="
+                                            text-right
+                                            stock-number
+                                        "
+                                    >
+                                        ${number(
+                                            stock
+                                        )}
+                                    </td>
+
+
+                                    <td
+                                        class="
+                                            text-right
+                                            warning-number
+                                        "
+                                    >
+                                        ≤ ${number(
+                                            minStock
+                                        )}
+                                    </td>
+
+
+                                    <td class="text-right">
+                                        ${money(
+                                            cost
+                                        )}
+                                    </td>
+
+
+                                    <td class="text-right">
+
+                                        <strong>
+                                            ${money(
+                                                stockValue
+                                            )}
+                                        </strong>
+
+                                    </td>
+
+
+                                    <td class="text-center">
+
+                                        <span
+                                            class="
+                                                status-badge
+                                                ${status.className}
+                                            "
+                                        >
+                                            ${status.text}
+                                        </span>
+
+                                    </td>
+
+
+                                    <td class="text-center">
+
+                                        <div class="table-actions">
+
+                                            <button
+                                                type="button"
+                                                class="
+                                                    table-action-btn
+                                                    edit
+                                                "
+                                                data-action="edit"
+                                                data-id="${esc(
+                                                    ingredient.id
+                                                )}"
+                                            >
+                                                ✏️ แก้ไข
+                                            </button>
+
+
+                                            <button
+                                                type="button"
+                                                class="
+                                                    table-action-btn
+                                                    toggle
+                                                "
+                                                data-action="toggle"
+                                                data-id="${esc(
+                                                    ingredient.id
+                                                )}"
+                                            >
+                                                ${
+                                                    ingredient.is_active
+                                                        ? '⏸ ปิดใช้งาน'
+                                                        : '▶ เปิดใช้งาน'
+                                                }
+                                            </button>
+
+                                        </div>
+
+                                    </td>
+
+                                </tr>
+
+                            `
+                        }
+                    ).join('')}
+
+                </tbody>
+
+            </table>
+
+        </div>
+
+
+        <div class="ingredient-table-footer">
+
+            แสดง
+
+            <strong>
+                ${list.length.toLocaleString(
+                    'th-TH'
+                )}
+            </strong>
+
+            รายการ
+
+        </div>
+
+    `
 }
 
 
@@ -1293,44 +1383,69 @@ async function logout() {
 ======================================== */
 
 async function init() {
+
     try {
+
+        /*
+         * ROLE GUARD
+         *
+         * Admin   = เข้าได้
+         * Manager = เข้าได้
+         * Staff   = เข้าไม่ได้
+         */
+        const guard =
+            await applyRoleGuard()
+
+        if (!guard) {
+            return
+        }
+
+
+        /*
+         * ตรวจสอบ Session
+         */
         const session =
             await requireSession()
-
 
         if (!session) {
             return
         }
 
 
+        /*
+         * โหลด Profile ผู้ใช้งาน
+         */
         await loadProfile(
             session.user.id
         )
 
 
+        /*
+         * โหลดข้อมูลสาขา
+         */
         await loadBranch()
 
 
+        /*
+         * โหลดรายการวัตถุดิบ
+         */
         await loadIngredients()
 
+
     } catch (error) {
+
         console.error(
             'Ingredients init error:',
             error
         )
 
-
-        el.ingredientList.innerHTML = `
-            <div class="empty-state">
-                ${esc(
+        message(
+            el.pageMessage,
             error.message ||
-            'โหลดข้อมูลไม่สำเร็จ'
-        )}
-            </div>
-        `
+            'โหลดข้อมูลวัตถุดิบไม่สำเร็จ'
+        )
     }
 }
-
 
 /* ========================================
    EVENTS
