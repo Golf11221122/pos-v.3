@@ -1,4 +1,5 @@
 import { supabase } from './supabase.js'
+import { applyRoleGuard } from './role-guard.js'
 
 
 /* ========================================
@@ -2296,9 +2297,15 @@ async function init() {
 
     try {
 
+        const guard =
+            await applyRoleGuard()
+
+        if (!guard) {
+            return
+        }
+
         const session =
             await requireSession()
-
 
         if (!session) {
             return
