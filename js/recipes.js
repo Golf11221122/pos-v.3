@@ -1,4 +1,5 @@
 import { supabase } from './supabase.js'
+import { applyRoleGuard } from './role-guard.js'
 
 const state = {
     session: null,
@@ -1003,25 +1004,33 @@ async function logout() {
 
 async function init() {
     try {
-        const session =
-            await requireSession()
+
+        // Admin / Manager เข้าได้
+        // Staff จะถูก Role Guard ป้องกัน
+        const guard = await applyRoleGuard()
+
+        if (!guard) {
+            return
+        }
+
+        const session = await requireSession()
 
         if (!session) {
             return
         }
 
-        await loadProfile(
-            session.user.id
-        )
+        await loadProfile(session.user.id)
 
         await loadBranch()
 
-        await Promise.all([
-            loadProducts(),
-            loadIngredients()
-        ])
+        // โหลดสินค้าสำหรับเลือกสูตร
+        await loadProducts()
+
+        // โหลดวัตถุดิบสำหรับใช้ในสูตร
+        await loadIngredients()
 
     } catch (error) {
+
         console.error(
             'Recipes init error:',
             error
