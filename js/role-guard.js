@@ -481,14 +481,17 @@ function applyDashboardQuickActions(
 
 
     /*
-     * ดูรายงาน
-     * Dashboard เข้าได้เฉพาะ Admin / Manager
-     */
+ * ดูรายงานเต็ม
+ * เฉพาะ Admin / Manager
+ */
     setMenuVisibility(
-        '#openReportsBtn',
-        role,
-        MENU_PERMISSIONS.dashboard
-    )
+    '#openReportsBtn',
+    role,
+    [
+        'admin',
+        'manager'
+    ]
+)
 }
 
 
