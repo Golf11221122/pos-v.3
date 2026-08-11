@@ -859,18 +859,6 @@ function renderUser() {
         `สาขา: ${state.branch.name}`
 
 
-    /*
-     * Staff ใช้ POS เป็นหน้าหลัก
-     * ไม่ให้ย้อนเข้า Dashboard
-     */
-    if (
-        state.profile.role === 'staff'
-        &&
-        el.backBtn
-    ) {
-        el.backBtn.style.display =
-            'none'
-    }
 }
 
 
@@ -2275,16 +2263,6 @@ async function init() {
 
 el.backBtn.onclick =
     () => {
-
-        /*
-         * Staff ห้ามเข้า Dashboard
-         */
-        if (
-            state.profile?.role === 'staff'
-        ) {
-            return
-        }
-
         location.href =
             './dashboard.html'
     }
