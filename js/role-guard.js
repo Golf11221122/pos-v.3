@@ -9,7 +9,8 @@ const PAGE_PERMISSIONS = {
 
     'dashboard.html': [
         'admin',
-        'manager'
+        'manager',
+        'staff'
     ],
 
     'pos.html': [
@@ -68,7 +69,8 @@ const MENU_PERMISSIONS = {
 
     dashboard: [
         'admin',
-        'manager'
+        'manager',
+        'staff'
     ],
 
     pos: [
