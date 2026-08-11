@@ -161,6 +161,11 @@ const elements = {
             'openSalesBtn'
         ),
 
+    openSalesReportBtn:
+        document.getElementById(
+            'openSalesReportBtn'
+        ),
+
     openReportsBtn:
         document.getElementById(
             'openReportsBtn'
@@ -1732,7 +1737,15 @@ function applyDashboardRoleView(
 
         return
     }
+    if (
+        elements.openSalesReportBtn
+    ) {
 
+        elements.openSalesReportBtn
+            .style
+            .display =
+            'none'
+    }
 
     /*
      * ================================
@@ -2427,7 +2440,26 @@ elements.openReportsBtn
         }
     )
 
+/* ========================================
+   OPEN SALES REPORT
+======================================== */
 
+elements.openSalesReportBtn
+    ?.addEventListener(
+        'click',
+        () => {
+
+            if (
+                state.role ===
+                'staff'
+            ) {
+                return
+            }
+
+            window.location.href =
+                './sales-report.html'
+        }
+    )
 /* ========================================
    REFRESH DASHBOARD
 ======================================== */
