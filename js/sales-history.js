@@ -1902,7 +1902,7 @@ async function init() {
          *
          * Admin   = เข้าได้
          * Manager = เข้าได้
-         * Staff   = เข้าไม่ได้
+         * Staff   = เข้าได้
          */
         const guard =
             await applyRoleGuard()
@@ -1913,6 +1913,9 @@ async function init() {
         }
 
 
+        /*
+         * ตรวจ Session
+         */
         const session =
             await requireSession()
 
@@ -1922,57 +1925,62 @@ async function init() {
         }
 
 
+        /*
+         * โหลด Profile
+         */
         await loadProfile(
             session.user.id
         )
 
 
+        /*
+         * โหลดสาขา
+         */
         await loadBranch()
 
 
         /*
-         * เปิดหน้าครั้งแรก
-         * ให้รายงานวันนี้
+         * แสดงชื่อผู้ใช้ / สาขา
          */
-        const today =
-            getLocalDateValue(
-                new Date()
-            )
+        renderUser()
 
 
-        el.dateFrom.value =
-            today
-
-
-        el.dateTo.value =
-            today
-
-
-        await loadInventoryReport()
+        /*
+         * โหลดประวัติการขาย
+         */
+        await loadSales()
 
 
     } catch (error) {
 
         console.error(
-            'Inventory report init error:',
+            'Sales history init error:',
             error
         )
 
 
-        el.loadingState
-            .classList
-            .add('hidden')
+        if (el.loadingState) {
+
+            el.loadingState
+                .classList
+                .add('hidden')
+        }
 
 
-        message(
-            el.pageMessage,
-            error.message
-            ||
-            'โหลดข้อมูลไม่สำเร็จ'
-        )
+        if (el.emptyState) {
+
+            el.emptyState
+                .classList
+                .remove('hidden')
+
+
+            el.emptyState.textContent =
+                error.message
+                ||
+                'โหลดประวัติการขายไม่สำเร็จ'
+        }
     }
 }
-
 
 /* ========================================
    EVENTS
