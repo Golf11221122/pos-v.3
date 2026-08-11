@@ -844,8 +844,8 @@ function getAvailability(
 /* ========================================
    USER
 ======================================== */
-
 function renderUser() {
+
     el.userName.textContent =
         state.profile.full_name
         ||
@@ -854,9 +854,23 @@ function renderUser() {
             .email
             .split('@')[0]
 
+
     el.branchText.textContent =
-        `สาขา: ${state.branch.name
-        }`
+        `สาขา: ${state.branch.name}`
+
+
+    /*
+     * Staff ใช้ POS เป็นหน้าหลัก
+     * ไม่ให้ย้อนเข้า Dashboard
+     */
+    if (
+        state.profile.role === 'staff'
+        &&
+        el.backBtn
+    ) {
+        el.backBtn.style.display =
+            'none'
+    }
 }
 
 
