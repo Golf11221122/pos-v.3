@@ -19,10 +19,22 @@ const PAGE_PERMISSIONS = {
         'staff'
     ],
 
+    'shift.html': [
+        'admin',
+        'manager',
+        'staff'
+    ],
+
     'sales-history.html': [
         'admin',
         'manager',
         'staff'
+    ],
+    /* เพิ่มใน PAGE_PERMISSIONS */
+
+    'sales-report.html': [
+        'admin',
+        'manager'
     ],
 
     'products.html': [
@@ -79,10 +91,21 @@ const MENU_PERMISSIONS = {
         'staff'
     ],
 
+    shift: [
+        'admin',
+        'manager',
+        'staff'
+    ],
+
     sales: [
         'admin',
         'manager',
         'staff'
+    ],
+
+    salesReport: [
+        'admin',
+        'manager'
     ],
 
     products: [
@@ -377,6 +400,12 @@ function applySidebarPermissions(
         MENU_PERMISSIONS.pos
     )
 
+    setMenuVisibility(
+        'a[href="./shift.html"]',
+        role,
+        MENU_PERMISSIONS.shift
+    )
+
 
     setMenuVisibility(
         'a[href="./products.html"]',
@@ -396,6 +425,12 @@ function applySidebarPermissions(
         'a[href="./sales-history.html"]',
         role,
         MENU_PERMISSIONS.sales
+    )
+
+    setMenuVisibility(
+        'a[href="./sales-report.html"]',
+        role,
+        MENU_PERMISSIONS.salesReport
     )
 
 
