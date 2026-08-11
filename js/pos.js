@@ -14,7 +14,10 @@ const state = {
     selectedCategory: '',
     cart: new Map(),
     paymentMethod: 'cash',
-    lastSale: null
+    lastSale: null,
+
+    // กะขายปัจจุบัน
+    currentShift: null
 }
 
 const $ = id =>
@@ -632,7 +635,228 @@ async function loadBranch() {
     state.branch =
         data
 }
+/* ========================================
+   CURRENT SHIFT
+======================================== */
 
+async function loadCurrentShift() {
+
+    const {
+        data,
+        error
+    } =
+        await supabase.rpc(
+            'get_current_shift'
+        )
+
+    if (error) {
+
+        console.error(
+            'Load current shift error:',
+            error
+        )
+
+        state.currentShift =
+            null
+
+        updateShiftSaleState()
+
+        throw error
+    }
+
+
+    const shift =
+        Array.isArray(data)
+            ? (
+                data[0]
+                ||
+                null
+            )
+            : (
+                data
+                ||
+                null
+            )
+
+
+    if (
+        shift?.branch_id
+        &&
+        state.profile?.branch_id
+        &&
+        shift.branch_id !==
+        state.profile.branch_id
+    ) {
+
+        console.warn(
+            'Current shift belongs to another branch:',
+            shift
+        )
+
+        state.currentShift =
+            null
+
+    } else {
+
+        state.currentShift =
+            shift
+    }
+
+
+    updateShiftSaleState()
+
+
+    return state.currentShift
+}
+
+
+/* ========================================
+   CHECK OPEN SHIFT
+======================================== */
+
+function hasOpenShift() {
+
+    const shift =
+        state.currentShift
+
+
+    if (!shift) {
+
+        return false
+    }
+
+
+    if (
+        shift.status !==
+        undefined
+        &&
+        shift.status !==
+        null
+    ) {
+
+        const status =
+            String(
+                shift.status
+            )
+                .trim()
+                .toLowerCase()
+
+
+        if (
+            ![
+                'open',
+                'opened',
+                'active'
+            ].includes(
+                status
+            )
+        ) {
+
+            return false
+        }
+    }
+
+
+    if (
+        shift.closed_at
+        ||
+        shift.close_at
+        ||
+        shift.ended_at
+    ) {
+
+        return false
+    }
+
+
+    return true
+}
+
+
+/* ========================================
+   UPDATE POS SALE STATE
+======================================== */
+
+function updateShiftSaleState() {
+
+    const canSell =
+        hasOpenShift()
+
+
+    const hasItems =
+        items().length >
+        0
+
+
+    if (
+        el.checkoutBtn
+    ) {
+
+        el.checkoutBtn.disabled =
+            !canSell
+            ||
+            !hasItems
+    }
+
+
+    if (
+        !canSell
+        &&
+        el.pageMessage
+    ) {
+
+        msg(
+            el.pageMessage,
+            'ยังไม่ได้เปิดกะ กรุณาเปิดกะก่อนเริ่มขาย'
+        )
+    }
+}
+
+
+/* ========================================
+   REQUIRE OPEN SHIFT
+======================================== */
+
+async function requireOpenShift() {
+
+    try {
+
+        await loadCurrentShift()
+
+    } catch (error) {
+
+        console.error(
+            'Shift check error:',
+            error
+        )
+
+
+        msg(
+            el.pageMessage,
+            'ตรวจสอบกะไม่สำเร็จ กรุณาลองใหม่'
+        )
+
+
+        return false
+    }
+
+
+    if (
+        !hasOpenShift()
+    ) {
+
+        msg(
+            el.pageMessage,
+            'ยังไม่ได้เปิดกะ หรือกะถูกปิดแล้ว กรุณาเปิดกะก่อนขาย'
+        )
+
+
+        return false
+    }
+
+
+    return true
+}
 
 /* ========================================
    CATALOG
@@ -1453,18 +1677,32 @@ function renderCart() {
         )
 
     el.checkoutBtn.disabled =
-        !list.length
+    !list.length
+    ||
+    !hasOpenShift()
 
-    msg(
-        el.pageMessage,
+    if (
+        !hasOpenShift()
+    ) {
 
-        discount() >
-            subtotal()
+        msg(
+            el.pageMessage,
+            'ยังไม่ได้เปิดกะ กรุณาเปิดกะก่อนเริ่มขาย'
+        )
 
-            ? 'ส่วนลดมากกว่ายอดสินค้า'
+    } else {
 
-            : ''
-    )
+        msg(
+            el.pageMessage,
+
+            discount() >
+                subtotal()
+
+                ? 'ส่วนลดมากกว่ายอดสินค้า'
+
+                : ''
+        )
+    }
 }
 
 
@@ -1472,15 +1710,33 @@ function renderCart() {
    PAYMENT
 ======================================== */
 
-function openPayment() {
+async function openPayment() {
+
     if (
         !items().length
         ||
         discount() >
         subtotal()
     ) {
+
         return
     }
+
+
+    /*
+     * เช็กกะล่าสุดก่อนเปิดหน้าชำระเงิน
+     */
+    const shiftReady =
+        await requireOpenShift()
+
+
+    if (
+        !shiftReady
+    ) {
+
+        return
+    }
+
 
     state.paymentMethod =
         'cash'
@@ -1858,27 +2114,30 @@ function printReceipt() {
 ======================================== */
 
 async function confirmPayment() {
+
+    // ตรวจสอบกะ
+    const shiftReady =
+        await requireOpenShift()
+
+    if (!shiftReady) {
+        msg(
+            el.paymentMessage,
+            'กะขายไม่ได้เปิดอยู่ กรุณาเปิดกะก่อนบันทึกการขาย'
+        )
+
+        return
+    }
+
+    // ตรวจสอบเงิน
     const received =
-        state.paymentMethod
-            ===
-            'cash'
-
-            ? Number(
-                el.receivedInput
-                    .value
-                ||
-                0
-            )
-
+        state.paymentMethod === 'cash'
+            ? Number(el.receivedInput.value || 0)
             : total()
 
     if (
-        state.paymentMethod
-        ===
-        'cash'
+        state.paymentMethod === 'cash'
         &&
-        received <
-        total()
+        received < total()
     ) {
         msg(
             el.paymentMessage,
@@ -1892,10 +2151,12 @@ async function confirmPayment() {
      * เก็บ snapshot ก่อนส่ง RPC
      * เพื่อใช้ทำใบเสร็จหลังบันทึกสำเร็จ
      */
+
     const saleSnapshot = {
 
         items:
             items()
+    // ↓↓↓ โค้ดเดิมของคุณต่อจากตรงนี้
                 .map(
                     item => ({
                         id:
@@ -2218,24 +2479,91 @@ async function logout() {
 ======================================== */
 
 async function init() {
+
     try {
 
-        // POS อนุญาต Admin / Manager / Staff
-        const session = await requireSession()
+        /*
+         * POS อนุญาต
+         * Admin / Manager / Staff
+         */
+        const session =
+            await requireSession()
 
-        if (!session) {
+
+        if (
+            !session
+        ) {
+
             return
         }
 
-        await loadProfile(session.user.id)
 
+        /*
+         * โหลดข้อมูลผู้ใช้
+         */
+        await loadProfile(
+            session.user.id
+        )
+
+
+        /*
+         * โหลดสาขา
+         */
         await loadBranch()
 
+
+        /*
+         * แสดงชื่อผู้ใช้ / สาขา
+         */
         renderUser()
 
+
+        /*
+         * =====================================
+         * โหลดกะปัจจุบัน
+         * =====================================
+         *
+         * ถ้ามีกะเปิดอยู่
+         * -> POS ขายได้
+         *
+         * ถ้ายังไม่เปิดกะ
+         * -> POS ยังเข้าได้
+         * -> แต่ปุ่มชำระเงินจะถูกล็อก
+         */
+        try {
+
+            await loadCurrentShift()
+
+        } catch (shiftError) {
+
+            console.error(
+                'Initial shift load error:',
+                shiftError
+            )
+
+
+            state.currentShift =
+                null
+        }
+
+
+        /*
+         * โหลดสินค้า / หมวดหมู่ / BOM
+         */
         await loadCatalog()
 
+
+        /*
+         * แสดงตะกร้า
+         */
         renderCart()
+
+
+        /*
+         * ตรวจสถานะปุ่มชำระเงินอีกครั้ง
+         */
+        updateShiftSaleState()
+
 
     } catch (error) {
 
@@ -2244,14 +2572,24 @@ async function init() {
             error
         )
 
+
         msg(
             el.pageMessage,
-            error.message ||
+            error.message
+            ||
             'โหลดข้อมูล POS ไม่สำเร็จ'
         )
 
-        if (el.loading) {
-            el.loading.classList.add('hidden')
+
+        if (
+            el.loading
+        ) {
+
+            el.loading
+                .classList
+                .add(
+                    'hidden'
+                )
         }
     }
 }
@@ -2278,23 +2616,53 @@ el.searchInput.oninput =
     renderProducts
 
 
-/* REFRESH */
+/* ========================================
+   REFRESH
+======================================== */
 
 el.refreshBtn.onclick =
     async () => {
+
         try {
+
             msg(
                 el.pageMessage,
                 ''
             )
 
+
+            /*
+             * ตรวจสอบกะล่าสุดก่อน
+             */
+            await loadCurrentShift()
+
+
+            /*
+             * โหลดสินค้า / BOM ใหม่
+             */
             await loadCatalog()
 
+
+            /*
+             * อัปเดตตะกร้า
+             */
+            renderCart()
+
+
+            /*
+             * เปิด / ปิดปุ่มชำระเงิน
+             * ตามสถานะกะ
+             */
+            updateShiftSaleState()
+
+
         } catch (error) {
+
             console.error(
                 'Refresh error:',
                 error
             )
+
 
             msg(
                 el.pageMessage,
