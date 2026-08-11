@@ -2,6 +2,10 @@ import { supabase } from './supabase.js'
 import { applyRoleGuard } from './role-guard.js'
 
 
+/* ========================================
+   ELEMENTS
+======================================== */
+
 const elements = {
 
     logoutBtn:
@@ -24,6 +28,8 @@ const elements = {
             'currentDate'
         ),
 
+
+    /* USER */
 
     userAvatar:
         document.getElementById(
@@ -66,6 +72,8 @@ const elements = {
         ),
 
 
+    /* TODAY SUMMARY */
+
     todaySales:
         document.getElementById(
             'todaySales'
@@ -85,6 +93,9 @@ const elements = {
         document.getElementById(
             'todayQr'
         ),
+
+
+    /* BUSINESS SUMMARY */
 
     monthSales:
         document.getElementById(
@@ -107,6 +118,8 @@ const elements = {
         ),
 
 
+    /* REPORT */
+
     sevenDayChart:
         document.getElementById(
             'sevenDayChart'
@@ -118,6 +131,8 @@ const elements = {
         ),
 
 
+    /* STATUS */
+
     statusMessage:
         document.getElementById(
             'statusMessage'
@@ -128,6 +143,8 @@ const elements = {
             'refreshDashboardBtn'
         ),
 
+
+    /* QUICK ACTION */
 
     openPosBtn:
         document.getElementById(
@@ -149,15 +166,8 @@ const elements = {
             'openReportsBtn'
         ),
 
-    categoriesMenu:
-        document.getElementById(
-            'categoriesMenu'
-        ),
 
-    stockMenu:
-        document.getElementById(
-            'stockMenu'
-        ),
+    /* MENU */
 
     settingsMenu:
         document.getElementById(
@@ -166,6 +176,10 @@ const elements = {
 }
 
 
+/* ========================================
+   STATE
+======================================== */
+
 const state = {
 
     session: null,
@@ -173,6 +187,8 @@ const state = {
     profile: null,
 
     branch: null,
+
+    role: null,
 
     sales: [],
 
@@ -206,10 +222,21 @@ function money(value) {
 }
 
 
+/* ========================================
+   STATUS MESSAGE
+======================================== */
+
 function showStatus(
     message = '',
     isError = true
 ) {
+
+    if (
+        !elements.statusMessage
+    ) {
+        return
+    }
+
 
     elements.statusMessage.textContent =
         message
@@ -222,6 +249,10 @@ function showStatus(
 }
 
 
+/* ========================================
+   ROLE TEXT
+======================================== */
+
 function formatRole(role) {
 
     const roles = {
@@ -231,6 +262,9 @@ function formatRole(role) {
 
         manager:
             'ผู้จัดการ',
+
+        staff:
+            'พนักงานขาย',
 
         cashier:
             'พนักงานขาย',
@@ -250,10 +284,21 @@ function formatRole(role) {
 }
 
 
+/* ========================================
+   CURRENT DATE
+======================================== */
+
 function setCurrentDate() {
 
     const date =
         new Date()
+
+
+    if (
+        !elements.currentDate
+    ) {
+        return
+    }
 
 
     elements.currentDate.textContent =
@@ -275,6 +320,10 @@ function setCurrentDate() {
         )
 }
 
+
+/* ========================================
+   DATE HELPERS
+======================================== */
 
 function startOfToday() {
 
@@ -327,6 +376,10 @@ function startOfSevenDays() {
 }
 
 
+/* ========================================
+   SALE STATUS
+======================================== */
+
 function isCompleted(sale) {
 
     return (
@@ -364,6 +417,7 @@ async function getCurrentSession() {
         window.location.replace(
             './index.html'
         )
+
 
         return null
     }
@@ -414,6 +468,7 @@ async function getProfile(
             'Profile error:',
             error
         )
+
 
         throw error
     }
@@ -529,43 +584,83 @@ function displayUser(
         'ยังไม่ได้กำหนดสาขา'
 
 
-    elements.userEmail.textContent =
-        user.email || '-'
+    if (
+        elements.userEmail
+    ) {
+
+        elements.userEmail.textContent =
+            user.email || '-'
+    }
 
 
-    elements.profileName.textContent =
-        fullName
+    if (
+        elements.profileName
+    ) {
+
+        elements.profileName.textContent =
+            fullName
+    }
 
 
-    elements.profileRole.textContent =
-        roleText
+    if (
+        elements.profileRole
+    ) {
+
+        elements.profileRole.textContent =
+            roleText
+    }
 
 
-    elements.profileBranch.textContent =
-        branchText
+    if (
+        elements.profileBranch
+    ) {
+
+        elements.profileBranch.textContent =
+            branchText
+    }
 
 
-    elements.userName.textContent =
-        fullName
+    if (
+        elements.userName
+    ) {
+
+        elements.userName.textContent =
+            fullName
+    }
 
 
-    elements.userRole.textContent =
-        roleText
+    if (
+        elements.userRole
+    ) {
+
+        elements.userRole.textContent =
+            roleText
+    }
 
 
-    elements.welcomeName.textContent =
-        fullName
+    if (
+        elements.welcomeName
+    ) {
+
+        elements.welcomeName.textContent =
+            fullName
+    }
 
 
-    elements.userAvatar.textContent =
-        fullName
-            .charAt(0)
-            .toUpperCase()
+    if (
+        elements.userAvatar
+    ) {
+
+        elements.userAvatar.textContent =
+            fullName
+                .charAt(0)
+                .toUpperCase()
+    }
 }
 
 
 /* ========================================
-   COUNTS
+   TABLE COUNT
 ======================================== */
 
 async function getTableCount(
@@ -614,6 +709,7 @@ async function getTableCount(
             error
         )
 
+
         return 0
     }
 
@@ -626,7 +722,9 @@ async function getTableCount(
    LOAD SALES
 ======================================== */
 
-async function loadSales() {
+async function loadSales(
+    role
+) {
 
     const sevenDaysAgo =
         startOfSevenDays()
@@ -636,13 +734,27 @@ async function loadSales() {
         startOfMonth()
 
 
+    /*
+     * Staff
+     * ใช้แค่วันนี้ + 7 วันย้อนหลัง
+     *
+     * Manager / Admin
+     * ใช้ข้อมูลเดือนด้วย
+     */
     const earliest =
-        sevenDaysAgo <
-            monthStart
+
+        role === 'staff'
 
             ? sevenDaysAgo
 
-            : monthStart
+            : (
+                sevenDaysAgo <
+                monthStart
+
+                    ? sevenDaysAgo
+
+                    : monthStart
+            )
 
 
     const {
@@ -692,6 +804,7 @@ async function loadSales() {
             error
         )
 
+
         throw error
     }
 
@@ -712,7 +825,9 @@ async function loadSaleItems() {
             sale => {
 
                 return (
-                    isCompleted(sale)
+                    isCompleted(
+                        sale
+                    )
                     &&
                     new Date(
                         sale.created_at
@@ -729,7 +844,9 @@ async function loadSaleItems() {
             sale => {
 
                 return (
-                    isCompleted(sale)
+                    isCompleted(
+                        sale
+                    )
                     &&
                     new Date(
                         sale.created_at
@@ -742,7 +859,9 @@ async function loadSaleItems() {
 
 
     const saleIds = [
+
         ...new Set(
+
             [
                 ...todaySales,
                 ...sevenDaySales
@@ -752,6 +871,7 @@ async function loadSaleItems() {
                         sale.id
                 )
         )
+
     ]
 
 
@@ -762,6 +882,7 @@ async function loadSaleItems() {
 
         state.saleItems =
             []
+
 
         return
     }
@@ -800,6 +921,7 @@ async function loadSaleItems() {
             error
         )
 
+
         throw error
     }
 
@@ -824,7 +946,9 @@ function renderTodaySummary() {
             sale => {
 
                 return (
-                    isCompleted(sale)
+                    isCompleted(
+                        sale
+                    )
                     &&
                     new Date(
                         sale.created_at
@@ -898,24 +1022,50 @@ function renderTodaySummary() {
             )
 
 
-    elements.todaySales.textContent =
-        money(total)
+    if (
+        elements.todaySales
+    ) {
 
-
-    elements.todayBills.textContent =
-        sales
-            .length
-            .toLocaleString(
-                'th-TH'
+        elements.todaySales.textContent =
+            money(
+                total
             )
+    }
 
 
-    elements.todayCash.textContent =
-        money(cash)
+    if (
+        elements.todayBills
+    ) {
+
+        elements.todayBills.textContent =
+            sales
+                .length
+                .toLocaleString(
+                    'th-TH'
+                )
+    }
 
 
-    elements.todayQr.textContent =
-        money(qr)
+    if (
+        elements.todayCash
+    ) {
+
+        elements.todayCash.textContent =
+            money(
+                cash
+            )
+    }
+
+
+    if (
+        elements.todayQr
+    ) {
+
+        elements.todayQr.textContent =
+            money(
+                qr
+            )
+    }
 }
 
 
@@ -935,7 +1085,9 @@ function renderMonthSales() {
                 sale => {
 
                     return (
-                        isCompleted(sale)
+                        isCompleted(
+                            sale
+                        )
                         &&
                         new Date(
                             sale.created_at
@@ -960,8 +1112,15 @@ function renderMonthSales() {
             )
 
 
-    elements.monthSales.textContent =
-        money(amount)
+    if (
+        elements.monthSales
+    ) {
+
+        elements.monthSales.textContent =
+            money(
+                amount
+            )
+    }
 }
 
 
@@ -983,7 +1142,9 @@ function renderTodayProfit() {
                     sale => {
 
                         return (
-                            isCompleted(sale)
+                            isCompleted(
+                                sale
+                            )
                             &&
                             new Date(
                                 sale.created_at
@@ -1019,6 +1180,7 @@ function renderTodayProfit() {
                 item.sale_id
             )
         ) {
+
             continue
         }
 
@@ -1049,8 +1211,15 @@ function renderTodayProfit() {
         cost
 
 
-    elements.todayProfit.textContent =
-        money(profit)
+    if (
+        elements.todayProfit
+    ) {
+
+        elements.todayProfit.textContent =
+            money(
+                profit
+            )
+    }
 }
 
 
@@ -1060,7 +1229,15 @@ function renderTodayProfit() {
 
 function renderSevenDayChart() {
 
-    const days = []
+    if (
+        !elements.sevenDayChart
+    ) {
+        return
+    }
+
+
+    const days =
+        []
 
 
     const start =
@@ -1074,7 +1251,9 @@ function renderSevenDayChart() {
     ) {
 
         const day =
-            new Date(start)
+            new Date(
+                start
+            )
 
 
         day.setDate(
@@ -1084,7 +1263,9 @@ function renderSevenDayChart() {
 
 
         const next =
-            new Date(day)
+            new Date(
+                day
+            )
 
 
         next.setDate(
@@ -1105,11 +1286,15 @@ function renderSevenDayChart() {
 
 
                         return (
-                            isCompleted(sale)
+                            isCompleted(
+                                sale
+                            )
                             &&
-                            created >= day
+                            created >=
+                            day
                             &&
-                            created < next
+                            created <
+                            next
                         )
                     }
                 )
@@ -1129,21 +1314,25 @@ function renderSevenDayChart() {
 
 
         days.push({
+
             date:
                 day,
 
             total:
                 total
+
         })
     }
 
 
     const max =
         Math.max(
+
             ...days.map(
                 day =>
                     day.total
             ),
+
             1
         )
 
@@ -1154,6 +1343,7 @@ function renderSevenDayChart() {
                 day => {
 
                     const height =
+
                         day.total > 0
 
                             ? Math.max(
@@ -1196,15 +1386,20 @@ function renderSevenDayChart() {
                                     chart-value
                                 "
                             >
-                                ${day.total > 0
-                            ? Math.round(
-                                day.total
-                            )
-                                .toLocaleString(
-                                    'th-TH'
-                                )
-                            : '0'
-                        }
+
+                                ${
+                                    day.total > 0
+
+                                        ? Math.round(
+                                            day.total
+                                        )
+                                            .toLocaleString(
+                                                'th-TH'
+                                            )
+
+                                        : '0'
+                                }
+
                             </div>
 
 
@@ -1218,15 +1413,19 @@ function renderSevenDayChart() {
                                     class="
                                         chart-bar
                                     "
+
                                     style="
                                         height:
                                         ${height}%;
                                     "
-                                    title="${money(
-                            day.total
-                        )
-                        }"
-                                ></div>
+
+                                    title="${
+                                        money(
+                                            day.total
+                                        )
+                                    }"
+                                >
+                                </div>
 
                             </div>
 
@@ -1236,7 +1435,9 @@ function renderSevenDayChart() {
                                     chart-label
                                 "
                             >
+
                                 ${label}
+
                             </div>
 
                         </div>
@@ -1254,6 +1455,13 @@ function renderSevenDayChart() {
 
 function renderTopProducts() {
 
+    if (
+        !elements.topProducts
+    ) {
+        return
+    }
+
+
     const validSaleIds =
         new Set(
 
@@ -1262,7 +1470,9 @@ function renderTopProducts() {
                     sale => {
 
                         return (
-                            isCompleted(sale)
+                            isCompleted(
+                                sale
+                            )
                             &&
                             new Date(
                                 sale.created_at
@@ -1294,6 +1504,7 @@ function renderTopProducts() {
                 item.sale_id
             )
         ) {
+
             continue
         }
 
@@ -1310,9 +1521,12 @@ function renderTopProducts() {
 
 
         const old =
-            productMap.get(key)
+            productMap.get(
+                key
+            )
             ||
             {
+
                 name:
                     item.product_name
                     ||
@@ -1323,6 +1537,7 @@ function renderTopProducts() {
 
                 total:
                     0
+
             }
 
 
@@ -1376,6 +1591,7 @@ function renderTopProducts() {
             </div>
             `
 
+
         return
     }
 
@@ -1399,8 +1615,9 @@ function renderTopProducts() {
                                 top-rank
                             "
                         >
-                            ${index + 1
-                    }
+
+                            ${index + 1}
+
                         </div>
 
 
@@ -1411,18 +1628,26 @@ function renderTopProducts() {
                         >
 
                             <strong>
-                                ${escapeHtml(
-                        product.name
-                    )
-                    }
+
+                                ${
+                                    escapeHtml(
+                                        product.name
+                                    )
+                                }
+
                             </strong>
 
+
                             <small>
+
                                 ยอดขาย
-                                ${money(
-                        product.total
-                    )
-                    }
+
+                                ${
+                                    money(
+                                        product.total
+                                    )
+                                }
+
                             </small>
 
                         </div>
@@ -1433,12 +1658,15 @@ function renderTopProducts() {
                                 top-qty
                             "
                         >
-                            ${product
-                        .quantity
-                        .toLocaleString(
-                            'th-TH'
-                        )
-                    }
+
+                            ${
+                                product
+                                    .quantity
+                                    .toLocaleString(
+                                        'th-TH'
+                                    )
+                            }
+
                         </div>
 
                     </div>
@@ -1482,24 +1710,233 @@ function escapeHtml(value) {
 
 
 /* ========================================
+   DASHBOARD ROLE VIEW
+======================================== */
+
+function applyDashboardRoleView(
+    role
+) {
+
+    /*
+     * ================================
+     * ADMIN / MANAGER
+     * ================================
+     *
+     * แสดง Dashboard เต็ม
+     */
+
+    if (
+        role !==
+        'staff'
+    ) {
+
+        return
+    }
+
+
+    /*
+     * ================================
+     * STAFF DASHBOARD
+     * ================================
+     *
+     * เห็น:
+     *
+     * - ยอดขายวันนี้
+     * - จำนวนบิลวันนี้
+     * - เงินสด
+     * - QR
+     * - กราฟยอดขายย้อนหลัง 7 วัน
+     * - เปิด POS
+     * - ประวัติการขาย
+     *
+     *
+     * ซ่อน:
+     *
+     * - ยอดขายเดือนนี้
+     * - กำไรขั้นต้น
+     * - จำนวนสินค้า
+     * - จำนวนหมวดหมู่
+     * - สินค้าขายดี
+     * - จัดการสินค้า
+     * - ดูรายงาน
+     */
+
+
+    /* =================================
+       HIDE BUSINESS SUMMARY
+    ================================= */
+
+    const businessSummary =
+        document.querySelector(
+            '.business-summary'
+        )
+
+
+    if (
+        businessSummary
+    ) {
+
+        businessSummary.style.display =
+            'none'
+
+
+        /*
+         * ซ่อนหัวข้อ
+         * "ภาพรวมร้าน"
+         */
+        const heading =
+            businessSummary
+                .previousElementSibling
+
+
+        if (
+            heading
+            &&
+            heading
+                .classList
+                .contains(
+                    'section-title'
+                )
+        ) {
+
+            heading.style.display =
+                'none'
+        }
+    }
+
+
+    /* =================================
+       REPORT PANELS
+    ================================= */
+
+    const reportPanels =
+        document.querySelectorAll(
+            '#reports .panel'
+        )
+
+
+    /*
+     * Panel 0
+     * = กราฟ 7 วัน
+     */
+
+    if (
+        reportPanels[0]
+    ) {
+
+        reportPanels[0]
+            .style
+            .gridColumn =
+            '1 / -1'
+    }
+
+
+    /*
+     * Panel 1
+     * = สินค้าขายดี
+     *
+     * Staff ไม่เห็น
+     */
+
+    if (
+        reportPanels[1]
+    ) {
+
+        reportPanels[1]
+            .style
+            .display =
+            'none'
+    }
+
+
+    /* =================================
+       QUICK ACTION
+    ================================= */
+
+    /*
+     * Staff ไม่เห็น
+     * จัดการสินค้า
+     */
+
+    if (
+        elements.openProductsBtn
+    ) {
+
+        elements
+            .openProductsBtn
+            .style
+            .display =
+            'none'
+    }
+
+
+    /*
+     * Staff ไม่เห็น
+     * ดูรายงานเต็ม
+     */
+
+    if (
+        elements.openReportsBtn
+    ) {
+
+        elements
+            .openReportsBtn
+            .style
+            .display =
+            'none'
+    }
+}
+
+
+/* ========================================
    LOAD DASHBOARD
 ======================================== */
 
 async function loadDashboard() {
 
     /*
-     * ตรวจ Role ก่อนโหลด Dashboard
+     * =====================================
+     * ROLE GUARD
+     * =====================================
      *
-     * admin   = เข้าได้
-     * manager = เข้าได้
-     * staff   = เด้งไป POS
+     * Admin
+     * = Dashboard เต็ม
+     *
+     * Manager
+     * = Dashboard เต็ม
+     *
+     * Staff
+     * = Dashboard แบบย่อ
      */
+
+
     const guard =
         await applyRoleGuard()
 
+
     if (!guard) {
+
         return
     }
+
+
+    /*
+     * เก็บ Role ที่ normalize
+     * จาก Role Guard
+     */
+
+    state.role =
+        guard.role
+
+
+    /*
+     * ปรับหน้าตา Dashboard
+     * ตาม Role
+     */
+
+    applyDashboardRoleView(
+        state.role
+    )
 
 
     showStatus(
@@ -1521,11 +1958,16 @@ async function loadDashboard() {
 
     try {
 
+        /* =================================
+           SESSION
+        ================================= */
+
         const session =
             await getCurrentSession()
 
 
         if (!session) {
+
             return
         }
 
@@ -1534,17 +1976,29 @@ async function loadDashboard() {
             session.user
 
 
+        /* =================================
+           PROFILE
+        ================================= */
+
         const profile =
             await getProfile(
                 user.id
             )
 
 
+        /* =================================
+           BRANCH
+        ================================= */
+
         const branch =
             await getBranch(
                 profile.branch_id
             )
 
+
+        /* =================================
+           USER DISPLAY
+        ================================= */
 
         displayUser(
             user,
@@ -1553,55 +2007,163 @@ async function loadDashboard() {
         )
 
 
-        const [
-            productCount,
-            categoryCount
-        ] =
-            await Promise.all(
-                [
-                    getTableCount(
-                        'products',
-                        profile.branch_id
-                    ),
+        /* =================================
+           LOAD SALES
+        ================================= */
 
-                    getTableCount(
-                        'categories',
-                        profile.branch_id
-                    )
-                ]
-            )
+        /*
+         * ทุก Role
+         * ต้องใช้ข้อมูลยอดขาย
+         */
+
+        await loadSales(
+            state.role
+        )
 
 
-        elements.productCount.textContent =
-            productCount
-                .toLocaleString(
-                    'th-TH'
-                )
+        /* =================================
+           TODAY SUMMARY
+        ================================= */
 
-
-        elements.categoryCount.textContent =
-            categoryCount
-                .toLocaleString(
-                    'th-TH'
-                )
-
-
-        await loadSales()
-
-
-        await loadSaleItems()
-
+        /*
+         * ทุก Role เห็น:
+         *
+         * - ยอดขายวันนี้
+         * - จำนวนบิล
+         * - เงินสด
+         * - QR
+         */
 
         renderTodaySummary()
 
-        renderMonthSales()
 
-        renderTodayProfit()
+        /* =================================
+           7 DAY SALES
+        ================================= */
+
+        /*
+         * ทุก Role เห็นกราฟ
+         * ย้อนหลัง 7 วัน
+         */
 
         renderSevenDayChart()
 
-        renderTopProducts()
 
+        /* =================================
+           ADMIN / MANAGER
+        ================================= */
+
+        if (
+            state.role !==
+            'staff'
+        ) {
+
+            /*
+             * PRODUCT COUNT
+             *
+             * CATEGORY COUNT
+             */
+
+            const [
+                productCount,
+                categoryCount
+            ] =
+                await Promise.all(
+                    [
+
+                        getTableCount(
+                            'products',
+                            profile.branch_id
+                        ),
+
+                        getTableCount(
+                            'categories',
+                            profile.branch_id
+                        )
+
+                    ]
+                )
+
+
+            if (
+                elements.productCount
+            ) {
+
+                elements
+                    .productCount
+                    .textContent =
+                    productCount
+                        .toLocaleString(
+                            'th-TH'
+                        )
+            }
+
+
+            if (
+                elements.categoryCount
+            ) {
+
+                elements
+                    .categoryCount
+                    .textContent =
+                    categoryCount
+                        .toLocaleString(
+                            'th-TH'
+                        )
+            }
+
+
+            /*
+             * โหลดรายการสินค้า
+             * ของบิล
+             *
+             * ใช้สำหรับ:
+             *
+             * - กำไรขั้นต้น
+             * - Top Products
+             */
+
+            await loadSaleItems()
+
+
+            /*
+             * ยอดขายเดือนนี้
+             */
+
+            renderMonthSales()
+
+
+            /*
+             * กำไรขั้นต้นวันนี้
+             */
+
+            renderTodayProfit()
+
+
+            /*
+             * Top Products
+             */
+
+            renderTopProducts()
+
+        } else {
+
+            /*
+             * STAFF
+             *
+             * ไม่โหลด Sale Items
+             * เพราะไม่ต้องเห็นกำไร
+             * และ Top Products
+             */
+
+            state.saleItems =
+                []
+        }
+
+
+        /* =================================
+           SUCCESS
+        ================================= */
 
         showStatus(
             'โหลดข้อมูลสำเร็จ',
@@ -1612,10 +2174,15 @@ async function loadDashboard() {
         setTimeout(
             () => {
 
-                elements
-                    .statusMessage
-                    .textContent =
-                    ''
+                if (
+                    elements.statusMessage
+                ) {
+
+                    elements
+                        .statusMessage
+                        .textContent =
+                        ''
+                }
 
             },
             2000
@@ -1631,11 +2198,13 @@ async function loadDashboard() {
 
 
         showStatus(
-            `โหลดข้อมูลไม่สำเร็จ: ${error.message
-            ||
-            'เกิดข้อผิดพลาด'
+            `โหลดข้อมูลไม่สำเร็จ: ${
+                error.message
+                ||
+                'เกิดข้อผิดพลาด'
             }`
         )
+
 
     } finally {
 
@@ -1658,12 +2227,17 @@ async function loadDashboard() {
 
 async function logout() {
 
-    elements.logoutBtn.disabled =
-        true
+    if (
+        elements.logoutBtn
+    ) {
+
+        elements.logoutBtn.disabled =
+            true
 
 
-    elements.logoutBtn.textContent =
-        'กำลังออกจากระบบ...'
+        elements.logoutBtn.textContent =
+            'กำลังออกจากระบบ...'
+    }
 
 
     const {
@@ -1676,16 +2250,22 @@ async function logout() {
 
     if (error) {
 
-        elements.logoutBtn.disabled =
-            false
+        if (
+            elements.logoutBtn
+        ) {
+
+            elements.logoutBtn.disabled =
+                false
 
 
-        elements.logoutBtn.innerHTML =
-            '<span>🚪</span> ออกจากระบบ'
+            elements.logoutBtn.innerHTML =
+                '<span>🚪</span> ออกจากระบบ'
+        }
 
 
         showStatus(
-            `ออกจากระบบไม่สำเร็จ: ${error.message
+            `ออกจากระบบไม่สำเร็จ: ${
+                error.message
             }`
         )
 
@@ -1704,20 +2284,29 @@ async function logout() {
    EVENTS
 ======================================== */
 
+
+/* ========================================
+   LOGOUT
+======================================== */
+
 elements.logoutBtn
-    .addEventListener(
+    ?.addEventListener(
         'click',
         logout
     )
 
 
+/* ========================================
+   MOBILE SIDEBAR
+======================================== */
+
 elements.menuToggle
-    .addEventListener(
+    ?.addEventListener(
         'click',
         () => {
 
             elements.sidebar
-                .classList
+                ?.classList
                 .toggle(
                     'open'
                 )
@@ -1725,10 +2314,22 @@ elements.menuToggle
     )
 
 
+/* ========================================
+   OPEN POS
+======================================== */
+
 elements.openPosBtn
-    .addEventListener(
+    ?.addEventListener(
         'click',
         () => {
+
+            /*
+             * Admin
+             * Manager
+             * Staff
+             *
+             * เข้า POS ได้ทั้งหมด
+             */
 
             window.location.href =
                 './pos.html'
@@ -1736,10 +2337,28 @@ elements.openPosBtn
     )
 
 
+/* ========================================
+   OPEN PRODUCTS
+======================================== */
+
 elements.openProductsBtn
-    .addEventListener(
+    ?.addEventListener(
         'click',
         () => {
+
+            /*
+             * Staff
+             * ห้ามเข้า Products
+             */
+
+            if (
+                state.role ===
+                'staff'
+            ) {
+
+                return
+            }
+
 
             window.location.href =
                 './products.html'
@@ -1747,10 +2366,22 @@ elements.openProductsBtn
     )
 
 
+/* ========================================
+   OPEN SALES
+======================================== */
+
 elements.openSalesBtn
-    .addEventListener(
+    ?.addEventListener(
         'click',
         () => {
+
+            /*
+             * Admin
+             * Manager
+             * Staff
+             *
+             * เข้า Sales History ได้
+             */
 
             window.location.href =
                 './sales-history.html'
@@ -1758,10 +2389,30 @@ elements.openSalesBtn
     )
 
 
+/* ========================================
+   OPEN REPORT
+======================================== */
+
 elements.openReportsBtn
-    .addEventListener(
+    ?.addEventListener(
         'click',
         () => {
+
+            /*
+             * Staff
+             * ไม่มีปุ่มนี้อยู่แล้ว
+             *
+             * เช็กซ้ำเพื่อความปลอดภัย
+             */
+
+            if (
+                state.role ===
+                'staff'
+            ) {
+
+                return
+            }
+
 
             document
                 .getElementById(
@@ -1777,14 +2428,20 @@ elements.openReportsBtn
     )
 
 
+/* ========================================
+   REFRESH DASHBOARD
+======================================== */
+
 elements.refreshDashboardBtn
-    .addEventListener(
+    ?.addEventListener(
         'click',
         loadDashboard
     )
 
 
-
+/* ========================================
+   SETTINGS
+======================================== */
 
 elements.settingsMenu
     ?.addEventListener(
@@ -1793,6 +2450,21 @@ elements.settingsMenu
 
             event.preventDefault()
 
+
+            /*
+             * Settings
+             * เฉพาะ Admin
+             */
+
+            if (
+                state.role !==
+                'admin'
+            ) {
+
+                return
+            }
+
+
             alert(
                 'หน้าตั้งค่าจะทำในขั้นตอนถัดไปครับ'
             )
@@ -1800,26 +2472,36 @@ elements.settingsMenu
     )
 
 
-supabase.auth.onAuthStateChange(
-    (
-        event,
-        session
-    ) => {
+/* ========================================
+   AUTH CHANGE
+======================================== */
 
-        if (
-            event ===
-            'SIGNED_OUT'
-            ||
-            !session
-        ) {
+supabase.auth
+    .onAuthStateChange(
+        (
+            event,
+            session
+        ) => {
 
-            window.location.replace(
-                './index.html'
-            )
+            if (
+                event ===
+                'SIGNED_OUT'
+                ||
+                !session
+            ) {
+
+                window.location
+                    .replace(
+                        './index.html'
+                    )
+            }
         }
-    }
-)
+    )
 
+
+/* ========================================
+   START
+======================================== */
 
 setCurrentDate()
 
