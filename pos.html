@@ -4,19 +4,27 @@
 <head>
     <meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1, viewport-fit=cover"
-    >
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
     <title>
         POS | JOKJUNG POS
     </title>
 
-    <link
-        rel="stylesheet"
-        href="./css/pos.css"
-    >
+    <link rel="stylesheet" href="./css/pos.css">
+
+    <style>
+        @media print {
+            #receiptOrderId {
+                overflow-wrap: anywhere;
+                word-break: break-word;
+            }
+
+            .receipt-order-note-row {
+                margin-top: 2px;
+            }
+        }
+    </style>
+
 </head>
 
 
@@ -30,12 +38,7 @@
 
         <div class="topbar-left">
 
-            <button
-                id="backBtn"
-                class="icon-btn"
-                type="button"
-                aria-label="ย้อนกลับ"
-            >
+            <button id="backBtn" class="icon-btn" type="button" aria-label="ย้อนกลับ">
                 ←
             </button>
 
@@ -62,11 +65,7 @@
             </span>
 
 
-            <button
-                id="logoutBtn"
-                class="outline-btn"
-                type="button"
-            >
+            <button id="logoutBtn" class="outline-btn" type="button">
                 ออกจากระบบ
             </button>
 
@@ -94,19 +93,10 @@
 
             <div class="toolbar">
 
-                <input
-                    id="searchInput"
-                    type="search"
-                    placeholder="ค้นหาชื่อสินค้า SKU หรือบาร์โค้ด"
-                    autocomplete="off"
-                >
+                <input id="searchInput" type="search" placeholder="ค้นหาชื่อสินค้า SKU หรือบาร์โค้ด" autocomplete="off">
 
 
-                <button
-                    id="refreshBtn"
-                    class="outline-btn refresh-btn"
-                    type="button"
-                >
+                <button id="refreshBtn" class="outline-btn refresh-btn" type="button">
 
                     <span class="refresh-icon">
                         ↻
@@ -124,19 +114,13 @@
 
             <!-- CATEGORY -->
 
-            <div
-                id="categoryTabs"
-                class="tabs"
-            ></div>
+            <div id="categoryTabs" class="tabs"></div>
 
 
 
             <!-- LOADING -->
 
-            <div
-                id="loading"
-                class="state"
-            >
+            <div id="loading" class="state">
                 กำลังโหลดสินค้า...
             </div>
 
@@ -144,10 +128,7 @@
 
             <!-- EMPTY -->
 
-            <div
-                id="empty"
-                class="state hidden"
-            >
+            <div id="empty" class="state hidden">
                 ไม่พบสินค้า
             </div>
 
@@ -155,10 +136,7 @@
 
             <!-- PRODUCTS -->
 
-            <div
-                id="productGrid"
-                class="product-grid hidden"
-            ></div>
+            <div id="productGrid" class="product-grid hidden"></div>
 
         </section>
 
@@ -168,10 +146,7 @@
              CART
         ===================================== -->
 
-        <aside
-            class="cart"
-            id="cartPanel"
-        >
+        <aside class="cart" id="cartPanel">
 
 
             <!-- MOBILE HANDLE -->
@@ -199,22 +174,13 @@
 
                 <div class="cart-head-actions">
 
-                    <button
-                        id="clearCartBtn"
-                        class="danger-link"
-                        type="button"
-                    >
+                    <button id="clearCartBtn" class="danger-link" type="button">
                         ล้างตะกร้า
                     </button>
 
 
                     <!-- ใช้บนมือถือ -->
-                    <button
-                        id="mobileCartClose"
-                        class="mobile-cart-close"
-                        type="button"
-                        aria-label="ปิดตะกร้า"
-                    >
+                    <button id="mobileCartClose" class="mobile-cart-close" type="button" aria-label="ปิดตะกร้า">
                         ×
                     </button>
 
@@ -226,10 +192,7 @@
 
             <!-- EMPTY CART -->
 
-            <div
-                id="emptyCart"
-                class="state"
-            >
+            <div id="emptyCart" class="state">
                 ยังไม่มีสินค้า
             </div>
 
@@ -237,10 +200,7 @@
 
             <!-- CART ITEMS -->
 
-            <div
-                id="cartItems"
-                class="cart-items hidden"
-            ></div>
+            <div id="cartItems" class="cart-items hidden"></div>
 
 
 
@@ -269,13 +229,7 @@
                         ส่วนลด
                     </span>
 
-                    <input
-                        id="discountInput"
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value="0"
-                    >
+                    <input id="discountInput" type="number" min="0" step="0.01" value="0">
 
                 </label>
 
@@ -295,20 +249,12 @@
 
 
 
-                <button
-                    id="checkoutBtn"
-                    class="primary-btn"
-                    type="button"
-                    disabled
-                >
+                <button id="checkoutBtn" class="primary-btn" type="button" disabled>
                     ชำระเงิน
                 </button>
 
 
-                <p
-                    id="pageMessage"
-                    class="message"
-                ></p>
+                <p id="pageMessage" class="message"></p>
 
             </div>
 
@@ -322,10 +268,7 @@
          MOBILE CART BACKDROP
     ========================================= -->
 
-    <div
-        id="cartBackdrop"
-        class="cart-backdrop"
-    ></div>
+    <div id="cartBackdrop" class="cart-backdrop"></div>
 
 
 
@@ -333,11 +276,7 @@
          MOBILE CART BAR
     ========================================= -->
 
-    <button
-        id="mobileCartBar"
-        class="mobile-cart-bar"
-        type="button"
-    >
+    <button id="mobileCartBar" class="mobile-cart-bar" type="button">
 
         <div class="mobile-cart-info">
 
@@ -376,16 +315,92 @@
 
     </button>
 
+    <!-- ========================================
+     START ORDER MODAL
+======================================== -->
 
+    <div id="orderStartModal" class="modal hidden">
+
+        <div class="modal-card">
+
+            <div class="modal-head">
+
+                <h2>เริ่มออเดอร์</h2>
+
+                <button id="closeOrderStartBtn" class="icon-btn" type="button">
+                    ×
+                </button>
+
+            </div>
+
+
+            <div class="order-type-select">
+
+                <button type="button" class="order-type-btn active" data-order-type="dine_in">
+                    🍽️ ทานที่ร้าน
+                </button>
+
+                <button type="button" class="order-type-btn" data-order-type="takeaway">
+                    🥡 กลับบ้าน
+                </button>
+
+            </div>
+
+
+            <div id="tableSelectSection">
+
+                <label>
+                    เลือกโต๊ะ
+                </label>
+
+                <div id="tableGrid" class="table-grid">
+                    กำลังโหลดโต๊ะ...
+                </div>
+
+            </div>
+
+
+            <div class="guest-section">
+
+                <label>
+                    จำนวนลูกค้า
+                </label>
+
+                <div class="guest-control">
+
+                    <button id="guestMinusBtn" type="button">
+                        −
+                    </button>
+
+                    <strong id="guestCountText">
+                        1 คน
+                    </strong>
+
+                    <button id="guestPlusBtn" type="button">
+                        ＋
+                    </button>
+
+                </div>
+
+            </div>
+
+
+            <p id="orderStartMessage" class="message"></p>
+
+
+            <button id="startOrderBtn" type="button" class="primary-btn">
+                เริ่มออเดอร์
+            </button>
+
+        </div>
+
+    </div>
 
     <!-- ========================================
          PAYMENT MODAL
     ========================================= -->
 
-    <div
-        id="paymentModal"
-        class="modal hidden"
-    >
+    <div id="paymentModal" class="modal hidden">
 
         <div class="modal-card">
 
@@ -397,12 +412,7 @@
                 </h2>
 
 
-                <button
-                    id="closePaymentBtn"
-                    class="icon-btn"
-                    type="button"
-                    aria-label="ปิด"
-                >
+                <button id="closePaymentBtn" class="icon-btn" type="button" aria-label="ปิด">
                     ×
                 </button>
 
@@ -430,20 +440,12 @@
 
             <div class="methods">
 
-                <button
-                    class="method active"
-                    data-method="cash"
-                    type="button"
-                >
+                <button class="method active" data-method="cash" type="button">
                     💵 เงินสด
                 </button>
 
 
-                <button
-                    class="method"
-                    data-method="qr"
-                    type="button"
-                >
+                <button class="method" data-method="qr" type="button">
                     📱 QR
                 </button>
 
@@ -460,20 +462,10 @@
                 </label>
 
 
-                <input
-                    id="receivedInput"
-                    class="money"
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    placeholder="0.00"
-                >
+                <input id="receivedInput" class="money" type="number" min="0" step="0.01" placeholder="0.00">
 
 
-                <div
-                    id="quickCash"
-                    class="quick-cash"
-                ></div>
+                <div id="quickCash" class="quick-cash"></div>
 
 
                 <div class="change">
@@ -494,10 +486,7 @@
 
             <!-- QR -->
 
-            <div
-                id="qrSection"
-                class="qr hidden"
-            >
+            <div id="qrSection" class="qr hidden">
 
                 <div class="qr-payment">
 
@@ -511,16 +500,10 @@
                     </p>
 
 
-                    <div
-                        id="promptpayQr"
-                        class="promptpay-qr"
-                    ></div>
+                    <div id="promptpayQr" class="promptpay-qr"></div>
 
 
-                    <div
-                        id="qrAmountText"
-                        class="qr-amount"
-                    >
+                    <div id="qrAmountText" class="qr-amount">
                         ฿0.00
                     </div>
 
@@ -543,17 +526,11 @@
             </label>
 
 
-            <textarea
-                id="saleNote"
-                rows="2"
-            ></textarea>
+            <textarea id="saleNote" rows="2"></textarea>
 
 
 
-            <p
-                id="paymentMessage"
-                class="message"
-            ></p>
+            <p id="paymentMessage" class="message"></p>
 
 
 
@@ -561,20 +538,12 @@
 
             <div class="actions">
 
-                <button
-                    id="cancelPaymentBtn"
-                    class="outline-btn"
-                    type="button"
-                >
+                <button id="cancelPaymentBtn" class="outline-btn" type="button">
                     ยกเลิก
                 </button>
 
 
-                <button
-                    id="confirmPaymentBtn"
-                    class="primary-btn"
-                    type="button"
-                >
+                <button id="confirmPaymentBtn" class="primary-btn" type="button">
                     ยืนยันการชำระเงิน
                 </button>
 
@@ -590,10 +559,7 @@
          SUCCESS MODAL
     ========================================= -->
 
-    <div
-        id="successModal"
-        class="modal hidden"
-    >
+    <div id="successModal" class="modal hidden">
 
         <div class="modal-card success">
 
@@ -652,20 +618,12 @@
 
             <div class="actions">
 
-                <button
-                    id="printReceiptBtn"
-                    class="outline-btn"
-                    type="button"
-                >
+                <button id="printReceiptBtn" class="outline-btn" type="button">
                     🧾 พิมพ์ใบเสร็จ
                 </button>
 
 
-                <button
-                    id="newSaleBtn"
-                    class="primary-btn"
-                    type="button"
-                >
+                <button id="newSaleBtn" class="primary-btn" type="button">
                     เริ่มบิลใหม่
                 </button>
 
@@ -681,10 +639,7 @@
          RECEIPT PRINT 80mm
     ========================================= -->
 
-    <section
-        id="receiptPrint"
-        class="receipt-print"
-    >
+    <section id="receiptPrint" class="receipt-print">
 
         <div class="receipt-center">
 
@@ -721,6 +676,41 @@
         <div>
             พนักงาน:
             <span id="receiptCashier">
+                -
+            </span>
+        </div>
+
+        <div>
+            ประเภทออเดอร์:
+            <span id="receiptOrderType">
+                -
+            </span>
+        </div>
+
+        <div>
+            โต๊ะ:
+            <span id="receiptTable">
+                -
+            </span>
+        </div>
+
+        <div>
+            จำนวนลูกค้า:
+            <span id="receiptGuestCount">
+                -
+            </span>
+        </div>
+
+        <div>
+            เลขคิว:
+            <span id="receiptOrderId">
+                -
+            </span>
+        </div>
+
+        <div class="receipt-order-note-row">
+            หมายเหตุ:
+            <span id="receiptOrderNote">
                 -
             </span>
         </div>
@@ -840,11 +830,7 @@
             </div>
 
 
-            <img
-                src="./assets/line-qr.jpg"
-                alt="LINE ร้าน"
-                class="receipt-line-qr"
-            >
+            <img src="./assets/line-qr.jpg" alt="LINE ร้าน" class="receipt-line-qr">
 
 
             <div class="receipt-line-text">
@@ -869,9 +855,7 @@
          QR CODE LIBRARY
     ========================================= -->
 
-    <script
-        src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"
-    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 
 
 
@@ -879,10 +863,7 @@
          POS JAVASCRIPT
     ========================================= -->
 
-    <script
-        type="module"
-        src="./js/pos.js"
-    ></script>
+    <script type="module" src="./js/pos.js"></script>
 
 </body>
 
