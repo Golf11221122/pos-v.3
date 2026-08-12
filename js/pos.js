@@ -28,7 +28,14 @@ const state = {
     lastSale: null,
 
     // กะขายปัจจุบัน
-    currentShift: null
+    currentShift: null,
+
+    // ระบบออเดอร์ร้านอาหาร
+    tables: [],
+    currentOrder: null,
+    orderType: 'dine_in',
+    selectedTableId: null,
+    guestCount: 1
 }
 
 
@@ -105,33 +112,63 @@ const el = {
         $('checkoutBtn'),
 
     pageMessage:
-    $('pageMessage'),
+        $('pageMessage'),
 
 
-/* ========================================
-   MOBILE CART
-======================================== */
+    /* ========================================
+       MOBILE CART
+    ======================================== */
 
-mobileCartBar:
-    $('mobileCartBar'),
+    mobileCartBar:
+        $('mobileCartBar'),
 
-mobileCartCount:
-    $('mobileCartCount'),
+    mobileCartCount:
+        $('mobileCartCount'),
 
-mobileCartTotal:
-    $('mobileCartTotal'),
+    mobileCartTotal:
+        $('mobileCartTotal'),
 
-mobileCartClose:
-    $('mobileCartClose'),
+    mobileCartClose:
+        $('mobileCartClose'),
 
-cartPanel:
-    $('cartPanel'),
+    cartPanel:
+        $('cartPanel'),
 
-cartBackdrop:
-    $('cartBackdrop'),
+    cartBackdrop:
+        $('cartBackdrop'),
 
 
-/* PAYMENT */
+    /* START ORDER */
+
+    orderStartModal:
+        $('orderStartModal'),
+
+    closeOrderStartBtn:
+        $('closeOrderStartBtn'),
+
+    tableSelectSection:
+        $('tableSelectSection'),
+
+    tableGrid:
+        $('tableGrid'),
+
+    guestMinusBtn:
+        $('guestMinusBtn'),
+
+    guestPlusBtn:
+        $('guestPlusBtn'),
+
+    guestCountText:
+        $('guestCountText'),
+
+    orderStartMessage:
+        $('orderStartMessage'),
+
+    startOrderBtn:
+        $('startOrderBtn'),
+
+
+    /* PAYMENT */
 
     /* PAYMENT */
 
@@ -218,6 +255,21 @@ cartBackdrop:
 
     receiptCashier:
         $('receiptCashier'),
+
+    receiptOrderType:
+        $('receiptOrderType'),
+
+    receiptTable:
+        $('receiptTable'),
+
+    receiptGuestCount:
+        $('receiptGuestCount'),
+
+    receiptOrderId:
+        $('receiptOrderId'),
+
+    receiptOrderNote:
+        $('receiptOrderNote'),
 
     receiptItems:
         $('receiptItems'),
@@ -1057,6 +1109,765 @@ function closeMobileCart() {
 
 
 /* ========================================
+   ORDER SYSTEM
+======================================== */
+
+function resetOrderDraft() {
+
+    state.orderType =
+        'dine_in'
+
+    state.selectedTableId =
+        null
+
+    state.guestCount =
+        1
+
+
+    renderOrderType()
+
+    renderGuestCount()
+
+    renderTables()
+}
+
+
+function orderTypeText() {
+
+    return state.orderType ===
+        'dine_in'
+
+        ? 'ทานที่ร้าน'
+
+        : 'กลับบ้าน'
+}
+
+
+function getSelectedTable() {
+
+    return state.tables.find(
+        table =>
+            table.id ===
+            state.selectedTableId
+    ) || null
+}
+
+
+function renderOrderContext() {
+
+    if (
+        !el.branchText
+        ||
+        !state.branch
+    ) {
+        return
+    }
+
+
+    if (
+        !state.currentOrder
+    ) {
+
+        el.branchText.textContent =
+            `สาขา: ${state.branch.name}`
+
+        return
+    }
+
+
+    if (
+        state.currentOrder.order_type ===
+        'dine_in'
+    ) {
+
+        const tableName =
+            state.currentOrder.table_name
+            ||
+            'โต๊ะ'
+
+
+        el.branchText.textContent =
+            `${state.branch.name} • ${tableName} • ${state.currentOrder.guest_count} คน`
+
+    } else {
+
+        el.branchText.textContent =
+            `${state.branch.name} • กลับบ้าน • ${state.currentOrder.guest_count} คน`
+    }
+}
+
+
+function renderOrderType() {
+
+    document
+        .querySelectorAll(
+            '.order-type-btn'
+        )
+        .forEach(
+            button => {
+
+                button
+                    .classList
+                    .toggle(
+                        'active',
+                        button.dataset.orderType ===
+                        state.orderType
+                    )
+            }
+        )
+
+
+    if (
+        el.tableSelectSection
+    ) {
+
+        el.tableSelectSection
+            .classList
+            .toggle(
+                'hidden',
+                state.orderType !==
+                'dine_in'
+            )
+    }
+}
+
+
+function renderGuestCount() {
+
+    if (
+        el.guestCountText
+    ) {
+
+        el.guestCountText.textContent =
+            `${state.guestCount.toLocaleString('th-TH')} คน`
+    }
+
+
+    if (
+        el.guestMinusBtn
+    ) {
+
+        el.guestMinusBtn.disabled =
+            state.guestCount <= 1
+    }
+}
+
+
+function tableStatusText(
+    status
+) {
+
+    const value =
+        String(
+            status ||
+            'available'
+        )
+            .trim()
+            .toLowerCase()
+
+
+    const map = {
+        available: 'ว่าง',
+        occupied: 'มีลูกค้า',
+        reserved: 'จอง',
+        disabled: 'ปิดใช้งาน'
+    }
+
+
+    return map[value]
+        ||
+        value
+}
+
+
+function renderTables() {
+
+    if (
+        !el.tableGrid
+    ) {
+        return
+    }
+
+
+    if (
+        !state.tables.length
+    ) {
+
+        el.tableGrid.innerHTML =
+            `
+            <div class="state">
+                ยังไม่มีโต๊ะในสาขานี้
+            </div>
+            `
+
+        return
+    }
+
+
+    el.tableGrid.innerHTML =
+        state.tables
+            .map(
+                table => {
+
+                    const status =
+                        String(
+                            table.status ||
+                            'available'
+                        )
+                            .trim()
+                            .toLowerCase()
+
+
+                    const available =
+                        status ===
+                        'available'
+
+
+                    const selected =
+                        table.id ===
+                        state.selectedTableId
+
+
+                    return `
+                        <button
+                            type="button"
+                            class="table-select-btn ${selected ? 'active' : ''}"
+                            data-table-id="${esc(table.id)}"
+                            ${available ? '' : 'disabled'}
+                        >
+                            <strong>
+                                ${esc(
+                        table.table_name
+                        ||
+                        `โต๊ะ ${table.table_no}`
+                    )}
+                            </strong>
+
+                            <small>
+                                ${tableStatusText(status)}
+                                • ${Number(table.capacity || 0).toLocaleString('th-TH')} ที่
+                            </small>
+                        </button>
+                    `
+                }
+            )
+            .join('')
+}
+
+
+async function loadRestaurantTables() {
+
+    const {
+        data,
+        error
+    } =
+        await supabase
+            .from(
+                'restaurant_tables'
+            )
+            .select(`
+                id,
+                branch_id,
+                table_no,
+                table_name,
+                capacity,
+                status,
+                qr_token,
+                is_active
+            `)
+            .eq(
+                'branch_id',
+                state.profile.branch_id
+            )
+            .eq(
+                'is_active',
+                true
+            )
+            .order(
+                'table_no',
+                {
+                    ascending: true
+                }
+            )
+
+
+    if (error) {
+        throw error
+    }
+
+
+    state.tables =
+        data || []
+
+
+    if (
+        state.selectedTableId
+    ) {
+
+        const stillAvailable =
+            state.tables.some(
+                table =>
+                    table.id ===
+                    state.selectedTableId
+                    &&
+                    String(table.status).toLowerCase() ===
+                    'available'
+            )
+
+
+        if (
+            !stillAvailable
+        ) {
+
+            state.selectedTableId =
+                null
+        }
+    }
+
+
+    renderTables()
+
+
+    return state.tables
+}
+
+
+async function openOrderStartModal() {
+
+    if (
+        !el.orderStartModal
+    ) {
+        return
+    }
+
+
+    closeMobileCart()
+
+
+    msg(
+        el.orderStartMessage,
+        ''
+    )
+
+
+    try {
+
+        await loadRestaurantTables()
+
+    } catch (error) {
+
+        console.error(
+            'Load restaurant tables error:',
+            error
+        )
+
+
+        msg(
+            el.orderStartMessage,
+            error.message ||
+            'โหลดข้อมูลโต๊ะไม่สำเร็จ'
+        )
+    }
+
+
+    renderOrderType()
+
+    renderGuestCount()
+
+    renderTables()
+
+
+    if (
+        el.closeOrderStartBtn
+    ) {
+
+        el.closeOrderStartBtn.disabled =
+            !state.currentOrder
+    }
+
+
+    el.orderStartModal
+        .classList
+        .remove(
+            'hidden'
+        )
+}
+
+
+function closeOrderStartModal() {
+
+    if (
+        !state.currentOrder
+    ) {
+
+        msg(
+            el.orderStartMessage,
+            'กรุณาเริ่มออเดอร์ก่อนเลือกสินค้า'
+        )
+
+        return
+    }
+
+
+    el.orderStartModal
+        ?.classList
+        .add(
+            'hidden'
+        )
+}
+
+
+async function startRestaurantOrder() {
+
+    if (
+        state.currentOrder
+    ) {
+
+        el.orderStartModal
+            ?.classList
+            .add(
+                'hidden'
+            )
+
+        return
+    }
+
+
+    const shiftReady =
+        await requireOpenShift()
+
+
+    if (
+        !shiftReady
+    ) {
+
+        msg(
+            el.orderStartMessage,
+            'กรุณาเปิดกะก่อนเริ่มออเดอร์'
+        )
+
+        return
+    }
+
+
+    if (
+        state.orderType ===
+        'dine_in'
+        &&
+        !state.selectedTableId
+    ) {
+
+        msg(
+            el.orderStartMessage,
+            'กรุณาเลือกโต๊ะ'
+        )
+
+        return
+    }
+
+
+    if (
+        state.guestCount < 1
+    ) {
+
+        msg(
+            el.orderStartMessage,
+            'จำนวนลูกค้าไม่ถูกต้อง'
+        )
+
+        return
+    }
+
+
+    if (
+        el.startOrderBtn
+    ) {
+
+        el.startOrderBtn.disabled =
+            true
+
+        el.startOrderBtn.textContent =
+            'กำลังเริ่มออเดอร์...'
+    }
+
+
+    try {
+
+        const selectedTable =
+            getSelectedTable()
+
+
+        const {
+            data,
+            error
+        } =
+            await supabase.rpc(
+                'create_restaurant_order',
+                {
+                    p_branch_id:
+                        state.profile.branch_id,
+
+                    p_shift_id:
+                        state.currentShift?.id
+                        ||
+                        null,
+
+                    p_order_type:
+                        state.orderType,
+
+                    p_table_id:
+                        state.orderType ===
+                            'dine_in'
+
+                            ? state.selectedTableId
+
+                            : null,
+
+                    p_guest_count:
+                        state.guestCount,
+
+                    p_order_source:
+                        'pos',
+
+                    p_note:
+                        null
+                }
+            )
+
+
+        if (error) {
+            throw error
+        }
+
+
+        const order =
+            Array.isArray(data)
+
+                ? data[0]
+
+                : data
+
+
+        if (
+            !order?.id
+        ) {
+
+            throw new Error(
+                'สร้างออเดอร์ไม่สำเร็จ'
+            )
+        }
+
+
+        state.currentOrder = {
+            ...order,
+            table_name:
+                selectedTable?.table_name
+                ||
+                (
+                    selectedTable
+                        ? `โต๊ะ ${selectedTable.table_no}`
+                        : null
+                )
+        }
+
+
+        if (
+            state.orderType ===
+            'dine_in'
+            &&
+            state.selectedTableId
+        ) {
+
+            const table =
+                state.tables.find(
+                    item =>
+                        item.id ===
+                        state.selectedTableId
+                )
+
+
+            if (table) {
+                table.status =
+                    'occupied'
+            }
+        }
+
+
+        renderTables()
+
+        renderOrderContext()
+
+
+        el.orderStartModal
+            .classList
+            .add(
+                'hidden'
+            )
+
+
+        msg(
+            el.pageMessage,
+            state.currentOrder.order_type === 'dine_in'
+                ? `${state.currentOrder.table_name} • ${state.currentOrder.guest_count} คน`
+                : `กลับบ้าน • ${state.currentOrder.guest_count} คน`
+        )
+
+
+        setTimeout(
+            () => {
+
+                if (
+                    el.pageMessage?.textContent ===
+                    (
+                        state.currentOrder?.order_type === 'dine_in'
+                            ? `${state.currentOrder?.table_name} • ${state.currentOrder?.guest_count} คน`
+                            : `กลับบ้าน • ${state.currentOrder?.guest_count} คน`
+                    )
+                ) {
+
+                    msg(
+                        el.pageMessage,
+                        ''
+                    )
+                }
+            },
+            1800
+        )
+
+
+    } catch (error) {
+
+        console.error(
+            'Create restaurant order error:',
+            error
+        )
+
+
+        let errorMessage =
+            error.message ||
+            'เริ่มออเดอร์ไม่สำเร็จ'
+
+
+        if (
+            errorMessage.includes(
+                'TABLE_REQUIRED'
+            )
+        ) {
+
+            errorMessage =
+                'กรุณาเลือกโต๊ะ'
+        }
+
+
+        if (
+            errorMessage.includes(
+                'INVALID_TABLE'
+            )
+        ) {
+
+            errorMessage =
+                'โต๊ะนี้ไม่สามารถใช้งานได้ กรุณาเลือกโต๊ะใหม่'
+
+            await loadRestaurantTables()
+        }
+
+
+        if (
+            errorMessage.includes(
+                'INVALID_GUEST_COUNT'
+            )
+        ) {
+
+            errorMessage =
+                'จำนวนลูกค้าไม่ถูกต้อง'
+        }
+
+
+        msg(
+            el.orderStartMessage,
+            errorMessage
+        )
+
+
+    } finally {
+
+        if (
+            el.startOrderBtn
+        ) {
+
+            el.startOrderBtn.disabled =
+                false
+
+            el.startOrderBtn.textContent =
+                'เริ่มออเดอร์'
+        }
+    }
+}
+
+
+async function completeCurrentOrder() {
+
+    if (
+        !state.currentOrder?.id
+    ) {
+        return
+    }
+
+
+    try {
+
+        const {
+            error
+        } =
+            await supabase.rpc(
+                'complete_restaurant_order',
+                {
+                    p_order_id:
+                        state.currentOrder.id
+                }
+            )
+
+
+        if (error) {
+            throw error
+        }
+
+
+        if (
+            state.currentOrder.table_id
+        ) {
+
+            const table =
+                state.tables.find(
+                    item =>
+                        item.id ===
+                        state.currentOrder.table_id
+                )
+
+
+            if (table) {
+                table.status =
+                    'available'
+            }
+        }
+
+
+    } catch (error) {
+
+        console.error(
+            'Complete restaurant order error:',
+            error
+        )
+
+        /*
+         * การขายถูกบันทึกไปแล้ว จึงไม่ throw ซ้ำ
+         * เพื่อป้องกันการสร้างบิลซ้ำ
+         */
+    }
+}
+
+
+/* ========================================
    CATALOG
 ======================================== */
 
@@ -1311,11 +2122,10 @@ function renderCategories() {
     el.categoryTabs.innerHTML =
         `
         <button
-            class="tab ${
-                !state.selectedCategory
-                    ? 'active'
-                    : ''
-            }"
+            class="tab ${!state.selectedCategory
+            ? 'active'
+            : ''
+        }"
             data-cat=""
             type="button"
         >
@@ -1328,21 +2138,20 @@ function renderCategories() {
                 category =>
                     `
                     <button
-                        class="tab ${
-                            state.selectedCategory
-                            ===
-                            category.id
-                                ? 'active'
-                                : ''
-                        }"
+                        class="tab ${state.selectedCategory
+                        ===
+                        category.id
+                        ? 'active'
+                        : ''
+                    }"
                         data-cat="${esc(
-                            category.id
-                        )}"
+                        category.id
+                    )}"
                         type="button"
                     >
                         ${esc(
-                            category.name
-                        )}
+                        category.name
+                    )}
                     </button>
                     `
             )
@@ -1481,16 +2290,16 @@ function renderProducts() {
                      * - หมด
                      * - ใกล้หมด <= 10
                      */
-                   let stockText =
-    ''
+                    let stockText =
+                        ''
 
 
-if (
-    soldOut
-) {
+                    if (
+                        soldOut
+                    ) {
 
-    stockText =
-        `
+                        stockText =
+                            `
         <div
             class="stock-status stock-out"
             style="
@@ -1504,10 +2313,10 @@ if (
         </div>
         `
 
-} else {
+                    } else {
 
-    stockText =
-        `
+                        stockText =
+                            `
         <div
             class="stock-status stock-available"
             style="
@@ -1519,61 +2328,58 @@ if (
         >
             ขายได้อีก
             ${availableQty.toLocaleString(
-                'th-TH'
-            )}
+                                'th-TH'
+                            )}
             จาน
         </div>
         `
-}
+                    }
 
 
                     return `
                         <article
                             class="
                                 product-card
-                                ${
-                                    soldOut
-                                        ? 'sold-out'
-                                        : ''
-                                }
+                                ${soldOut
+                            ? 'sold-out'
+                            : ''
+                        }
                             "
                         >
 
                             <button
                                 type="button"
                                 data-add="${esc(
-                                    product.id
-                                )}"
-                                ${
-                                    soldOut
-                                        ? 'disabled'
-                                        : ''
-                                }
+                            product.id
+                        )}"
+                                ${soldOut
+                            ? 'disabled'
+                            : ''
+                        }
                             >
 
                                 <div
                                     class="product-image"
                                 >
 
-                                    ${
-                                        product.image_url
+                                    ${product.image_url
 
-                                            ? `
+                            ? `
                                                 <img
                                                     src="${esc(
-                                                        product.image_url
-                                                    )}"
+                                product.image_url
+                            )}"
                                                     alt="${esc(
-                                                        product.name
-                                                    )}"
+                                product.name
+                            )}"
                                                     onerror="
                                                         this.parentElement.innerHTML='🍽️'
                                                     "
                                                 >
                                             `
 
-                                            : '🍽️'
-                                    }
+                            : '🍽️'
+                        }
 
                                 </div>
 
@@ -1584,8 +2390,8 @@ if (
 
                                     <h3>
                                         ${esc(
-                                            product.name
-                                        )}
+                            product.name
+                        )}
                                     </h3>
 
 
@@ -1596,15 +2402,14 @@ if (
 
                                         <strong>
                                             ${money(
-                                                product.price
-                                            )}
+                            product.price
+                        )}
                                         </strong>
 
 
-                                        ${
-                                            soldOut
+                                        ${soldOut
 
-                                                ? `
+                            ? `
                                                     <span
                                                         style="
                                                             color:#d93025;
@@ -1615,14 +2420,14 @@ if (
                                                     </span>
                                                 `
 
-                                                : `
+                            : `
                                                     <span
                                                         class="plus"
                                                     >
                                                         ＋
                                                     </span>
                                                 `
-                                        }
+                        }
 
                                     </div>
 
@@ -1645,6 +2450,21 @@ if (
 function add(
     id
 ) {
+
+    if (
+        !state.currentOrder
+    ) {
+
+        msg(
+            el.pageMessage,
+            'กรุณาเริ่มออเดอร์ก่อนเลือกสินค้า'
+        )
+
+        openOrderStartModal()
+
+        return
+    }
+
 
     const product =
         state.products.find(
@@ -1914,15 +2734,15 @@ function renderCart() {
 
                             <strong>
                                 ${esc(
-                                    item.name
-                                )}
+                        item.name
+                    )}
                             </strong>
 
 
                             <small>
                                 ${money(
-                                    item.price
-                                )}
+                        item.price
+                    )}
                                 ×
                                 ${item.quantity}
                             </small>
@@ -1936,8 +2756,8 @@ function renderCart() {
                                     type="button"
                                     data-act="dec"
                                     data-id="${esc(
-                                        item.id
-                                    )}"
+                        item.id
+                    )}"
                                 >
                                     −
                                 </button>
@@ -1952,8 +2772,8 @@ function renderCart() {
                                     type="button"
                                     data-act="inc"
                                     data-id="${esc(
-                                        item.id
-                                    )}"
+                        item.id
+                    )}"
                                 >
                                     ＋
                                 </button>
@@ -1964,8 +2784,8 @@ function renderCart() {
                                     class="remove"
                                     data-act="remove"
                                     data-id="${esc(
-                                        item.id
-                                    )}"
+                        item.id
+                    )}"
                                 >
                                     ลบ
                                 </button>
@@ -1977,12 +2797,12 @@ function renderCart() {
 
                         <strong>
                             ${money(
-                                Number(
-                                    item.price
-                                )
-                                *
-                                item.quantity
-                            )}
+                        Number(
+                            item.price
+                        )
+                        *
+                        item.quantity
+                    )}
                         </strong>
 
                     </div>
@@ -2215,8 +3035,8 @@ function renderQuickCash() {
                         data-cash="${value}"
                     >
                         ${value.toLocaleString(
-                            'th-TH'
-                        )}
+                        'th-TH'
+                    )}
                     </button>
                     `
             )
@@ -2247,6 +3067,258 @@ function updateChange() {
                 0
             )
         )
+}
+
+
+/* ========================================
+   RECEIPT QUEUE DISPLAY
+======================================== */
+
+function setupReceiptQueueDisplay(
+    sale
+) {
+
+    if (
+        !el.receiptPrint
+    ) {
+        return
+    }
+
+
+    /*
+     * หา / สร้างกล่องเลขคิวเพียง 1 กล่อง
+     * ป้องกันการซ้ำเวลาที่ renderReceipt()
+     * ถูกเรียกทั้งตอนขายสำเร็จและตอนกดพิมพ์
+     */
+    let queueBox =
+        el.receiptPrint
+            .querySelector(
+                '.receipt-queue-box'
+            )
+
+
+    const originalQueueElement =
+        document.getElementById(
+            'receiptOrderId'
+        )
+
+
+    if (
+        !queueBox
+    ) {
+
+        /*
+         * ใช้แถวเลขคิวเดิมใน HTML เป็นกล่องหลัก
+         */
+        const originalRow =
+            originalQueueElement
+                ?.closest(
+                    'div'
+                )
+
+
+        if (
+            !originalRow
+        ) {
+            return
+        }
+
+
+        queueBox =
+            originalRow
+
+
+        queueBox.className =
+            'receipt-queue-box'
+
+
+        queueBox.innerHTML =
+            `
+            <div class="receipt-queue-label">
+                เลขคิว / QUEUE NO.
+            </div>
+
+            <div
+                id="receiptOrderId"
+                class="receipt-queue-number"
+            >
+                -
+            </div>
+            `
+
+
+        /*
+         * ย้ายขึ้นไปไว้ใต้ชื่อร้าน
+         * ก่อนเส้นคั่นแรก
+         */
+        const firstHr =
+            el.receiptPrint
+                .querySelector(
+                    'hr'
+                )
+
+
+        if (
+            firstHr
+        ) {
+
+            el.receiptPrint
+                .insertBefore(
+                    queueBox,
+                    firstHr
+                )
+        }
+    }
+
+
+    /*
+     * อัปเดต reference ทุกครั้ง
+     * เพราะ innerHTML อาจสร้าง element ใหม่
+     */
+    el.receiptOrderId =
+        queueBox
+            .querySelector(
+                '#receiptOrderId'
+            )
+
+
+    /*
+     * เลขคิวแสดงเฉพาะ "กลับบ้าน"
+     */
+    if (
+        sale.order_type !==
+        'takeaway'
+    ) {
+
+        queueBox.style.display =
+            'none'
+
+
+        return
+    }
+
+
+    const queueNo =
+        Number(
+            sale.queue_no
+            ||
+            0
+        )
+
+
+    if (
+        queueNo <=
+        0
+    ) {
+
+        queueBox.style.display =
+            'none'
+
+
+        return
+    }
+
+
+    queueBox.style.display =
+        ''
+
+
+    if (
+        el.receiptOrderId
+    ) {
+
+        el.receiptOrderId.textContent =
+            String(
+                queueNo
+            ).padStart(
+                3,
+                '0'
+            )
+    }
+
+
+    /*
+     * CSS กล่องเลขคิว
+     * ขนาดเล็กลงประมาณ 20%
+     */
+    if (
+        !document.getElementById(
+            'receiptQueuePrintStyle'
+        )
+    ) {
+
+        const style =
+            document.createElement(
+                'style'
+            )
+
+
+        style.id =
+            'receiptQueuePrintStyle'
+
+
+        style.textContent =
+            `
+            .receipt-queue-box {
+                margin: 7px 0 8px;
+                padding: 5px 7px 6px;
+                border: 2px solid #d93025;
+                border-radius: 8px;
+                text-align: center;
+                color: #d93025;
+                background: #fff;
+            }
+
+            .receipt-queue-label {
+                font-size: 13px;
+                line-height: 1.15;
+                font-weight: 800;
+                letter-spacing: .2px;
+            }
+
+            .receipt-queue-number {
+                margin-top: 1px;
+                font-size: 38px;
+                line-height: .95;
+                font-weight: 900;
+                letter-spacing: 3px;
+            }
+
+            @media print {
+
+                .receipt-queue-box {
+                    display: block !important;
+                    margin: 7px 0 8px !important;
+                    padding: 5px 7px 6px !important;
+                    border: 2px solid #000 !important;
+                    border-radius: 7px !important;
+                    text-align: center !important;
+                    color: #000 !important;
+                    background: #fff !important;
+                    break-inside: avoid !important;
+                }
+
+                .receipt-queue-label {
+                    font-size: 13px !important;
+                    line-height: 1.15 !important;
+                    font-weight: 800 !important;
+                }
+
+                .receipt-queue-number {
+                    margin-top: 1px !important;
+                    font-size: 38px !important;
+                    line-height: .95 !important;
+                    font-weight: 900 !important;
+                    letter-spacing: 3px !important;
+                }
+            }
+            `
+
+
+        document.head.appendChild(
+            style
+        )
+    }
 }
 
 
@@ -2325,6 +3397,98 @@ function renderReceipt() {
 
 
     if (
+        el.receiptOrderType
+    ) {
+
+        el.receiptOrderType.textContent =
+            sale.order_type ===
+                'dine_in'
+
+                ? 'ทานที่ร้าน'
+
+                : sale.order_type ===
+                    'takeaway'
+
+                    ? 'กลับบ้าน'
+
+                    : '-'
+    }
+
+
+    if (
+        el.receiptTable
+    ) {
+
+        el.receiptTable.textContent =
+            sale.order_type ===
+                'dine_in'
+
+                ? (
+                    sale.table_name
+                    ||
+                    '-'
+                )
+
+                : '-'
+    }
+
+
+    if (
+        el.receiptGuestCount
+    ) {
+
+        el.receiptGuestCount.textContent =
+            `${Number(
+                sale.guest_count
+                ||
+                1
+            ).toLocaleString(
+                'th-TH'
+            )} คน`
+    }
+
+
+    /*
+     * แสดงเลขคิวเด่นเฉพาะออเดอร์กลับบ้าน
+     */
+    setupReceiptQueueDisplay(
+        sale
+    )
+
+
+    if (
+        el.receiptOrderNote
+    ) {
+
+        const note =
+            sale.order_note
+            ||
+            ''
+
+        el.receiptOrderNote.textContent =
+            note
+            ||
+            '-'
+
+        const noteRow =
+            el.receiptOrderNote
+                .closest(
+                    '.receipt-order-note-row'
+                )
+
+        if (
+            noteRow
+        ) {
+
+            noteRow.style.display =
+                note
+                    ? ''
+                    : 'none'
+        }
+    }
+
+
+    if (
         el.receiptItems
     ) {
 
@@ -2341,8 +3505,8 @@ function renderReceipt() {
                                 class="receipt-item-name"
                             >
                                 ${esc(
-                                    item.name
-                                )}
+                            item.name
+                        )}
                             </div>
 
 
@@ -2354,19 +3518,19 @@ function renderReceipt() {
                                     ${item.quantity}
                                     ×
                                     ${money(
-                                        item.price
-                                    )}
+                            item.price
+                        )}
                                 </span>
 
 
                                 <strong>
                                     ${money(
-                                        Number(
-                                            item.price
-                                        )
-                                        *
-                                        item.quantity
-                                    )}
+                            Number(
+                                item.price
+                            )
+                            *
+                            item.quantity
+                        )}
                                 </strong>
 
                             </div>
@@ -2439,8 +3603,8 @@ function renderReceipt() {
 
         el.receiptPayment.textContent =
             sale.payment_method
-            ===
-            'cash'
+                ===
+                'cash'
 
                 ? 'เงินสด'
 
@@ -2500,8 +3664,8 @@ async function confirmPayment() {
 
     const received =
         state.paymentMethod
-        ===
-        'cash'
+            ===
+            'cash'
 
             ? Number(
                 el.receivedInput.value
@@ -2571,6 +3735,60 @@ async function confirmPayment() {
 
         payment_method:
             state.paymentMethod,
+
+        /*
+         * เก็บข้อมูลออเดอร์ไว้ในใบเสร็จ
+         * ก่อน completeCurrentOrder()
+         */
+        order_id:
+            state.currentOrder?.id
+            ||
+            null,
+
+        queue_no:
+            Number(
+                state.currentOrder?.queue_no
+                ||
+                0
+            ),
+
+        order_type:
+            state.currentOrder?.order_type
+            ||
+            state.orderType
+            ||
+            null,
+
+        table_id:
+            state.currentOrder?.table_id
+            ||
+            null,
+
+        table_name:
+            state.currentOrder?.table_name
+            ||
+            null,
+
+        guest_count:
+            Number(
+                state.currentOrder?.guest_count
+                ||
+                state.guestCount
+                ||
+                1
+            ),
+
+        order_source:
+            state.currentOrder?.order_source
+            ||
+            'pos',
+
+        order_note:
+            el.saleNote
+                ?.value
+                ?.trim()
+            ||
+            null,
 
         created_at:
             new Date()
@@ -2722,15 +3940,22 @@ async function confirmPayment() {
             .remove(
                 'hidden'
             )
-            
-            /*
- * ล้างตะกร้าหลังชำระเงินสำเร็จ
- */
-state.cart.clear()
 
-el.discountInput.value = '0'
 
-renderCart()
+        /*
+         * ปิดออเดอร์และคืนสถานะโต๊ะ
+         * หลังบันทึกการขายสำเร็จ
+         */
+        await completeCurrentOrder()
+
+        /*
+* ล้างตะกร้าหลังชำระเงินสำเร็จ
+*/
+        state.cart.clear()
+
+        el.discountInput.value = '0'
+
+        renderCart()
 
 
         /*
@@ -2872,12 +4097,16 @@ renderCart()
    NEW SALE
 ======================================== */
 
-function newSale() {
+async function newSale() {
 
     state.cart.clear()
 
 
     state.lastSale =
+        null
+
+
+    state.currentOrder =
         null
 
 
@@ -2892,6 +4121,12 @@ function newSale() {
         )
 
 
+    resetOrderDraft()
+
+
+    renderOrderContext()
+
+
     msg(
         el.pageMessage,
         ''
@@ -2899,6 +4134,9 @@ function newSale() {
 
 
     renderCart()
+
+
+    await openOrderStartModal()
 }
 
 
@@ -2997,6 +4235,16 @@ async function init() {
          * ตรวจสถานะกะ
          */
         updateShiftSaleState()
+
+
+        /*
+         * โหลดโต๊ะและเปิดหน้าต่างเริ่มออเดอร์
+         */
+        resetOrderDraft()
+
+        await loadRestaurantTables()
+
+        await openOrderStartModal()
 
 
     } catch (error) {
@@ -3403,6 +4651,139 @@ window.addEventListener(
 
 
 /* ========================================
+   START ORDER EVENTS
+======================================== */
+
+document
+    .querySelectorAll(
+        '.order-type-btn'
+    )
+    .forEach(
+        button => {
+
+            button
+                .addEventListener(
+                    'click',
+                    () => {
+
+                        state.orderType =
+                            button.dataset.orderType ===
+                                'takeaway'
+
+                                ? 'takeaway'
+
+                                : 'dine_in'
+
+
+                        if (
+                            state.orderType ===
+                            'takeaway'
+                        ) {
+
+                            state.selectedTableId =
+                                null
+                        }
+
+
+                        msg(
+                            el.orderStartMessage,
+                            ''
+                        )
+
+
+                        renderOrderType()
+
+                        renderTables()
+                    }
+                )
+        }
+    )
+
+
+el.tableGrid
+    ?.addEventListener(
+        'click',
+        event => {
+
+            const button =
+                event.target.closest(
+                    '[data-table-id]'
+                )
+
+
+            if (
+                !button
+                ||
+                button.disabled
+            ) {
+                return
+            }
+
+
+            state.selectedTableId =
+                button.dataset.tableId
+
+
+            msg(
+                el.orderStartMessage,
+                ''
+            )
+
+
+            renderTables()
+        }
+    )
+
+
+el.guestMinusBtn
+    ?.addEventListener(
+        'click',
+        () => {
+
+            state.guestCount =
+                Math.max(
+                    state.guestCount - 1,
+                    1
+                )
+
+
+            renderGuestCount()
+        }
+    )
+
+
+el.guestPlusBtn
+    ?.addEventListener(
+        'click',
+        () => {
+
+            state.guestCount =
+                Math.min(
+                    state.guestCount + 1,
+                    99
+                )
+
+
+            renderGuestCount()
+        }
+    )
+
+
+el.startOrderBtn
+    ?.addEventListener(
+        'click',
+        startRestaurantOrder
+    )
+
+
+el.closeOrderStartBtn
+    ?.addEventListener(
+        'click',
+        closeOrderStartModal
+    )
+
+
+/* ========================================
    CHECKOUT
 ======================================== */
 
@@ -3627,6 +5008,26 @@ document
             ) {
 
                 closeMobileCart()
+
+
+                return
+            }
+
+
+            /*
+             * ปิด Start Order Modal เฉพาะเมื่อมีออเดอร์แล้ว
+             */
+            if (
+                el.orderStartModal
+                &&
+                !el.orderStartModal
+                    .classList
+                    .contains(
+                        'hidden'
+                    )
+            ) {
+
+                closeOrderStartModal()
 
 
                 return
