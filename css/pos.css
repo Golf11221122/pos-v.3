@@ -3045,3 +3045,138 @@ and
         grid-template-columns: repeat(3, 1fr);
     }
 }
+/* ========================================
+   START ORDER MODAL - MOBILE FIX
+======================================== */
+
+@media (max-width: 760px) {
+
+    /* ซ่อนแถบตะกร้าตอนเปิดหน้าต่างเริ่มออเดอร์ */
+    body:has(#orderStartModal:not(.hidden))
+    .mobile-cart-bar {
+        display: none !important;
+    }
+
+
+    /* modal เต็มจอมือถือ */
+    #orderStartModal {
+        align-items: flex-end !important;
+        padding: 0 !important;
+        z-index: 30000 !important;
+    }
+
+
+    /* กล่องเริ่มออเดอร์ */
+    #orderStartModal .modal-card {
+        width: 100% !important;
+        max-width: none !important;
+
+        height: auto !important;
+        max-height: 92dvh !important;
+
+        overflow-y: auto !important;
+
+        padding:
+            18px 18px
+            calc(
+                22px + env(safe-area-inset-bottom)
+            ) !important;
+
+        border-radius:
+            24px 24px 0 0 !important;
+
+        -webkit-overflow-scrolling: touch;
+    }
+
+
+    /* หัว modal ค้างด้านบนเวลาเลื่อน */
+    #orderStartModal .modal-head {
+        position: sticky !important;
+        top: -18px !important;
+
+        z-index: 5 !important;
+
+        margin:
+            -18px -18px
+            12px !important;
+
+        padding:
+            18px !important;
+
+        background: #fff !important;
+    }
+
+
+    #orderStartModal .modal-head h2 {
+        font-size: 26px !important;
+    }
+
+
+    /* ทานที่ร้าน / กลับบ้าน */
+    #orderStartModal .order-type-select {
+        gap: 8px !important;
+        margin: 10px 0 16px !important;
+    }
+
+
+    #orderStartModal .order-type-btn {
+        min-height: 54px !important;
+        padding: 8px !important;
+        font-size: 16px !important;
+    }
+
+
+    /* โต๊ะ */
+    #orderStartModal .table-grid {
+        grid-template-columns:
+            repeat(3, minmax(0, 1fr)) !important;
+
+        gap: 8px !important;
+
+        margin-top: 8px !important;
+    }
+
+
+    #orderStartModal .table-select-btn {
+        min-height: 58px !important;
+
+        padding: 6px !important;
+
+        font-size: 14px !important;
+
+        line-height: 1.25 !important;
+    }
+
+
+    /* จำนวนลูกค้า */
+    #orderStartModal .guest-section {
+        margin: 18px 0 12px !important;
+    }
+
+
+    #orderStartModal .guest-control {
+        grid-template-columns:
+            52px 1fr 52px !important;
+
+        gap: 8px !important;
+    }
+
+
+    #orderStartModal .guest-control button {
+        min-height: 50px !important;
+    }
+
+
+    /* ปุ่มเริ่มออเดอร์ให้อยู่ท้าย modal */
+    #orderStartModal #startOrderBtn {
+        position: sticky !important;
+
+        bottom: 0 !important;
+
+        min-height: 54px !important;
+
+        margin-top: 10px !important;
+
+        z-index: 5 !important;
+    }
+}
