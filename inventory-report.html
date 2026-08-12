@@ -1,0 +1,301 @@
+    <!DOCTYPE html>
+    <html lang="th">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <title>รายงานวัตถุดิบ | JOKJUNG POS</title>
+
+        <link rel="stylesheet" href="./css/inventory-report.css">
+    </head>
+
+    <body>
+
+        <header class="topbar">
+
+            <div class="topbar-left">
+
+                <button id="backBtn" class="icon-btn" type="button">
+                    ←
+                </button>
+
+                <div>
+                    <h1>รายงานวัตถุดิบ</h1>
+
+                    <small id="branchText">
+                        กำลังโหลดสาขา...
+                    </small>
+                </div>
+
+            </div>
+
+
+            <div class="topbar-right">
+
+                <span id="userName">
+                    ผู้ใช้งาน
+                </span>
+
+                <button id="logoutBtn" class="outline-btn" type="button">
+                    ออกจากระบบ
+                </button>
+
+            </div>
+
+        </header>
+
+
+        <main class="page">
+
+            <section class="page-header">
+
+                <div>
+                    <h2>รายงานสต็อกและต้นทุน</h2>
+
+                    <p>
+                        ตรวจสอบคงเหลือ การรับเข้า การใช้จากการขาย และของเสีย
+                    </p>
+                </div>
+
+                <button id="refreshBtn" type="button" class="primary-btn">
+                    ↻ รีเฟรช
+                </button>
+
+            </section>
+
+
+            <!-- FILTER -->
+
+            <section class="filter-card">
+
+                <div class="field">
+
+                    <label for="dateFrom">
+                        วันที่เริ่ม
+                    </label>
+
+                    <input id="dateFrom" type="date">
+
+                </div>
+
+
+                <div class="field">
+
+                    <label for="dateTo">
+                        วันที่สิ้นสุด
+                    </label>
+
+                    <input id="dateTo" type="date">
+
+                </div>
+
+
+                <div class="field">
+
+                    <label for="searchInput">
+                        ค้นหาวัตถุดิบ
+                    </label>
+
+                    <input id="searchInput" type="search" placeholder="ชื่อวัตถุดิบ...">
+
+                </div>
+
+
+                <div class="filter-actions">
+
+                    <button id="todayBtn" type="button" class="outline-btn">
+                        วันนี้
+                    </button>
+
+                    <button id="clearFilterBtn" type="button" class="outline-btn">
+                        ล้างตัวกรอง
+                    </button>
+
+                </div>
+
+            </section>
+
+
+            <!-- SUMMARY -->
+
+            <section class="summary-grid">
+
+                <article class="summary-card">
+
+                    <span>
+                        มูลค่าสต็อกคงเหลือ
+                    </span>
+
+                    <strong id="stockValue">
+                        ฿0.00
+                    </strong>
+
+                </article>
+
+
+                <article class="summary-card">
+
+                    <span>
+                        ต้นทุนจากการขาย
+                    </span>
+
+                    <strong id="saleCost">
+                        ฿0.00
+                    </strong>
+
+                </article>
+
+
+                <article class="summary-card">
+
+                    <span>
+                        มูลค่ารับเข้า
+                    </span>
+
+                    <strong id="stockInValue">
+                        ฿0.00
+                    </strong>
+
+                </article>
+
+
+                <article class="summary-card">
+
+                    <span>
+                        มูลค่าของเสีย
+                    </span>
+
+                    <strong id="wasteValue">
+                        ฿0.00
+                    </strong>
+
+                </article>
+
+            </section>
+
+
+            <p id="pageMessage" class="message"></p>
+
+
+            <!-- TABLE -->
+
+            <section class="report-card">
+
+                <div class="report-header">
+
+                    <div>
+                        <h3>สรุปตามวัตถุดิบ</h3>
+
+                        <small id="resultCount">
+                            0 รายการ
+                        </small>
+                    </div>
+
+                </div>
+
+
+                <div id="loadingState" class="state">
+                    กำลังโหลดข้อมูล...
+                </div>
+
+
+                <div id="emptyState" class="state hidden">
+                    ไม่พบข้อมูล
+                </div>
+
+
+                <div id="tableWrap" class="table-wrap hidden">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+                                <th>วัตถุดิบ</th>
+                            
+                                <th>หน่วย</th>
+                            
+                                <th class="text-right">
+                                    ยอดยกมา
+                                </th>
+                            
+                                <th class="text-right">
+                                    รับเข้า
+                                </th>
+                            
+                                <th class="text-right">
+                                    ใช้จากขาย
+                                </th>
+                            
+                                <th class="text-right">
+                                    ของเสีย
+                                </th>
+                            
+                                <th class="text-right">
+                                    ปรับเพิ่ม
+                                </th>
+                            
+                                <th class="text-right">
+                                    ปรับลด
+                                </th>
+                            
+                                <th class="text-right">
+                                    คงเหลือ
+                                </th>
+                            
+                                <th class="text-right">
+                                    ต้นทุน/หน่วย
+                                </th>
+                            
+                                <th class="text-right">
+                                    มูลค่าคงเหลือ
+                                </th>
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody id="reportTableBody">
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+
+            <!-- LOW STOCK -->
+
+            <section class="low-stock-card">
+
+                <div class="report-header">
+
+                    <div>
+                        <h3>วัตถุดิบใกล้หมด</h3>
+
+                        <small>
+                            รายการที่คงเหลือน้อยกว่าหรือเท่ากับจุดเตือน
+                        </small>
+                    </div>
+
+                </div>
+
+
+                <div id="lowStockList" class="low-stock-list">
+                    <div class="state">
+                        กำลังโหลด...
+                    </div>
+                </div>
+
+            </section>
+
+        </main>
+
+
+        <script type="module" src="./js/inventory-report.js"></script>
+
+    </body>
+
+    </html>

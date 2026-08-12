@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>
+        รายงานยอดขาย | JOKJUNG POS
+    </title>
+
+    <link rel="stylesheet" href="./css/sales-report.css">
+
+</head>
+
+
+<body>
+
+
+    <!-- ========================================
+     TOPBAR
+======================================== -->
+
+    <header class="topbar">
+
+        <div class="topbar-left">
+
+            <button id="backBtn" class="icon-btn" type="button">
+                ←
+            </button>
+
+
+            <div>
+
+                <h1>
+                    รายงานยอดขาย
+                </h1>
+
+                <small id="branchText">
+                    กำลังโหลดสาขา...
+                </small>
+
+            </div>
+
+        </div>
+
+
+        <div class="topbar-right">
+
+            <span id="userName">
+                ผู้ใช้งาน
+            </span>
+
+
+            <button id="logoutBtn" class="outline-btn" type="button">
+                ออกจากระบบ
+            </button>
+
+        </div>
+
+    </header>
+
+
+
+    <!-- ========================================
+     PAGE
+======================================== -->
+
+    <main class="page">
+
+
+        <!-- =====================================
+         PAGE HEADER
+    ====================================== -->
+
+        <section class="page-heading">
+
+            <div>
+
+                <h2>
+                    สรุปยอดขาย
+                </h2>
+
+                <p>
+                    วิเคราะห์ยอดขายตามช่วงวันที่
+                </p>
+
+            </div>
+
+
+            <!-- EXPORT ACTIONS -->
+
+            <div class="report-actions">
+
+                <button id="printReportBtn" class="outline-btn" type="button">
+                    🖨️ พิมพ์
+                </button>
+
+
+                <button id="exportPdfBtn" class="outline-btn" type="button">
+                    📄 PDF
+                </button>
+
+
+                <button id="exportExcelBtn" class="outline-btn" type="button">
+                    📊 Excel
+                </button>
+
+
+                <button id="sharePdfBtn" class="primary-btn" type="button">
+                    📤 แชร์ PDF
+                </button>
+
+            </div>
+
+        </section>
+
+
+
+        <!-- =====================================
+         FILTER
+    ====================================== -->
+
+        <section class="filter-card">
+
+            <div class="filter-grid">
+
+
+                <div class="field">
+
+                    <label for="dateFrom">
+                        วันที่เริ่ม
+                    </label>
+
+                    <input id="dateFrom" type="date">
+
+                </div>
+
+
+                <div class="field">
+
+                    <label for="dateTo">
+                        วันที่สิ้นสุด
+                    </label>
+
+                    <input id="dateTo" type="date">
+
+                </div>
+
+
+                <div class="field">
+
+                    <label for="paymentFilter">
+                        วิธีชำระ
+                    </label>
+
+                    <select id="paymentFilter">
+
+                        <option value="">
+                            ทั้งหมด
+                        </option>
+
+                        <option value="cash">
+                            เงินสด
+                        </option>
+
+                        <option value="qr">
+                            QR
+                        </option>
+
+                    </select>
+
+                </div>
+
+            </div>
+
+
+            <div class="filter-actions">
+
+                <button id="todayBtn" class="outline-btn" type="button">
+                    วันนี้
+                </button>
+
+
+                <button id="monthBtn" class="outline-btn" type="button">
+                    เดือนนี้
+                </button>
+
+
+                <button id="clearFilterBtn" class="outline-btn" type="button">
+                    ล้างตัวกรอง
+                </button>
+
+
+                <button id="refreshBtn" class="primary-btn" type="button">
+                    ↻ รีเฟรช
+                </button>
+
+            </div>
+
+        </section>
+
+
+
+        <p id="pageMessage" class="page-message">
+        </p>
+
+
+
+        <!-- =====================================
+         EXPORT AREA
+    ====================================== -->
+
+        <div id="reportExportArea">
+
+
+            <!-- REPORT PRINT HEADER -->
+
+            <section class="print-report-header">
+
+                <h2>
+                    รายงานยอดขาย JOKJUNG POS
+                </h2>
+
+                <div id="printBranchText">
+                    -
+                </div>
+
+                <div id="printPeriodText">
+                    -
+                </div>
+
+            </section>
+
+
+
+            <!-- =====================================
+             SUMMARY
+        ====================================== -->
+
+            <section class="summary-grid">
+
+
+                <article class="summary-card">
+
+                    <span>
+                        ยอดขายรวม
+                    </span>
+
+                    <strong id="summarySales">
+                        ฿0.00
+                    </strong>
+
+                </article>
+
+
+                <article class="summary-card">
+
+                    <span>
+                        จำนวนบิล
+                    </span>
+
+                    <strong id="summaryBills">
+                        0
+                    </strong>
+
+                </article>
+
+
+                <article class="summary-card">
+
+                    <span>
+                        เงินสด
+                    </span>
+
+                    <strong id="summaryCash">
+                        ฿0.00
+                    </strong>
+
+                </article>
+
+
+                <article class="summary-card">
+
+                    <span>
+                        QR
+                    </span>
+
+                    <strong id="summaryQr">
+                        ฿0.00
+                    </strong>
+
+                </article>
+
+
+                <article class="summary-card">
+
+                    <span>
+                        ส่วนลดรวม
+                    </span>
+
+                    <strong id="summaryDiscount">
+                        ฿0.00
+                    </strong>
+
+                </article>
+
+
+                <article class="summary-card void-card">
+
+                    <span>
+                        จำนวนบิล VOID
+                    </span>
+
+                    <strong id="summaryVoidBills">
+                        0
+                    </strong>
+
+                </article>
+
+
+                <article class="summary-card void-card">
+
+                    <span>
+                        ยอดบิล VOID
+                    </span>
+
+                    <strong id="summaryVoidAmount">
+                        ฿0.00
+                    </strong>
+
+                </article>
+
+            </section>
+
+
+
+            <!-- =====================================
+             REPORT GRID
+        ====================================== -->
+
+            <section class="report-grid">
+
+
+                <!-- DAILY SALES -->
+
+                <article class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+
+                            <h3>
+                                ยอดขายรายวัน
+                            </h3>
+
+                            <p>
+                                ยอดขายสุทธิแยกตามวัน
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div id="dailySalesChart" class="daily-chart">
+
+                        <div class="state">
+                            กำลังโหลด...
+                        </div>
+
+                    </div>
+
+                </article>
+
+
+
+                <!-- TOP PRODUCTS -->
+
+                <article class="panel">
+
+                    <div class="panel-header">
+
+                        <div>
+
+                            <h3>
+                                สินค้าขายดี
+                            </h3>
+
+                            <p>
+                                Top 5 ตามจำนวนที่ขาย
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                    <div id="topProducts" class="top-products">
+
+                        <div class="state">
+                            กำลังโหลด...
+                        </div>
+
+                    </div>
+
+                </article>
+
+            </section>
+
+
+
+            <!-- =====================================
+             DAILY TABLE
+        ====================================== -->
+
+            <section class="table-card">
+
+                <div class="table-header">
+
+                    <div>
+
+                        <h3>
+                            สรุปยอดขายรายวัน
+                        </h3>
+
+                        <small id="resultCount">
+                            0 วัน
+                        </small>
+
+                    </div>
+
+                </div>
+
+
+                <div id="loadingState" class="state">
+                    กำลังโหลดข้อมูล...
+                </div>
+
+
+                <div id="emptyState" class="state hidden">
+                    ไม่พบข้อมูลยอดขาย
+                </div>
+
+
+                <div id="tableWrap" class="table-wrap hidden">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    วันที่
+                                </th>
+
+                                <th class="text-right">
+                                    จำนวนบิล
+                                </th>
+
+                                <th class="text-right">
+                                    ยอดขาย
+                                </th>
+
+                                <th class="text-right">
+                                    เงินสด
+                                </th>
+
+                                <th class="text-right">
+                                    QR
+                                </th>
+
+                                <th class="text-right">
+                                    ส่วนลด
+                                </th>
+
+                                <th class="text-right">
+                                    VOID
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody id="dailyTableBody">
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+            </section>
+
+
+        </div>
+
+    </main>
+
+
+
+    <!-- ========================================
+     PDF LIBRARY
+======================================== -->
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+
+
+    <!-- ========================================
+     EXCEL LIBRARY
+======================================== -->
+
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+
+
+
+    <!-- ========================================
+     APP
+======================================== -->
+
+    <script type="module" src="./js/sales-report.js"></script>
+
+
+</body>
+
+</html>
