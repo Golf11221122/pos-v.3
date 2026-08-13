@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="th">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>จัดการครัว | JOKJUNG POS</title>
+    <link rel="stylesheet" href="./css/kitchen-stations.css">
+</head>
+
+<body>
+    <header>
+        <div>
+            <h1>จัดการ Kitchen Station</h1><small id="branchText">กำลังโหลด...</small>
+        </div>
+        <nav><button id="addBtn">+ เพิ่มครัว</button><button id="backBtn">← Dashboard</button></nav>
+    </header>
+    <main>
+        <section class="stats">
+            <div>Kitchen Station <b id="stationCount">0</b></div>
+            <div>เมนูทั้งหมด <b id="productCount">0</b></div>
+            <div>ยังไม่กำหนดครัว <b id="unassignedCount">0</b></div>
+        </section>
+        <section class="layout">
+            <aside>
+                <h2>จุดครัว</h2><button class="filter active" data-filter="">เมนูทั้งหมด <b
+                        id="allCount">0</b></button><button class="filter" data-filter="unassigned">⚠️ ยังไม่กำหนด <b
+                        id="noneCount">0</b></button>
+                <div id="stations"></div>
+            </aside>
+            <section class="products">
+                <div class="toolbar">
+                    <div>
+                        <h2 id="title">เมนูทั้งหมด</h2><small>เลือกครัวให้แต่ละเมนู</small>
+                    </div><input id="search" type="search" placeholder="ค้นหาเมนู...">
+                </div>
+                <div id="products"></div>
+                <div id="empty" class="empty hidden">ไม่พบเมนู</div>
+            </section>
+        </section>
+        <p id="message"></p>
+    </main>
+    <div id="modal" class="modal hidden">
+        <form id="form">
+            <div class="modalHead">
+                <h2 id="modalTitle">เพิ่มครัว</h2><button id="closeBtn" type="button">✕</button>
+            </div><input id="id" type="hidden"><label>ชื่อครัว<input id="name" required
+                    placeholder="เช่น ครัวก๋วยเตี๋ยว"></label><label>Code<input id="code" required
+                    placeholder="เช่น noodle"></label><label>ลำดับ<input id="order" type="number" min="0"
+                    value="0"></label><label class="check">เปิดใช้งาน <input id="active" type="checkbox"
+                    checked></label>
+            <div class="actions"><button id="deleteBtn" type="button" class="danger hidden">ลบครัว</button><button
+                    type="submit" class="primary">บันทึก</button></div>
+        </form>
+    </div>
+    <script type="module" src="./js/kitchen-stations.js"></script>
+</body>
+
+</html>
