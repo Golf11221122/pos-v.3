@@ -4,6 +4,8 @@ const state = {
     session: null,
     profile: null,
     branch: null,
+    stations: [],
+    selectedStation: '',
     items: [],
     soundEnabled: false,
     knownItemIds: new Set(),
@@ -14,6 +16,8 @@ const $ = id => document.getElementById(id)
 
 const el = {
     branchText: $('branchText'),
+    stationSelect: $('stationSelect'),
+    selectedStationText: $('selectedStationText'),
     enableSoundBtn: $('enableSoundBtn'),
     refreshBtn: $('refreshBtn'),
     backBtn: $('backBtn'),
@@ -210,6 +214,54 @@ async function loadBranch() {
         `สาขา: ${data.name}`
 }
 
+/* ========================================
+   KITCHEN STATIONS
+======================================== */
+
+function stationStorageKey() {
+    return `jokjung-kitchen-station-${state.profile.branch_id}`
+}
+
+async function loadKitchenStations() {
+    const { data, error } = await supabase
+        .from('kitchen_stations')
+        .select('id,name,code,display_order,is_active')
+        .eq('branch_id', state.profile.branch_id)
+        .eq('is_active', true)
+        .order('display_order', { ascending: true })
+        .order('name', { ascending: true })
+
+    if (error) throw error
+    state.stations = data || []
+
+    const saved = localStorage.getItem(stationStorageKey()) || ''
+    const validSaved = !saved || state.stations.some(station => station.id === saved)
+    state.selectedStation = validSaved ? saved : ''
+    renderStationSelect()
+}
+
+function renderStationSelect() {
+    if (!el.stationSelect) return
+
+    el.stationSelect.innerHTML = `
+        <option value="">ทุกครัว</option>
+        ${state.stations.map(station => `
+            <option value="${esc(station.id)}">${esc(station.name)}</option>
+        `).join('')}
+    `
+
+    el.stationSelect.value = state.selectedStation
+    renderSelectedStationText()
+}
+
+function renderSelectedStationText() {
+    const station = state.stations.find(row => row.id === state.selectedStation)
+    const text = station?.name || 'ทุกครัว'
+    if (el.selectedStationText) el.selectedStationText.textContent = text
+    document.title = state.selectedStation ? `${text} | JOKJUNG POS` : 'Kitchen | JOKJUNG POS'
+}
+
+
 
 /* ========================================
    LOAD / RENDER
@@ -222,7 +274,10 @@ async function loadKitchenItems({
         data,
         error
     } = await supabase.rpc(
-        'get_kitchen_active_items'
+        'get_kitchen_active_items_by_station',
+        {
+            p_kitchen_station_id: state.selectedStation || null
+        }
     )
 
     if (error) throw error
@@ -299,10 +354,15 @@ function renderBoard() {
     setCount(el.preparingBadge, preparing.length)
     setCount(el.readyBadge, ready.length)
 
+    const selectedStation = state.stations.find(
+        station => station.id === state.selectedStation
+    )
+    const stationName = selectedStation?.name || 'ทุกครัว'
+
     el.statusText.textContent =
         state.items.length
-            ? `มี ${state.items.length.toLocaleString('th-TH')} รายการในครัว`
-            : 'รอออเดอร์ใหม่...'
+            ? `${stationName} • ${state.items.length.toLocaleString('th-TH')} รายการ`
+            : `${stationName} • รอออเดอร์ใหม่...`
 
     renderColumn(
         el.pendingGrid,
@@ -447,6 +507,11 @@ function renderTicket(item) {
                     <div class="ticket-time">
                         ${formatTime(item.created_at)}
                     </div>
+
+                    ${item.kitchen_station_name
+                        ? `<div class="ticket-time">🍳 ${esc(item.kitchen_station_name)}</div>`
+                        : ''
+                    }
                 </div>
 
                 <span
@@ -518,6 +583,11 @@ function renderPrintTicket(item) {
             <div class="print-center">
                 <strong>JOKJUNG - ใบครัว</strong>
             </div>
+
+            ${item.kitchen_station_name
+                ? `<div class="print-center">${esc(item.kitchen_station_name)}</div>`
+                : ''
+            }
 
             <div class="print-table">
                 ${esc(tableName(item))}
@@ -736,6 +806,8 @@ async function init() {
 
         await loadBranch()
 
+        await loadKitchenStations()
+
         await loadKitchenItems({
             notifyNew: false
         })
@@ -760,6 +832,26 @@ async function init() {
 /* ========================================
    EVENTS
 ======================================== */
+
+el.stationSelect
+    ?.addEventListener(
+        'change',
+        async event => {
+            state.selectedStation = event.target.value || ''
+            localStorage.setItem(stationStorageKey(), state.selectedStation)
+            state.knownItemIds = new Set()
+            renderSelectedStationText()
+
+            try {
+                await loadKitchenItems({ notifyNew: false })
+                msg(el.pageMessage, '')
+            } catch (error) {
+                console.error('Change kitchen station error:', error)
+                msg(el.pageMessage, error.message || 'เปลี่ยนครัวไม่สำเร็จ')
+            }
+        }
+    )
+
 
 el.enableSoundBtn
     ?.addEventListener(
