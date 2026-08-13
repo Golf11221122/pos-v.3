@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1, viewport-fit=cover"
+    >
+
+    <title>
+        Kitchen | JOKJUNG POS
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="./css/kitchen.css"
+    >
+</head>
+
+<body>
+
+    <header class="topbar">
+
+        <div>
+            <h1>🍳 ครัว</h1>
+
+            <small id="branchText">
+                กำลังโหลด...
+            </small>
+        </div>
+
+        <div class="top-actions">
+
+            <button
+                id="enableSoundBtn"
+                class="sound-btn"
+                type="button"
+            >
+                🔔 เปิดเสียงแจ้งเตือน
+            </button>
+
+            <button
+                id="refreshBtn"
+                class="outline-btn"
+                type="button"
+            >
+                ↻ รีเฟรช
+            </button>
+
+            <button
+                id="backBtn"
+                class="outline-btn"
+                type="button"
+            >
+                ← Dashboard
+            </button>
+
+        </div>
+
+    </header>
+
+
+    <main class="page">
+
+        <section class="summary">
+
+            <div>
+                <span>ออเดอร์ QR ที่รอ</span>
+
+                <strong id="pendingCount">
+                    0
+                </strong>
+            </div>
+
+            <p id="statusText">
+                รอออเดอร์ใหม่...
+            </p>
+
+        </section>
+
+
+        <section
+            id="emptyState"
+            class="empty-state"
+        >
+            ✅ ยังไม่มีออเดอร์ใหม่
+        </section>
+
+
+        <section
+            id="ticketGrid"
+            class="ticket-grid hidden"
+        ></section>
+
+
+        <p
+            id="pageMessage"
+            class="message"
+        ></p>
+
+    </main>
+
+
+    <!-- พื้นที่พิมพ์ใบครัว -->
+    <section
+        id="kitchenPrintArea"
+        class="kitchen-print-area"
+    ></section>
+
+
+    <script
+        type="module"
+        src="./js/kitchen.js"
+    ></script>
+
+</body>
+
+</html>
