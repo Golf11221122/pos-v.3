@@ -27,6 +27,13 @@
 
         <div class="top-actions">
 
+            <label class="station-picker">
+                <span>ครัว</span>
+                <select id="stationSelect">
+                    <option value="">ทุกครัว</option>
+                </select>
+            </label>
+
             <button id="enableSoundBtn" class="sound-btn" type="button">
                 🔔 เปิดเสียงแจ้งเตือน
             </button>
@@ -67,6 +74,12 @@
                 รอออเดอร์ใหม่...
             </p>
 
+        </section>
+
+
+        <section class="station-context">
+            <span>กำลังดู:</span>
+            <strong id="selectedStationText">ทุกครัว</strong>
         </section>
 
 
