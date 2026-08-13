@@ -35,7 +35,11 @@ const state = {
     currentOrder: null,
     orderType: 'dine_in',
     selectedTableId: null,
-    guestCount: 1
+    guestCount: 1,
+
+    // Modifier / ตัวเลือกสินค้า
+    modifierCache: new Map(),
+    modifierProduct: null
 }
 
 
@@ -166,6 +170,9 @@ const el = {
 
     startOrderBtn:
         $('startOrderBtn'),
+
+    holdTableBtn:
+        $('holdTableBtn'),
 
 
     /* PAYMENT */
@@ -1109,6 +1116,49 @@ function closeMobileCart() {
 
 
 /* ========================================
+   TABLE HOLD UI STYLE
+======================================== */
+
+function ensureTableHoldStyle() {
+
+    if (
+        document.getElementById(
+            'tableHoldDynamicStyle'
+        )
+    ) {
+        return
+    }
+
+    const style =
+        document.createElement(
+            'style'
+        )
+
+    style.id =
+        'tableHoldDynamicStyle'
+
+    style.textContent =
+        `
+        .table-select-btn.occupied {
+            border-color: #f5b400 !important;
+            background: #fff8df !important;
+        }
+
+        .table-select-btn.occupied strong,
+        .table-select-btn.occupied small {
+            color: #a96500 !important;
+        }
+
+        .table-select-btn.occupied small {
+            font-weight: 700;
+        }
+        `
+
+    document.head.appendChild(style)
+}
+
+
+/* ========================================
    ORDER SYSTEM
 ======================================== */
 
@@ -1164,6 +1214,9 @@ function renderOrderContext() {
     }
 
 
+    /*
+     * ไม่มีออเดอร์
+     */
     if (
         !state.currentOrder
     ) {
@@ -1171,10 +1224,26 @@ function renderOrderContext() {
         el.branchText.textContent =
             `สาขา: ${state.branch.name}`
 
+
+        if (
+            el.holdTableBtn
+        ) {
+
+            el.holdTableBtn
+                .classList
+                .add(
+                    'hidden'
+                )
+        }
+
+
         return
     }
 
 
+    /*
+     * ทานที่ร้าน
+     */
     if (
         state.currentOrder.order_type ===
         'dine_in'
@@ -1191,11 +1260,31 @@ function renderOrderContext() {
 
     } else {
 
+        /*
+         * กลับบ้าน
+         */
         el.branchText.textContent =
             `${state.branch.name} • กลับบ้าน • ${state.currentOrder.guest_count} คน`
     }
-}
 
+
+    /*
+     * แสดงปุ่มพักโต๊ะ
+     * เฉพาะทานที่ร้าน
+     */
+    if (
+        el.holdTableBtn
+    ) {
+
+        el.holdTableBtn
+            .classList
+            .toggle(
+                'hidden',
+                state.currentOrder.order_type !==
+                'dine_in'
+            )
+    }
+}
 
 function renderOrderType() {
 
@@ -1280,29 +1369,22 @@ function tableStatusText(
 }
 
 
+
 function renderTables() {
 
-    if (
-        !el.tableGrid
-    ) {
+    if (!el.tableGrid) {
         return
     }
 
-
-    if (
-        !state.tables.length
-    ) {
-
+    if (!state.tables.length) {
         el.tableGrid.innerHTML =
             `
             <div class="state">
                 ยังไม่มีโต๊ะในสาขานี้
             </div>
             `
-
         return
     }
-
 
     el.tableGrid.innerHTML =
         state.tables
@@ -1311,41 +1393,56 @@ function renderTables() {
 
                     const status =
                         String(
-                            table.status ||
-                            'available'
+                            table.status || 'available'
                         )
                             .trim()
                             .toLowerCase()
 
-
-                    const available =
-                        status ===
-                        'available'
-
+                    const selectable =
+                        ['available', 'occupied']
+                            .includes(status)
 
                     const selected =
                         table.id ===
                         state.selectedTableId
 
+                    const helperText =
+                        status ===
+                            'occupied'
+
+                            ? (
+                                selected
+
+                                    ? '✓ กำลังเลือก • เปิดบิลเดิม'
+
+                                    : 'แตะเพื่อเปิดบิลเดิม'
+                            )
+
+                            : `${Number(
+                                table.capacity
+                                ||
+                                0
+                            ).toLocaleString(
+                                'th-TH'
+                            )} ที่`
 
                     return `
                         <button
                             type="button"
-                            class="table-select-btn ${selected ? 'active' : ''}"
+                            class="table-select-btn ${selected ? 'active' : ''} ${status === 'occupied' ? 'occupied' : ''}"
                             data-table-id="${esc(table.id)}"
-                            ${available ? '' : 'disabled'}
+                            ${selectable ? '' : 'disabled'}
                         >
                             <strong>
                                 ${esc(
-                        table.table_name
-                        ||
-                        `โต๊ะ ${table.table_no}`
-                    )}
+                                    table.table_name
+                                    || `โต๊ะ ${table.table_no}`
+                                )}
                             </strong>
 
                             <small>
                                 ${tableStatusText(status)}
-                                • ${Number(table.capacity || 0).toLocaleString('th-TH')} ที่
+                                • ${helperText}
                             </small>
                         </button>
                     `
@@ -1355,6 +1452,7 @@ function renderTables() {
 }
 
 
+
 async function loadRestaurantTables() {
 
     const {
@@ -1362,9 +1460,7 @@ async function loadRestaurantTables() {
         error
     } =
         await supabase
-            .from(
-                'restaurant_tables'
-            )
+            .from('restaurant_tables')
             .select(`
                 id,
                 branch_id,
@@ -1390,43 +1486,35 @@ async function loadRestaurantTables() {
                 }
             )
 
-
     if (error) {
         throw error
     }
 
-
     state.tables =
         data || []
 
+    if (state.selectedTableId) {
 
-    if (
-        state.selectedTableId
-    ) {
-
-        const stillAvailable =
+        const stillSelectable =
             state.tables.some(
                 table =>
                     table.id ===
                     state.selectedTableId
                     &&
-                    String(table.status).toLowerCase() ===
-                    'available'
+                    ['available', 'occupied']
+                        .includes(
+                            String(
+                                table.status || ''
+                            ).toLowerCase()
+                        )
             )
 
-
-        if (
-            !stillAvailable
-        ) {
-
-            state.selectedTableId =
-                null
+        if (!stillSelectable) {
+            state.selectedTableId = null
         }
     }
 
-
     renderTables()
-
 
     return state.tables
 }
@@ -1517,86 +1605,369 @@ function closeOrderStartModal() {
 }
 
 
-async function startRestaurantOrder() {
 
-    if (
-        state.currentOrder
+function isHeldDineInOrder() {
+    return (
+        state.currentOrder?.order_type === 'dine_in'
+        &&
+        Boolean(state.currentOrder?.id)
+    )
+}
+
+
+function heldItemToCartItem(row) {
+
+    const modifiers =
+        Array.isArray(row.modifiers)
+            ? row.modifiers
+            : []
+
+    const itemNote =
+        row.item_note || ''
+
+    const cartKey =
+        buildCartKey(
+            row.product_id,
+            modifiers,
+            itemNote
+        )
+
+    const product =
+        state.products.find(
+            item => item.id === row.product_id
+        )
+
+    return {
+        ...(product || {}),
+
+        id:
+            row.product_id,
+
+        name:
+            row.product_name
+            || product?.name
+            || 'สินค้า',
+
+        cartKey,
+
+        restaurant_item_id:
+            row.id,
+
+        base_price:
+            Number(
+                row.base_price
+                ?? product?.price
+                ?? 0
+            ),
+
+        modifier_total:
+            Number(
+                row.modifier_total || 0
+            ),
+
+        price:
+            Number(
+                row.unit_price
+                ?? (
+                    Number(
+                        row.base_price
+                        ?? product?.price
+                        ?? 0
+                    )
+                    +
+                    Number(
+                        row.modifier_total || 0
+                    )
+                )
+            ),
+
+        quantity:
+            Number(
+                row.quantity || 0
+            ),
+
+        modifiers,
+
+        item_note:
+            itemNote
+    }
+}
+
+
+async function loadHeldRestaurantOrder(
+    orderId,
+    selectedTable = null
+) {
+
+    const {
+        data,
+        error
+    } =
+        await supabase.rpc(
+            'get_restaurant_order',
+            {
+                p_order_id:
+                    orderId
+            }
+        )
+
+    if (error) {
+        throw error
+    }
+
+    const order =
+        Array.isArray(data)
+            ? data[0]
+            : data
+
+    if (!order?.order_id) {
+        throw new Error(
+            'ไม่พบออเดอร์โต๊ะ'
+        )
+    }
+
+    state.currentOrder = {
+        id:
+            order.order_id,
+
+        branch_id:
+            order.branch_id,
+
+        table_id:
+            order.table_id,
+
+        order_type:
+            order.order_type,
+
+        guest_count:
+            Number(order.guest_count || 1),
+
+        status:
+            order.status,
+
+        order_source:
+            order.order_source || 'pos',
+
+        note:
+            order.note || null,
+
+        opened_at:
+            order.opened_at || null,
+
+        table_name:
+            selectedTable?.table_name
+            ||
+            (
+                selectedTable
+                    ? `โต๊ะ ${selectedTable.table_no}`
+                    : null
+            )
+    }
+
+    state.orderType =
+        state.currentOrder.order_type
+
+    state.selectedTableId =
+        state.currentOrder.table_id
+
+    state.guestCount =
+        state.currentOrder.guest_count
+
+    state.cart.clear()
+
+    for (
+        const row
+        of
+        order.items || []
     ) {
 
-        el.orderStartModal
-            ?.classList
-            .add(
-                'hidden'
-            )
+        const cartItem =
+            heldItemToCartItem(row)
 
+        if (
+            cartItem.quantity > 0
+        ) {
+            state.cart.set(
+                cartItem.cartKey,
+                cartItem
+            )
+        }
+    }
+
+    renderOrderContext()
+    renderGuestCount()
+    renderCart()
+
+    return state.currentOrder
+}
+
+
+async function holdCurrentTableAndChooseAnother() {
+
+    if (!isHeldDineInOrder()) {
+        location.href =
+            './dashboard.html'
         return
     }
 
+    closeMobileCart()
+    closeModifierModal()
+
+    state.cart.clear()
+    state.currentOrder = null
+    state.selectedTableId = null
+    state.guestCount = 1
+    state.orderType = 'dine_in'
+
+    renderCart()
+    renderOrderContext()
+    resetOrderDraft()
+
+    await openOrderStartModal()
+}
+
+
+
+async function startRestaurantOrder() {
+
+    if (state.currentOrder) {
+        el.orderStartModal
+            ?.classList
+            .add('hidden')
+        return
+    }
 
     const shiftReady =
         await requireOpenShift()
 
-
-    if (
-        !shiftReady
-    ) {
-
+    if (!shiftReady) {
         msg(
             el.orderStartMessage,
             'กรุณาเปิดกะก่อนเริ่มออเดอร์'
         )
-
         return
     }
 
-
     if (
-        state.orderType ===
-        'dine_in'
+        state.orderType === 'dine_in'
         &&
         !state.selectedTableId
     ) {
-
         msg(
             el.orderStartMessage,
             'กรุณาเลือกโต๊ะ'
         )
-
         return
     }
 
-
-    if (
-        state.guestCount < 1
-    ) {
-
+    if (state.guestCount < 1) {
         msg(
             el.orderStartMessage,
             'จำนวนลูกค้าไม่ถูกต้อง'
         )
-
         return
     }
 
-
-    if (
-        el.startOrderBtn
-    ) {
-
-        el.startOrderBtn.disabled =
-            true
-
+    if (el.startOrderBtn) {
+        el.startOrderBtn.disabled = true
         el.startOrderBtn.textContent =
-            'กำลังเริ่มออเดอร์...'
+            state.orderType === 'dine_in'
+                ? 'กำลังเปิดโต๊ะ...'
+                : 'กำลังเริ่มออเดอร์...'
     }
-
 
     try {
 
         const selectedTable =
             getSelectedTable()
 
+        /*
+         * DINE-IN
+         * เปิดโต๊ะใหม่ หรือเปิดออเดอร์เดิม
+         */
+        if (
+            state.orderType === 'dine_in'
+        ) {
 
+            const {
+                data,
+                error
+            } =
+                await supabase.rpc(
+                    'open_restaurant_order',
+                    {
+                        p_branch_id:
+                            state.profile.branch_id,
+
+                        p_table_id:
+                            state.selectedTableId,
+
+                        p_guest_count:
+                            state.guestCount,
+
+                        p_order_type:
+                            'dine_in'
+                    }
+                )
+
+            if (error) {
+                throw error
+            }
+
+            const result =
+                Array.isArray(data)
+                    ? data[0]
+                    : data
+
+            if (!result?.order_id) {
+                throw new Error(
+                    'เปิดโต๊ะไม่สำเร็จ'
+                )
+            }
+
+            await loadHeldRestaurantOrder(
+                result.order_id,
+                selectedTable
+            )
+
+            const table =
+                state.tables.find(
+                    item =>
+                        item.id ===
+                        state.selectedTableId
+                )
+
+            if (table) {
+                table.status = 'occupied'
+            }
+
+            renderTables()
+            renderOrderContext()
+            renderCart()
+
+            el.orderStartModal
+                .classList
+                .add('hidden')
+
+            msg(
+                el.pageMessage,
+                result.is_existing
+                    ? `${state.currentOrder.table_name} • เปิดออเดอร์เดิมแล้ว`
+                    : `${state.currentOrder.table_name} • เปิดโต๊ะแล้ว`
+            )
+
+            setTimeout(
+                () => msg(el.pageMessage, ''),
+                1600
+            )
+
+            return
+        }
+
+        /*
+         * TAKEAWAY
+         * คงระบบเดิมไว้เพื่อรักษาเลขคิว
+         */
         const {
             data,
             error
@@ -1609,19 +1980,13 @@ async function startRestaurantOrder() {
 
                     p_shift_id:
                         state.currentShift?.id
-                        ||
-                        null,
+                        || null,
 
                     p_order_type:
-                        state.orderType,
+                        'takeaway',
 
                     p_table_id:
-                        state.orderType ===
-                            'dine_in'
-
-                            ? state.selectedTableId
-
-                            : null,
+                        null,
 
                     p_guest_count:
                         state.guestCount,
@@ -1634,170 +1999,95 @@ async function startRestaurantOrder() {
                 }
             )
 
-
         if (error) {
             throw error
         }
 
-
         const order =
             Array.isArray(data)
-
                 ? data[0]
-
                 : data
 
-
-        if (
-            !order?.id
-        ) {
-
+        if (!order?.id) {
             throw new Error(
                 'สร้างออเดอร์ไม่สำเร็จ'
             )
         }
 
-
         state.currentOrder = {
             ...order,
-            table_name:
-                selectedTable?.table_name
-                ||
-                (
-                    selectedTable
-                        ? `โต๊ะ ${selectedTable.table_no}`
-                        : null
-                )
+            table_name: null
         }
-
-
-        if (
-            state.orderType ===
-            'dine_in'
-            &&
-            state.selectedTableId
-        ) {
-
-            const table =
-                state.tables.find(
-                    item =>
-                        item.id ===
-                        state.selectedTableId
-                )
-
-
-            if (table) {
-                table.status =
-                    'occupied'
-            }
-        }
-
-
-        renderTables()
 
         renderOrderContext()
 
-
         el.orderStartModal
             .classList
-            .add(
-                'hidden'
-            )
-
+            .add('hidden')
 
         msg(
             el.pageMessage,
-            state.currentOrder.order_type === 'dine_in'
-                ? `${state.currentOrder.table_name} • ${state.currentOrder.guest_count} คน`
-                : `กลับบ้าน • ${state.currentOrder.guest_count} คน`
+            `กลับบ้าน • ${state.currentOrder.guest_count} คน`
         )
-
 
         setTimeout(
-            () => {
-
-                if (
-                    el.pageMessage?.textContent ===
-                    (
-                        state.currentOrder?.order_type === 'dine_in'
-                            ? `${state.currentOrder?.table_name} • ${state.currentOrder?.guest_count} คน`
-                            : `กลับบ้าน • ${state.currentOrder?.guest_count} คน`
-                    )
-                ) {
-
-                    msg(
-                        el.pageMessage,
-                        ''
-                    )
-                }
-            },
-            1800
+            () => msg(el.pageMessage, ''),
+            1600
         )
-
 
     } catch (error) {
 
         console.error(
-            'Create restaurant order error:',
+            'Start restaurant order error:',
             error
         )
 
-
         let errorMessage =
-            error.message ||
-            'เริ่มออเดอร์ไม่สำเร็จ'
-
+            error.message
+            || 'เริ่มออเดอร์ไม่สำเร็จ'
 
         if (
             errorMessage.includes(
                 'TABLE_REQUIRED'
             )
         ) {
-
             errorMessage =
                 'กรุณาเลือกโต๊ะ'
         }
 
-
         if (
+            errorMessage.includes(
+                'TABLE_NOT_FOUND'
+            )
+            ||
             errorMessage.includes(
                 'INVALID_TABLE'
             )
         ) {
-
             errorMessage =
                 'โต๊ะนี้ไม่สามารถใช้งานได้ กรุณาเลือกโต๊ะใหม่'
 
             await loadRestaurantTables()
         }
 
-
         if (
             errorMessage.includes(
                 'INVALID_GUEST_COUNT'
             )
         ) {
-
             errorMessage =
                 'จำนวนลูกค้าไม่ถูกต้อง'
         }
-
 
         msg(
             el.orderStartMessage,
             errorMessage
         )
 
-
     } finally {
 
-        if (
-            el.startOrderBtn
-        ) {
-
-            el.startOrderBtn.disabled =
-                false
-
+        if (el.startOrderBtn) {
+            el.startOrderBtn.disabled = false
             el.startOrderBtn.textContent =
                 'เริ่มออเดอร์'
         }
@@ -2444,10 +2734,1394 @@ function renderProducts() {
 
 
 /* ========================================
+   PRODUCT MODIFIERS
+======================================== */
+
+function ensureModifierModal() {
+
+    let modal =
+        document.getElementById(
+            'modifierModal'
+        )
+
+
+    if (modal) {
+        return modal
+    }
+
+
+    modal =
+        document.createElement(
+            'div'
+        )
+
+
+    modal.id =
+        'modifierModal'
+
+
+    modal.className =
+        'modal hidden'
+
+
+    modal.innerHTML =
+        `
+        <div class="modal-card modifier-modal-card">
+
+            <div class="modal-head">
+
+                <div>
+                    <h2 id="modifierProductName">
+                        ตัวเลือกสินค้า
+                    </h2>
+
+                    <small id="modifierBasePrice">
+                        -
+                    </small>
+                </div>
+
+                <button
+                    id="closeModifierBtn"
+                    class="icon-btn"
+                    type="button"
+                >
+                    ×
+                </button>
+
+            </div>
+
+
+            <div
+                id="modifierGroups"
+                class="modifier-groups"
+            ></div>
+
+
+            <label
+                class="modifier-note-label"
+                for="modifierItemNote"
+            >
+                หมายเหตุเฉพาะรายการ
+            </label>
+
+            <textarea
+                id="modifierItemNote"
+                rows="2"
+                placeholder="เช่น ไม่ใส่ผัก"
+            ></textarea>
+
+
+            <div class="modifier-total-row">
+
+                <span>
+                    ราคารายการ
+                </span>
+
+                <strong id="modifierTotalText">
+                    ฿0.00
+                </strong>
+
+            </div>
+
+
+            <p
+                id="modifierMessage"
+                class="message"
+            ></p>
+
+
+            <button
+                id="confirmModifierBtn"
+                class="primary-btn"
+                type="button"
+            >
+                เพิ่มลงตะกร้า
+            </button>
+
+        </div>
+        `
+
+
+    document.body.appendChild(
+        modal
+    )
+
+
+    if (
+        !document.getElementById(
+            'modifierDynamicStyle'
+        )
+    ) {
+
+        const style =
+            document.createElement(
+                'style'
+            )
+
+
+        style.id =
+            'modifierDynamicStyle'
+
+
+        style.textContent =
+            `
+            .modifier-groups {
+                display: grid;
+                gap: 18px;
+                margin-top: 18px;
+            }
+
+            .modifier-group {
+                padding: 14px;
+                border: 1px solid var(--border, #e2e5e9);
+                border-radius: 14px;
+                background: #fff;
+            }
+
+            .modifier-group-head {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 10px;
+                margin-bottom: 10px;
+            }
+
+            .modifier-group-head strong {
+                font-size: 16px;
+            }
+
+            .modifier-required {
+                color: #d93025;
+                font-size: 12px;
+                font-weight: 700;
+            }
+
+            .modifier-options {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 8px;
+            }
+
+            .modifier-option {
+                position: relative;
+                display: block !important;
+                margin: 0 !important;
+                cursor: pointer;
+            }
+
+            .modifier-option input {
+                position: absolute;
+                opacity: 0;
+                pointer-events: none;
+            }
+
+            .modifier-option-box {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 8px;
+                min-height: 50px;
+                padding: 10px 12px;
+                border: 1px solid var(--border, #e2e5e9);
+                border-radius: 11px;
+                background: #fff;
+            }
+
+            .modifier-option input:checked + .modifier-option-box {
+                border-color: var(--p, #f5b400);
+                background: var(--pl, #fff4c7);
+                box-shadow: inset 0 0 0 1px var(--p, #f5b400);
+            }
+
+            .modifier-option-price {
+                white-space: nowrap;
+                font-weight: 700;
+            }
+
+            .modifier-note-label {
+                display: block;
+                margin-top: 18px !important;
+            }
+
+            .modifier-total-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                margin-top: 16px;
+                padding: 14px;
+                border-radius: 12px;
+                background: var(--pl, #fff4c7);
+                font-size: 18px;
+            }
+
+            .modifier-total-row strong {
+                font-size: 22px;
+            }
+
+            @media (max-width: 760px) {
+
+                body:has(#modifierModal:not(.hidden))
+                .mobile-cart-bar {
+                    display: none !important;
+                }
+
+                #modifierModal {
+                    align-items: flex-end !important;
+                    padding: 0 !important;
+                    z-index: 31000 !important;
+                }
+
+                #modifierModal .modifier-modal-card {
+                    width: 100% !important;
+                    max-width: none !important;
+                    max-height: 92dvh !important;
+                    overflow-y: auto !important;
+                    padding:
+                        18px 18px
+                        calc(22px + env(safe-area-inset-bottom))
+                        !important;
+                    border-radius: 24px 24px 0 0 !important;
+                    -webkit-overflow-scrolling: touch;
+                }
+
+                #modifierModal .modal-head {
+                    position: sticky !important;
+                    top: -18px !important;
+                    z-index: 5 !important;
+                    margin: -18px -18px 12px !important;
+                    padding: 18px !important;
+                    background: #fff !important;
+                }
+
+                .modifier-options {
+                    grid-template-columns: 1fr 1fr;
+                }
+
+                #confirmModifierBtn {
+                    position: sticky;
+                    bottom: 0;
+                    z-index: 5;
+                    min-height: 54px;
+                    margin-top: 10px;
+                }
+            }
+            `
+
+
+        document.head.appendChild(
+            style
+        )
+    }
+
+
+    modal
+        .querySelector(
+            '#closeModifierBtn'
+        )
+        ?.addEventListener(
+            'click',
+            closeModifierModal
+        )
+
+
+    modal
+        .querySelector(
+            '#confirmModifierBtn'
+        )
+        ?.addEventListener(
+            'click',
+            confirmModifierSelection
+        )
+
+
+    modal
+        .querySelector(
+            '#modifierGroups'
+        )
+        ?.addEventListener(
+            'change',
+            updateModifierTotal
+        )
+
+
+    modal.addEventListener(
+        'click',
+        event => {
+
+            if (
+                event.target ===
+                modal
+            ) {
+
+                closeModifierModal()
+            }
+        }
+    )
+
+
+    return modal
+}
+
+
+function closeModifierModal() {
+
+    const modal =
+        document.getElementById(
+            'modifierModal'
+        )
+
+
+    modal
+        ?.classList
+        .add(
+            'hidden'
+        )
+
+
+    state.modifierProduct =
+        null
+}
+
+
+function cartProductQuantity(
+    productId
+) {
+
+    return items()
+        .filter(
+            item =>
+                item.id ===
+                productId
+        )
+        .reduce(
+            (
+                sum,
+                item
+            ) =>
+                sum +
+                Number(
+                    item.quantity
+                    ||
+                    0
+                ),
+            0
+        )
+}
+
+
+async function loadProductModifiers(
+    productId
+) {
+
+    if (
+        state.modifierCache.has(
+            productId
+        )
+    ) {
+
+        return state.modifierCache.get(
+            productId
+        )
+    }
+
+
+    const {
+        data: links,
+        error: linkError
+    } =
+        await supabase
+            .from(
+                'product_modifier_groups'
+            )
+            .select(
+                'modifier_group_id,display_order'
+            )
+            .eq(
+                'product_id',
+                productId
+            )
+            .order(
+                'display_order',
+                {
+                    ascending: true
+                }
+            )
+
+
+    if (linkError) {
+        throw linkError
+    }
+
+
+    if (
+        !links?.length
+    ) {
+
+        state.modifierCache.set(
+            productId,
+            []
+        )
+
+
+        return []
+    }
+
+
+    const groupIds =
+        [
+            ...new Set(
+                links.map(
+                    item =>
+                        item.modifier_group_id
+                )
+            )
+        ]
+
+
+    const [
+        groupResult,
+        optionResult
+    ] =
+        await Promise.all([
+            supabase
+                .from(
+                    'modifier_groups'
+                )
+                .select(`
+                    id,
+                    name,
+                    selection_type,
+                    is_required,
+                    min_select,
+                    max_select,
+                    display_order,
+                    is_active
+                `)
+                .in(
+                    'id',
+                    groupIds
+                )
+                .eq(
+                    'is_active',
+                    true
+                ),
+
+            supabase
+                .from(
+                    'modifier_options'
+                )
+                .select(`
+                    id,
+                    modifier_group_id,
+                    name,
+                    price_adjustment,
+                    display_order,
+                    is_active
+                `)
+                .in(
+                    'modifier_group_id',
+                    groupIds
+                )
+                .eq(
+                    'is_active',
+                    true
+                )
+        ])
+
+
+    if (groupResult.error) {
+        throw groupResult.error
+    }
+
+
+    if (optionResult.error) {
+        throw optionResult.error
+    }
+
+
+    const linkOrder =
+        new Map(
+            links.map(
+                link => [
+                    link.modifier_group_id,
+                    Number(
+                        link.display_order
+                        ||
+                        0
+                    )
+                ]
+            )
+        )
+
+
+    const groups =
+        (groupResult.data || [])
+            .map(
+                group => ({
+                    ...group,
+
+                    product_display_order:
+                        linkOrder.get(
+                            group.id
+                        )
+                        ??
+                        Number(
+                            group.display_order
+                            ||
+                            0
+                        ),
+
+                    options:
+                        (optionResult.data || [])
+                            .filter(
+                                option =>
+                                    option.modifier_group_id ===
+                                    group.id
+                            )
+                            .sort(
+                                (
+                                    a,
+                                    b
+                                ) =>
+                                    Number(
+                                        a.display_order
+                                        ||
+                                        0
+                                    )
+                                    -
+                                    Number(
+                                        b.display_order
+                                        ||
+                                        0
+                                    )
+                            )
+                })
+            )
+            .sort(
+                (
+                    a,
+                    b
+                ) =>
+                    a.product_display_order
+                    -
+                    b.product_display_order
+            )
+
+
+    state.modifierCache.set(
+        productId,
+        groups
+    )
+
+
+    return groups
+}
+
+
+function renderModifierGroups(
+    groups
+) {
+
+    const container =
+        document.getElementById(
+            'modifierGroups'
+        )
+
+
+    if (!container) {
+        return
+    }
+
+
+    container.innerHTML =
+        groups
+            .map(
+                group => {
+
+                    const type =
+                        group.selection_type ===
+                        'multiple'
+
+                            ? 'checkbox'
+
+                            : 'radio'
+
+
+                    const requiredText =
+                        group.is_required
+
+                            ? 'จำเป็น'
+
+                            : 'ไม่บังคับ'
+
+
+                    return `
+                        <section
+                            class="modifier-group"
+                            data-modifier-group="${esc(
+                                group.id
+                            )}"
+                            data-selection-type="${esc(
+                                group.selection_type
+                            )}"
+                            data-required="${group.is_required ? 'true' : 'false'}"
+                            data-min="${Number(
+                                group.min_select
+                                ||
+                                0
+                            )}"
+                            data-max="${Number(
+                                group.max_select
+                                ||
+                                0
+                            )}"
+                        >
+
+                            <div class="modifier-group-head">
+
+                                <strong>
+                                    ${esc(
+                                        group.name
+                                    )}
+                                </strong>
+
+                                <span class="modifier-required">
+                                    ${requiredText}
+                                </span>
+
+                            </div>
+
+
+                            <div class="modifier-options">
+
+                                ${group.options
+                                    .map(
+                                        (
+                                            option,
+                                            index
+                                        ) => {
+
+                                            /*
+                                             * กลุ่ม single ที่บังคับเลือก
+                                             * เลือกตัวเลือกแรกเป็นค่าเริ่มต้น
+                                             * เช่น "ธรรมดา"
+                                             */
+                                            const defaultChecked =
+                                                group.selection_type ===
+                                                'single'
+                                                &&
+                                                group.is_required
+                                                &&
+                                                index ===
+                                                0
+
+
+                                            const price =
+                                                Number(
+                                                    option.price_adjustment
+                                                    ||
+                                                    0
+                                                )
+
+
+                                            return `
+                                                <label class="modifier-option">
+
+                                                    <input
+                                                        type="${type}"
+                                                        name="modifier-${esc(
+                                                            group.id
+                                                        )}"
+                                                        value="${esc(
+                                                            option.id
+                                                        )}"
+                                                        data-group-id="${esc(
+                                                            group.id
+                                                        )}"
+                                                        data-group-name="${esc(
+                                                            group.name
+                                                        )}"
+                                                        data-option-name="${esc(
+                                                            option.name
+                                                        )}"
+                                                        data-price="${price}"
+                                                        ${defaultChecked ? 'checked' : ''}
+                                                    >
+
+                                                    <span class="modifier-option-box">
+
+                                                        <span>
+                                                            ${esc(
+                                                                option.name
+                                                            )}
+                                                        </span>
+
+                                                        <span class="modifier-option-price">
+                                                            ${
+                                                                price > 0
+
+                                                                    ? `+${money(
+                                                                        price
+                                                                    )}`
+
+                                                                    : ''
+                                                            }
+                                                        </span>
+
+                                                    </span>
+
+                                                </label>
+                                            `
+                                        }
+                                    )
+                                    .join('')}
+
+                            </div>
+
+                        </section>
+                    `
+                }
+            )
+            .join('')
+}
+
+
+function selectedModifierPrice() {
+
+    return [
+        ...document.querySelectorAll(
+            '#modifierModal input[data-price]:checked'
+        )
+    ]
+        .reduce(
+            (
+                sum,
+                input
+            ) =>
+                sum +
+                Number(
+                    input.dataset.price
+                    ||
+                    0
+                ),
+            0
+        )
+}
+
+
+function updateModifierTotal() {
+
+    const product =
+        state.modifierProduct
+
+
+    const target =
+        document.getElementById(
+            'modifierTotalText'
+        )
+
+
+    if (
+        !product
+        ||
+        !target
+    ) {
+        return
+    }
+
+
+    target.textContent =
+        money(
+            Number(
+                product.price
+                ||
+                0
+            )
+            +
+            selectedModifierPrice()
+        )
+
+
+    msg(
+        document.getElementById(
+            'modifierMessage'
+        ),
+        ''
+    )
+}
+
+
+async function openModifierModal(
+    product,
+    groups
+) {
+
+    const modal =
+        ensureModifierModal()
+
+
+    state.modifierProduct =
+        product
+
+
+    const title =
+        document.getElementById(
+            'modifierProductName'
+        )
+
+
+    const basePrice =
+        document.getElementById(
+            'modifierBasePrice'
+        )
+
+
+    const note =
+        document.getElementById(
+            'modifierItemNote'
+        )
+
+
+    if (title) {
+
+        title.textContent =
+            product.name
+    }
+
+
+    if (basePrice) {
+
+        basePrice.textContent =
+            `ราคาเริ่มต้น ${money(
+                product.price
+            )}`
+    }
+
+
+    if (note) {
+
+        note.value =
+            ''
+    }
+
+
+    renderModifierGroups(
+        groups
+    )
+
+
+    updateModifierTotal()
+
+
+    msg(
+        document.getElementById(
+            'modifierMessage'
+        ),
+        ''
+    )
+
+
+    closeMobileCart()
+
+
+    modal.classList.remove(
+        'hidden'
+    )
+}
+
+
+function buildCartKey(
+    productId,
+    modifiers,
+    itemNote
+) {
+
+    const optionKey =
+        modifiers
+            .map(
+                item =>
+                    item.option_id
+            )
+            .sort()
+            .join(
+                ','
+            )
+
+
+    const noteKey =
+        String(
+            itemNote
+            ||
+            ''
+        )
+            .trim()
+            .toLowerCase()
+
+
+    return `${productId}::${optionKey}::${noteKey}`
+}
+
+
+
+async function addConfiguredProduct(
+    product,
+    modifiers = [],
+    itemNote = ''
+) {
+
+    const availability =
+        getAvailability(product.id)
+
+    const availableQty =
+        Math.floor(
+            availability.available_qty
+        )
+
+    const currentProductQty =
+        cartProductQuantity(product.id)
+
+    if (availableQty <= 0) {
+        msg(
+            el.pageMessage,
+            'สินค้านี้หมด เนื่องจากวัตถุดิบไม่เพียงพอ'
+        )
+        return false
+    }
+
+    if (
+        currentProductQty >=
+        availableQty
+    ) {
+        msg(
+            el.pageMessage,
+            `เพิ่มไม่ได้ สามารถขาย ${product.name} ได้สูงสุด ${availableQty} จาน`
+        )
+        return false
+    }
+
+    const modifierTotal =
+        modifiers.reduce(
+            (sum, modifier) =>
+                sum +
+                Number(
+                    modifier.price_adjustment || 0
+                ),
+            0
+        )
+
+    const unitPrice =
+        Number(product.price || 0)
+        +
+        modifierTotal
+
+    const cartKey =
+        buildCartKey(
+            product.id,
+            modifiers,
+            itemNote
+        )
+
+    const old =
+        state.cart.get(cartKey)
+
+    /*
+     * DINE-IN
+     * บันทึกลง Supabase ทันที
+     */
+    if (isHeldDineInOrder()) {
+
+        try {
+
+            if (
+                old?.restaurant_item_id
+            ) {
+
+                const newQuantity =
+                    Number(old.quantity || 0)
+                    +
+                    1
+
+                const {
+                    error
+                } =
+                    await supabase.rpc(
+                        'update_restaurant_order_item_quantity',
+                        {
+                            p_item_id:
+                                old.restaurant_item_id,
+
+                            p_quantity:
+                                newQuantity
+                        }
+                    )
+
+                if (error) {
+                    throw error
+                }
+
+                old.quantity =
+                    newQuantity
+
+            } else {
+
+                const {
+                    data,
+                    error
+                } =
+                    await supabase.rpc(
+                        'add_restaurant_order_item',
+                        {
+                            p_order_id:
+                                state.currentOrder.id,
+
+                            p_product_id:
+                                product.id,
+
+                            p_quantity:
+                                1,
+
+                            p_modifiers:
+                                modifiers.map(
+                                    modifier => ({
+                                        group_id:
+                                            modifier.group_id,
+
+                                        option_id:
+                                            modifier.option_id
+                                    })
+                                ),
+
+                            p_item_note:
+                                String(
+                                    itemNote || ''
+                                ).trim()
+                                || null
+                        }
+                    )
+
+                if (error) {
+                    throw error
+                }
+
+                const saved =
+                    Array.isArray(data)
+                        ? data[0]
+                        : data
+
+                state.cart.set(
+                    cartKey,
+                    {
+                        ...product,
+
+                        cartKey,
+
+                        restaurant_item_id:
+                            saved?.item_id || null,
+
+                        base_price:
+                            Number(
+                                product.price || 0
+                            ),
+
+                        price:
+                            Number(
+                                saved?.unit_price
+                                ?? unitPrice
+                            ),
+
+                        modifier_total:
+                            modifierTotal,
+
+                        modifiers,
+
+                        item_note:
+                            String(
+                                itemNote || ''
+                            ).trim(),
+
+                        quantity:
+                            1
+                    }
+                )
+            }
+
+            renderCart()
+
+            msg(
+                el.pageMessage,
+                'บันทึกรายการเข้าบิลโต๊ะแล้ว'
+            )
+
+            setTimeout(
+                () => {
+                    if (
+                        el.pageMessage?.textContent ===
+                        'บันทึกรายการเข้าบิลโต๊ะแล้ว'
+                    ) {
+                        msg(
+                            el.pageMessage,
+                            ''
+                        )
+                    }
+                },
+                1000
+            )
+
+            return true
+
+        } catch (error) {
+
+            console.error(
+                'Save held order item error:',
+                error
+            )
+
+            msg(
+                el.pageMessage,
+                error.message
+                || 'บันทึกรายการลงโต๊ะไม่สำเร็จ'
+            )
+
+            return false
+        }
+    }
+
+    /*
+     * TAKEAWAY
+     * ใช้ตะกร้าในหน้าเว็บเหมือนเดิม
+     */
+    if (old) {
+        old.quantity++
+    } else {
+        state.cart.set(
+            cartKey,
+            {
+                ...product,
+                cartKey,
+                base_price:
+                    Number(
+                        product.price || 0
+                    ),
+                price:
+                    unitPrice,
+                modifier_total:
+                    modifierTotal,
+                modifiers,
+                item_note:
+                    String(
+                        itemNote || ''
+                    ).trim(),
+                quantity:
+                    1
+            }
+        )
+    }
+
+    msg(
+        el.pageMessage,
+        ''
+    )
+
+    renderCart()
+
+    return true
+}
+
+
+async function confirmModifierSelection() {
+
+    const product =
+        state.modifierProduct
+
+
+    if (!product) {
+        return
+    }
+
+
+    const modal =
+        document.getElementById(
+            'modifierModal'
+        )
+
+
+    const message =
+        document.getElementById(
+            'modifierMessage'
+        )
+
+
+    const groups =
+        [
+            ...modal.querySelectorAll(
+                '[data-modifier-group]'
+            )
+        ]
+
+
+    for (
+        const group
+        of
+        groups
+    ) {
+
+        const checked =
+            [
+                ...group.querySelectorAll(
+                    'input:checked'
+                )
+            ]
+
+
+        const required =
+            group.dataset.required ===
+            'true'
+
+
+        const min =
+            Number(
+                group.dataset.min
+                ||
+                0
+            )
+
+
+        const max =
+            Number(
+                group.dataset.max
+                ||
+                0
+            )
+
+
+        const selectionType =
+            group.dataset.selectionType
+
+
+        const groupTitle =
+            group
+                .querySelector(
+                    '.modifier-group-head strong'
+                )
+                ?.textContent
+                ?.trim()
+            ||
+            'ตัวเลือก'
+
+
+        if (
+            (
+                required
+                &&
+                checked.length <
+                Math.max(
+                    min,
+                    1
+                )
+            )
+            ||
+            checked.length <
+            min
+        ) {
+
+            msg(
+                message,
+                `กรุณาเลือก ${groupTitle}`
+            )
+
+
+            return
+        }
+
+
+        if (
+            (
+                max > 0
+                &&
+                checked.length >
+                max
+            )
+            ||
+            (
+                selectionType ===
+                'single'
+                &&
+                checked.length >
+                1
+            )
+        ) {
+
+            msg(
+                message,
+                `เลือก ${groupTitle} เกินจำนวนที่กำหนด`
+            )
+
+
+            return
+        }
+    }
+
+
+    const modifiers =
+        [
+            ...modal.querySelectorAll(
+                'input[data-group-id]:checked'
+            )
+        ]
+            .map(
+                input => ({
+                    group_id:
+                        input.dataset.groupId,
+
+                    group_name:
+                        input.dataset.groupName,
+
+                    option_id:
+                        input.value,
+
+                    option_name:
+                        input.dataset.optionName,
+
+                    price_adjustment:
+                        Number(
+                            input.dataset.price
+                            ||
+                            0
+                        )
+                })
+            )
+
+
+    const itemNote =
+        document.getElementById(
+            'modifierItemNote'
+        )
+            ?.value
+            ?.trim()
+        ||
+        ''
+
+
+    const added =
+        await addConfiguredProduct(
+            product,
+            modifiers,
+            itemNote
+        )
+
+
+    if (added) {
+
+        closeModifierModal()
+    }
+}
+
+
+/* ========================================
    ADD PRODUCT
 ======================================== */
 
-function add(
+async function add(
     id
 ) {
 
@@ -2460,7 +4134,9 @@ function add(
             'กรุณาเริ่มออเดอร์ก่อนเลือกสินค้า'
         )
 
+
         openOrderStartModal()
+
 
         return
     }
@@ -2507,56 +4183,58 @@ function add(
     }
 
 
-    const old =
-        state.cart.get(
-            id
+    try {
+
+        const groups =
+            await loadProductModifiers(
+                product.id
+            )
+
+
+        /*
+         * เมนูไม่มี Modifier
+         * เพิ่มลงตะกร้าได้ทันทีเหมือนเดิม
+         */
+        if (
+            !groups.length
+        ) {
+
+            await addConfiguredProduct(
+                product,
+                [],
+                ''
+            )
+
+
+            return
+        }
+
+
+        /*
+         * เมนูมี Modifier
+         * เปิด Popup ให้เลือกก่อน
+         */
+        await openModifierModal(
+            product,
+            groups
         )
 
 
-    const currentQty =
-        old?.quantity
-        ||
-        0
+    } catch (error) {
 
+        console.error(
+            'Load product modifiers error:',
+            error
+        )
 
-    if (
-        currentQty >=
-        availableQty
-    ) {
 
         msg(
             el.pageMessage,
-            `เพิ่มไม่ได้ สามารถขาย ${product.name} ได้สูงสุด ${availableQty} จาน`
-        )
-
-
-        return
-    }
-
-
-    if (old) {
-
-        old.quantity++
-
-    } else {
-
-        state.cart.set(
-            id,
-            {
-                ...product,
-                quantity: 1
-            }
+            error.message
+            ||
+            'โหลดตัวเลือกสินค้าไม่สำเร็จ'
         )
     }
-
-
-    msg(
-        el.pageMessage,
-        ''
-    )
-
-
-    renderCart()
 }
 
 
@@ -2564,76 +4242,221 @@ function add(
    CHANGE CART QTY
 ======================================== */
 
-function qty(
-    id,
+
+async function qty(
+    cartKey,
     change
 ) {
 
     const item =
-        state.cart.get(
-            id
-        )
-
+        state.cart.get(cartKey)
 
     if (!item) {
         return
     }
 
-
-    if (
-        change >
-        0
-    ) {
+    if (change > 0) {
 
         const availability =
-            getAvailability(
-                id
-            )
-
+            getAvailability(item.id)
 
         const availableQty =
             Math.floor(
-                availability
-                    .available_qty
+                availability.available_qty
             )
 
+        const currentProductQty =
+            cartProductQuantity(item.id)
 
         if (
-            item.quantity >=
+            currentProductQty >=
             availableQty
         ) {
-
             msg(
                 el.pageMessage,
                 `เพิ่มไม่ได้ สามารถขาย ${item.name} ได้สูงสุด ${availableQty} จาน`
             )
+            return
+        }
+    }
 
+    const newQuantity =
+        Number(item.quantity || 0)
+        +
+        change
+
+    if (
+        isHeldDineInOrder()
+        &&
+        item.restaurant_item_id
+    ) {
+
+        try {
+
+            if (newQuantity <= 0) {
+
+                const {
+                    error
+                } =
+                    await supabase.rpc(
+                        'remove_restaurant_order_item',
+                        {
+                            p_item_id:
+                                item.restaurant_item_id
+                        }
+                    )
+
+                if (error) {
+                    throw error
+                }
+
+                state.cart.delete(cartKey)
+
+            } else {
+
+                const {
+                    error
+                } =
+                    await supabase.rpc(
+                        'update_restaurant_order_item_quantity',
+                        {
+                            p_item_id:
+                                item.restaurant_item_id,
+
+                            p_quantity:
+                                newQuantity
+                        }
+                    )
+
+                if (error) {
+                    throw error
+                }
+
+                item.quantity =
+                    newQuantity
+            }
+
+            msg(
+                el.pageMessage,
+                ''
+            )
+
+            renderCart()
+
+            return
+
+        } catch (error) {
+
+            console.error(
+                'Update held order quantity error:',
+                error
+            )
+
+            msg(
+                el.pageMessage,
+                error.message
+                || 'แก้จำนวนสินค้าไม่สำเร็จ'
+            )
 
             return
         }
     }
 
+    item.quantity =
+        newQuantity
 
-    item.quantity +=
-        change
-
-
-    if (
-        item.quantity <=
-        0
-    ) {
-
-        state.cart.delete(
-            id
-        )
+    if (item.quantity <= 0) {
+        state.cart.delete(cartKey)
     }
-
 
     msg(
         el.pageMessage,
         ''
     )
 
+    renderCart()
+}
+
+
+
+async function removeCartItem(
+    cartKey
+) {
+
+    const item =
+        state.cart.get(cartKey)
+
+    if (!item) {
+        return
+    }
+
+    if (
+        isHeldDineInOrder()
+        &&
+        item.restaurant_item_id
+    ) {
+
+        const {
+            error
+        } =
+            await supabase.rpc(
+                'remove_restaurant_order_item',
+                {
+                    p_item_id:
+                        item.restaurant_item_id
+                }
+            )
+
+        if (error) {
+            throw error
+        }
+    }
+
+    state.cart.delete(cartKey)
+
+    renderCart()
+}
+
+
+async function clearCurrentCart() {
+
+    const list =
+        items()
+
+    if (isHeldDineInOrder()) {
+
+        for (
+            const item
+            of
+            list
+        ) {
+
+            if (
+                item.restaurant_item_id
+            ) {
+
+                const {
+                    error
+                } =
+                    await supabase.rpc(
+                        'remove_restaurant_order_item',
+                        {
+                            p_item_id:
+                                item.restaurant_item_id
+                        }
+                    )
+
+                if (error) {
+                    throw error
+                }
+            }
+        }
+    }
+
+    state.cart.clear()
+
+    el.discountInput.value =
+        '0'
 
     renderCart()
 }
@@ -2724,89 +4547,176 @@ function renderCart() {
     el.cartItems.innerHTML =
         list
             .map(
-                item =>
-                    `
-                    <div
-                        class="cart-item"
-                    >
+                item => {
 
-                        <div>
+                    const modifierText =
+                        (item.modifiers || [])
+                            .map(
+                                modifier => {
 
-                            <strong>
-                                ${esc(
-                        item.name
-                    )}
-                            </strong>
-
-
-                            <small>
-                                ${money(
-                        item.price
-                    )}
-                                ×
-                                ${item.quantity}
-                            </small>
+                                    const price =
+                                        Number(
+                                            modifier.price_adjustment
+                                            ||
+                                            0
+                                        )
 
 
-                            <div
-                                class="qty"
-                            >
+                                    return (
+                                        esc(
+                                            modifier.option_name
+                                        )
+                                        +
+                                        (
+                                            price > 0
 
-                                <button
-                                    type="button"
-                                    data-act="dec"
-                                    data-id="${esc(
-                        item.id
-                    )}"
-                                >
-                                    −
-                                </button>
+                                                ? ` (+${money(
+                                                    price
+                                                )})`
+
+                                                : ''
+                                        )
+                                    )
+                                }
+                            )
+                            .join(
+                                ' • '
+                            )
 
 
-                                <b>
+                    const noteText =
+                        item.item_note
+                            ? `หมายเหตุ: ${esc(
+                                item.item_note
+                            )}`
+                            : ''
+
+
+                    return `
+                        <div
+                            class="cart-item"
+                        >
+
+                            <div>
+
+                                <strong>
+                                    ${esc(
+                                        item.name
+                                    )}
+                                </strong>
+
+
+                                ${
+                                    modifierText
+
+                                        ? `
+                                            <small
+                                                style="
+                                                    color:#5f6368;
+                                                    margin-top:4px;
+                                                "
+                                            >
+                                                ${modifierText}
+                                            </small>
+                                        `
+
+                                        : ''
+                                }
+
+
+                                ${
+                                    noteText
+
+                                        ? `
+                                            <small
+                                                style="
+                                                    color:#d97706;
+                                                    margin-top:3px;
+                                                "
+                                            >
+                                                ${noteText}
+                                            </small>
+                                        `
+
+                                        : ''
+                                }
+
+
+                                <small>
+                                    ${money(
+                                        item.price
+                                    )}
+                                    ×
                                     ${item.quantity}
-                                </b>
+                                </small>
 
 
-                                <button
-                                    type="button"
-                                    data-act="inc"
-                                    data-id="${esc(
-                        item.id
-                    )}"
+                                <div
+                                    class="qty"
                                 >
-                                    ＋
-                                </button>
+
+                                    <button
+                                        type="button"
+                                        data-act="dec"
+                                        data-id="${esc(
+                                            item.cartKey
+                                            ||
+                                            item.id
+                                        )}"
+                                    >
+                                        −
+                                    </button>
 
 
-                                <button
-                                    type="button"
-                                    class="remove"
-                                    data-act="remove"
-                                    data-id="${esc(
-                        item.id
-                    )}"
-                                >
-                                    ลบ
-                                </button>
+                                    <b>
+                                        ${item.quantity}
+                                    </b>
+
+
+                                    <button
+                                        type="button"
+                                        data-act="inc"
+                                        data-id="${esc(
+                                            item.cartKey
+                                            ||
+                                            item.id
+                                        )}"
+                                    >
+                                        ＋
+                                    </button>
+
+
+                                    <button
+                                        type="button"
+                                        class="remove"
+                                        data-act="remove"
+                                        data-id="${esc(
+                                            item.cartKey
+                                            ||
+                                            item.id
+                                        )}"
+                                    >
+                                        ลบ
+                                    </button>
+
+                                </div>
 
                             </div>
 
+
+                            <strong>
+                                ${money(
+                                    Number(
+                                        item.price
+                                    )
+                                    *
+                                    item.quantity
+                                )}
+                            </strong>
+
                         </div>
-
-
-                        <strong>
-                            ${money(
-                        Number(
-                            item.price
-                        )
-                        *
-                        item.quantity
-                    )}
-                        </strong>
-
-                    </div>
                     `
+                }
             )
             .join('')
 
@@ -3505,9 +5415,71 @@ function renderReceipt() {
                                 class="receipt-item-name"
                             >
                                 ${esc(
-                            item.name
-                        )}
+                                    item.name
+                                )}
                             </div>
+
+
+                            ${
+                                (item.modifiers || []).length
+
+                                    ? `
+                                        <div
+                                            style="
+                                                font-size:10px;
+                                                margin:1px 0 2px 8px;
+                                            "
+                                        >
+                                            ${(item.modifiers || [])
+                                                .map(
+                                                    modifier =>
+                                                        `${esc(
+                                                            modifier.group_name
+                                                            ||
+                                                            ''
+                                                        )}: ${esc(
+                                                            modifier.option_name
+                                                            ||
+                                                            ''
+                                                        )}${
+                                                            Number(
+                                                                modifier.price_adjustment
+                                                                ||
+                                                                0
+                                                            ) > 0
+                                                                ? ` +${money(
+                                                                    modifier.price_adjustment
+                                                                )}`
+                                                                : ''
+                                                        }`
+                                                )
+                                                .join('<br>')}
+                                        </div>
+                                    `
+
+                                    : ''
+                            }
+
+
+                            ${
+                                item.item_note
+
+                                    ? `
+                                        <div
+                                            style="
+                                                font-size:10px;
+                                                margin:1px 0 2px 8px;
+                                            "
+                                        >
+                                            หมายเหตุ:
+                                            ${esc(
+                                                item.item_note
+                                            )}
+                                        </div>
+                                    `
+
+                                    : ''
+                            }
 
 
                             <div
@@ -3518,19 +5490,19 @@ function renderReceipt() {
                                     ${item.quantity}
                                     ×
                                     ${money(
-                            item.price
-                        )}
+                                        item.price
+                                    )}
                                 </span>
 
 
                                 <strong>
                                     ${money(
-                            Number(
-                                item.price
-                            )
-                            *
-                            item.quantity
-                        )}
+                                        Number(
+                                            item.price
+                                        )
+                                        *
+                                        item.quantity
+                                    )}
                                 </strong>
 
                             </div>
@@ -3716,6 +5688,50 @@ async function confirmPayment() {
                                 item.price
                             ),
 
+                        base_price:
+                            Number(
+                                item.base_price
+                                ??
+                                item.price
+                            ),
+
+                        modifier_total:
+                            Number(
+                                item.modifier_total
+                                ||
+                                0
+                            ),
+
+                        modifiers:
+                            (item.modifiers || [])
+                                .map(
+                                    modifier => ({
+                                        group_id:
+                                            modifier.group_id,
+
+                                        group_name:
+                                            modifier.group_name,
+
+                                        option_id:
+                                            modifier.option_id,
+
+                                        option_name:
+                                            modifier.option_name,
+
+                                        price_adjustment:
+                                            Number(
+                                                modifier.price_adjustment
+                                                ||
+                                                0
+                                            )
+                                    })
+                                ),
+
+                        item_note:
+                            item.item_note
+                            ||
+                            null,
+
                         quantity:
                             item.quantity
                     })
@@ -3840,7 +5856,24 @@ async function confirmPayment() {
                                         item.id,
 
                                     quantity:
-                                        item.quantity
+                                        item.quantity,
+
+                                    modifiers:
+                                        (item.modifiers || [])
+                                            .map(
+                                                modifier => ({
+                                                    group_id:
+                                                        modifier.group_id,
+
+                                                    option_id:
+                                                        modifier.option_id
+                                                })
+                                            ),
+
+                                    item_note:
+                                        item.item_note
+                                        ||
+                                        null
                                 })
                             )
                 }
@@ -3947,6 +5980,15 @@ async function confirmPayment() {
          * หลังบันทึกการขายสำเร็จ
          */
         await completeCurrentOrder()
+
+        try {
+            await loadRestaurantTables()
+        } catch (tableError) {
+            console.error(
+                'Reload tables after payment error:',
+                tableError
+            )
+        }
 
         /*
 * ล้างตะกร้าหลังชำระเงินสำเร็จ
@@ -4075,6 +6117,38 @@ async function confirmPayment() {
         }
 
 
+        /*
+         * Modifier ไม่ถูกต้อง
+         */
+        if (
+            errorMessage.includes(
+                'INVALID_MODIFIER_OPTION'
+            )
+            ||
+            errorMessage.includes(
+                'INVALID_MODIFIERS'
+            )
+        ) {
+
+            errorMessage =
+                'ตัวเลือกสินค้าไม่ถูกต้อง กรุณาเลือกใหม่'
+        }
+
+
+        /*
+         * เลือก Modifier ไม่ครบ / เกินจำนวน
+         */
+        if (
+            errorMessage.includes(
+                'MODIFIER_SELECTION_REQUIRED_OR_INVALID'
+            )
+        ) {
+
+            errorMessage =
+                'กรุณาตรวจสอบตัวเลือกสินค้าที่จำเป็นก่อนชำระเงิน'
+        }
+
+
         msg(
             el.paymentMessage,
             errorMessage
@@ -4156,6 +6230,14 @@ async function logout() {
     )
 }
 
+document
+    .getElementById('backToDashboardBtn')
+    ?.addEventListener(
+        'click',
+        () => {
+            location.href = './dashboard.html'
+        }
+    )
 /* ========================================
    INIT
 ======================================== */
@@ -4197,6 +6279,8 @@ async function init() {
          * แสดงข้อมูลผู้ใช้
          */
         renderUser()
+
+        ensureTableHoldStyle()
 
 
         /*
@@ -4289,10 +6373,27 @@ async function init() {
 el.backBtn
     ?.addEventListener(
         'click',
-        () => {
+        async () => {
+
+            if (
+                isHeldDineInOrder()
+            ) {
+
+                await holdCurrentTableAndChooseAnother()
+
+                return
+            }
 
             location.href =
                 './dashboard.html'
+        }
+    )
+    el.holdTableBtn
+    ?.addEventListener(
+        'click',
+        async () => {
+
+            await holdCurrentTableAndChooseAnother()
         }
     )
 
@@ -4345,13 +6446,36 @@ el.refreshBtn
                 /*
                  * โหลดสินค้าใหม่
                  */
+                state.modifierCache.clear()
+
                 await loadCatalog()
 
 
                 /*
-                 * อัปเดตตะกร้า
+                 * ถ้าเป็นโต๊ะค้าง โหลดรายการล่าสุดจาก Supabase
                  */
-                renderCart()
+                if (
+                    isHeldDineInOrder()
+                ) {
+
+                    const table =
+                        state.tables.find(
+                            item =>
+                                item.id ===
+                                state.currentOrder.table_id
+                        )
+                        ||
+                        null
+
+                    await loadHeldRestaurantOrder(
+                        state.currentOrder.id,
+                        table
+                    )
+
+                } else {
+
+                    renderCart()
+                }
 
 
                 /*
@@ -4455,75 +6579,61 @@ el.productGrid
 el.cartItems
     ?.addEventListener(
         'click',
-        event => {
+        async event => {
 
             const button =
                 event.target.closest(
                     '[data-act]'
                 )
 
-
             if (!button) {
-
                 return
             }
-
 
             const id =
                 button.dataset.id
 
-
             const action =
                 button.dataset.act
 
+            try {
 
-            if (
-                action ===
-                'inc'
-            ) {
+                if (action === 'inc') {
+                    await qty(
+                        id,
+                        1
+                    )
+                    return
+                }
 
-                qty(
-                    id,
-                    1
+                if (action === 'dec') {
+                    await qty(
+                        id,
+                        -1
+                    )
+                    return
+                }
+
+                if (action === 'remove') {
+                    await removeCartItem(id)
+                    msg(
+                        el.pageMessage,
+                        ''
+                    )
+                }
+
+            } catch (error) {
+
+                console.error(
+                    'Cart item action error:',
+                    error
                 )
-
-
-                return
-            }
-
-
-            if (
-                action ===
-                'dec'
-            ) {
-
-                qty(
-                    id,
-                    -1
-                )
-
-
-                return
-            }
-
-
-            if (
-                action ===
-                'remove'
-            ) {
-
-                state.cart.delete(
-                    id
-                )
-
 
                 msg(
                     el.pageMessage,
-                    ''
+                    error.message
+                    || 'แก้ไขรายการไม่สำเร็จ'
                 )
-
-
-                renderCart()
             }
         }
     )
@@ -4547,44 +6657,45 @@ el.discountInput
 el.clearCartBtn
     ?.addEventListener(
         'click',
-        () => {
+        async () => {
 
-            if (
-                !state.cart.size
-            ) {
-
+            if (!state.cart.size) {
                 return
             }
-
 
             const confirmed =
                 confirm(
-                    'ล้างตะกร้าหรือไม่?'
+                    isHeldDineInOrder()
+                        ? 'ลบรายการทั้งหมดออกจากบิลโต๊ะนี้หรือไม่?'
+                        : 'ล้างตะกร้าหรือไม่?'
                 )
 
-
-            if (
-                !confirmed
-            ) {
-
+            if (!confirmed) {
                 return
             }
 
+            try {
 
-            state.cart.clear()
+                await clearCurrentCart()
 
+                msg(
+                    el.pageMessage,
+                    ''
+                )
 
-            el.discountInput.value =
-                '0'
+            } catch (error) {
 
+                console.error(
+                    'Clear cart error:',
+                    error
+                )
 
-            msg(
-                el.pageMessage,
-                ''
-            )
-
-
-            renderCart()
+                msg(
+                    el.pageMessage,
+                    error.message
+                    || 'ล้างรายการไม่สำเร็จ'
+                )
+            }
         }
     )
 
@@ -4991,6 +7102,32 @@ document
                 event.key !==
                 'Escape'
             ) {
+
+                return
+            }
+
+
+            /*
+             * ปิด Modifier Modal ก่อน
+             */
+            const modifierModal =
+                document.getElementById(
+                    'modifierModal'
+                )
+
+
+            if (
+                modifierModal
+                &&
+                !modifierModal
+                    .classList
+                    .contains(
+                        'hidden'
+                    )
+            ) {
+
+                closeModifierModal()
+
 
                 return
             }
