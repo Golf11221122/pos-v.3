@@ -543,3 +543,64 @@ button {
         font-size: 24px;
     }
 }
+
+/* KITCHEN STATION FILTER */
+.station-picker {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 42px;
+    padding: 6px 9px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--white)
+}
+
+.station-picker span {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap
+}
+
+.station-picker select {
+    min-width: 180px;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    font: inherit;
+    font-weight: 800;
+    outline: none
+}
+
+.station-context {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    margin: -6px 0 14px;
+    padding: 10px 13px;
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    background: var(--white)
+}
+
+.station-context span {
+    color: var(--muted);
+    font-size: 13px
+}
+
+.station-context strong {
+    font-size: 14px
+}
+
+@media(max-width:760px) {
+    .station-picker {
+        grid-column: 1/-1;
+        width: 100%
+    }
+
+    .station-picker select {
+        width: 100%;
+        min-width: 0
+    }
+}
