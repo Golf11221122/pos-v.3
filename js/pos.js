@@ -5252,6 +5252,234 @@ function setupReceiptQueueDisplay(
 
 
 /* ========================================
+   RECEIPT ITEM MERGE
+   รวมเมนูที่เหมือนกันเฉพาะตอนออกใบเสร็จ
+   ไม่กระทบรายการแยกรอบสั่งใน POS / Kitchen
+======================================== */
+
+function receiptModifierKey(
+    modifiers = []
+) {
+
+    return [...modifiers]
+        .map(
+            modifier => ({
+                group_id:
+                    modifier.group_id
+                    ||
+                    '',
+
+                group_name:
+                    modifier.group_name
+                    ||
+                    '',
+
+                option_id:
+                    modifier.option_id
+                    ||
+                    '',
+
+                option_name:
+                    modifier.option_name
+                    ||
+                    '',
+
+                price_adjustment:
+                    Number(
+                        modifier.price_adjustment
+                        ||
+                        0
+                    )
+            })
+        )
+        .sort(
+            (a, b) => {
+
+                const left =
+                    `${a.group_id}|${a.option_id}|${a.group_name}|${a.option_name}|${a.price_adjustment}`
+
+                const right =
+                    `${b.group_id}|${b.option_id}|${b.group_name}|${b.option_name}|${b.price_adjustment}`
+
+                return left.localeCompare(
+                    right
+                )
+            }
+        )
+        .map(
+            modifier =>
+                [
+                    modifier.group_id,
+                    modifier.group_name,
+                    modifier.option_id,
+                    modifier.option_name,
+                    modifier.price_adjustment
+                ].join('|')
+        )
+        .join('||')
+}
+
+
+function mergeReceiptItems(
+    sourceItems = []
+) {
+
+    const grouped =
+        new Map()
+
+
+    for (
+        const item
+        of
+        sourceItems
+    ) {
+
+        const modifiers =
+            Array.isArray(
+                item.modifiers
+            )
+                ? item.modifiers
+                : []
+
+
+        const itemNote =
+            String(
+                item.item_note
+                ||
+                ''
+            )
+                .trim()
+
+
+        /*
+         * รวมเฉพาะรายการที่เหมือนกันจริง:
+         * - product เดียวกัน
+         * - ราคาต่อหน่วยเท่ากัน
+         * - Modifier เหมือนกัน
+         * - หมายเหตุเหมือนกัน
+         *
+         * ไม่ใช้ restaurant_item_id
+         * เพราะใบเสร็จลูกค้าต้องการยอดรวม
+         */
+        const key =
+            [
+                item.id
+                ||
+                item.product_id
+                ||
+                item.name
+                ||
+                '',
+
+                Number(
+                    item.price
+                    ||
+                    0
+                ),
+
+                receiptModifierKey(
+                    modifiers
+                ),
+
+                itemNote
+            ].join('::')
+
+
+        const quantity =
+            Number(
+                item.quantity
+                ||
+                0
+            )
+
+
+        if (
+            grouped.has(
+                key
+            )
+        ) {
+
+            grouped.get(
+                key
+            ).quantity +=
+                quantity
+
+            continue
+        }
+
+
+        grouped.set(
+            key,
+            {
+                id:
+                    item.id,
+
+                name:
+                    item.name,
+
+                price:
+                    Number(
+                        item.price
+                    ),
+
+                base_price:
+                    Number(
+                        item.base_price
+                        ??
+                        item.price
+                    ),
+
+                modifier_total:
+                    Number(
+                        item.modifier_total
+                        ||
+                        0
+                    ),
+
+                modifiers:
+                    modifiers
+                        .map(
+                            modifier => ({
+                                group_id:
+                                    modifier.group_id,
+
+                                group_name:
+                                    modifier.group_name,
+
+                                option_id:
+                                    modifier.option_id,
+
+                                option_name:
+                                    modifier.option_name,
+
+                                price_adjustment:
+                                    Number(
+                                        modifier.price_adjustment
+                                        ||
+                                        0
+                                    )
+                            })
+                        ),
+
+                item_note:
+                    itemNote
+                    ||
+                    null,
+
+                quantity:
+                    quantity
+            }
+        )
+    }
+
+
+    return [
+        ...grouped.values()
+    ]
+}
+
+
+/* ========================================
    RECEIPT
 ======================================== */
 
@@ -5692,69 +5920,24 @@ async function confirmPayment() {
      */
     const saleSnapshot = {
 
+        /*
+         * ใบเสร็จลูกค้า:
+         * รวมเมนูที่เหมือนกันจากหลายรอบสั่ง
+         *
+         * ตัวอย่าง:
+         * รอบ 1 ข้าวกะเพราหมูสับ x1
+         * รอบ 2 ข้าวกะเพราหมูสับ x2
+         *
+         * ใบเสร็จ:
+         * ข้าวกะเพราหมูสับ x3
+         *
+         * ถ้า Modifier / หมายเหตุ / ราคา ต่างกัน
+         * จะยังแยกเป็นคนละบรรทัด
+         */
         items:
-            items()
-                .map(
-                    item => ({
-                        id:
-                            item.id,
-
-                        name:
-                            item.name,
-
-                        price:
-                            Number(
-                                item.price
-                            ),
-
-                        base_price:
-                            Number(
-                                item.base_price
-                                ??
-                                item.price
-                            ),
-
-                        modifier_total:
-                            Number(
-                                item.modifier_total
-                                ||
-                                0
-                            ),
-
-                        modifiers:
-                            (item.modifiers || [])
-                                .map(
-                                    modifier => ({
-                                        group_id:
-                                            modifier.group_id,
-
-                                        group_name:
-                                            modifier.group_name,
-
-                                        option_id:
-                                            modifier.option_id,
-
-                                        option_name:
-                                            modifier.option_name,
-
-                                        price_adjustment:
-                                            Number(
-                                                modifier.price_adjustment
-                                                ||
-                                                0
-                                            )
-                                    })
-                                ),
-
-                        item_note:
-                            item.item_note
-                            ||
-                            null,
-
-                        quantity:
-                            item.quantity
-                    })
-                ),
+            mergeReceiptItems(
+                items()
+            ),
 
         subtotal:
             subtotal(),
