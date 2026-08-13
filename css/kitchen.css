@@ -1,0 +1,352 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+:root {
+    --primary: #f5b400;
+    --background: #f3f4f6;
+    --white: #ffffff;
+    --text: #202124;
+    --muted: #70757a;
+    --border: #e2e5e9;
+    --danger: #d93025;
+    --success: #188038;
+}
+
+body {
+    min-height: 100vh;
+    background: var(--background);
+    color: var(--text);
+    font-family: Arial, "Noto Sans Thai", sans-serif;
+}
+
+button {
+    font: inherit;
+    cursor: pointer;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.topbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+
+    padding: 14px 18px;
+
+    background: var(--white);
+    border-bottom: 1px solid var(--border);
+}
+
+.topbar h1 {
+    font-size: 22px;
+}
+
+.topbar small {
+    display: block;
+    margin-top: 3px;
+    color: var(--muted);
+}
+
+.top-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.outline-btn,
+.sound-btn {
+    min-height: 42px;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--white);
+}
+
+.sound-btn.active {
+    border-color: var(--primary);
+    background: #fff4c7;
+    font-weight: 800;
+}
+
+.page {
+    width: min(1200px, 100%);
+    margin: 0 auto;
+    padding: 18px;
+}
+
+.summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+
+    margin-bottom: 16px;
+    padding: 16px;
+
+    border: 1px solid var(--border);
+    border-radius: 14px;
+
+    background: var(--white);
+}
+
+.summary span {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.summary strong {
+    display: block;
+    margin-top: 4px;
+    font-size: 30px;
+}
+
+.summary p {
+    color: var(--muted);
+}
+
+.empty-state {
+    display: grid;
+    min-height: 220px;
+    place-items: center;
+
+    border: 1px dashed var(--border);
+    border-radius: 16px;
+
+    background: var(--white);
+
+    color: var(--muted);
+    font-size: 18px;
+}
+
+.ticket-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+    gap: 14px;
+}
+
+.ticket-card {
+    overflow: hidden;
+
+    border: 2px solid var(--primary);
+    border-radius: 16px;
+
+    background: var(--white);
+}
+
+.ticket-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+
+    padding: 14px 15px;
+
+    background: #fff7d6;
+}
+
+.ticket-head h2 {
+    font-size: 20px;
+}
+
+.ticket-time {
+    margin-top: 4px;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.new-badge {
+    padding: 5px 8px;
+    border-radius: 999px;
+    background: var(--danger);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.ticket-body {
+    padding: 15px;
+}
+
+.product-name {
+    font-size: 20px;
+    font-weight: 800;
+}
+
+.quantity {
+    margin-top: 4px;
+    font-size: 26px;
+    font-weight: 900;
+}
+
+.modifier-list,
+.note {
+    margin-top: 10px;
+    padding: 9px 10px;
+    border-radius: 9px;
+    background: #f8f9fa;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.note {
+    background: #fff4c7;
+}
+
+.ticket-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+
+    padding: 12px 15px 15px;
+}
+
+.ticket-actions button {
+    min-height: 44px;
+    border-radius: 10px;
+    font-weight: 800;
+}
+
+.print-btn {
+    border: 1px solid var(--border);
+    background: var(--white);
+}
+
+.ack-btn {
+    border: 1px solid var(--primary);
+    background: var(--primary);
+}
+
+.message {
+    min-height: 18px;
+    margin-top: 12px;
+    color: var(--danger);
+}
+
+.kitchen-print-area {
+    display: none;
+}
+
+@media (max-width: 760px) {
+
+    .topbar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .top-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .sound-btn {
+        grid-column: 1 / -1;
+    }
+
+    .page {
+        padding: 12px;
+    }
+
+    .summary {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .ticket-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+/* ========================================
+   PRINT KITCHEN TICKET 80mm
+======================================== */
+
+@media print {
+
+    @page {
+        size: 80mm auto;
+        margin: 3mm;
+    }
+
+    body * {
+        visibility: hidden !important;
+    }
+
+    #kitchenPrintArea,
+    #kitchenPrintArea * {
+        visibility: visible !important;
+    }
+
+    #kitchenPrintArea {
+        position: absolute;
+        left: 0;
+        top: 0;
+
+        display: block !important;
+
+        width: 74mm;
+
+        color: #000;
+
+        font-family:
+            Arial,
+            "Noto Sans Thai",
+            sans-serif;
+    }
+
+    .print-ticket {
+        width: 100%;
+        font-size: 12px;
+    }
+
+    .print-center {
+        text-align: center;
+    }
+
+    .print-table {
+        margin: 3mm 0;
+        font-size: 26px;
+        font-weight: 900;
+        text-align: center;
+    }
+
+    .print-product {
+        margin-top: 3mm;
+        font-size: 20px;
+        font-weight: 900;
+    }
+
+    .print-qty {
+        font-size: 22px;
+        font-weight: 900;
+    }
+
+    .print-detail {
+        margin-top: 2mm;
+        font-size: 13px;
+        line-height: 1.45;
+    }
+
+    .print-note {
+        margin-top: 2mm;
+        padding: 2mm;
+        border: 1px solid #000;
+        font-size: 14px;
+        font-weight: 800;
+    }
+
+    .print-line {
+        margin: 3mm 0;
+        border-top: 1px dashed #000;
+    }
+}
