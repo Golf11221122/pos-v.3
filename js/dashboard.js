@@ -23,6 +23,15 @@ const elements = {
             'sidebar'
         ),
 
+    sidebarOverlay:
+        document.getElementById('sidebarOverlay'),
+
+    managementToggle:
+        document.getElementById('managementToggle'),
+
+    managementMenu:
+        document.getElementById('managementMenu'),
+
     currentDate:
         document.getElementById(
             'currentDate'
@@ -2313,18 +2322,40 @@ elements.logoutBtn
    MOBILE SIDEBAR
 ======================================== */
 
-elements.menuToggle
-    ?.addEventListener(
-        'click',
-        () => {
+function setSidebarOpen(isOpen) {
+    elements.sidebar?.classList.toggle('open', isOpen)
+    elements.sidebarOverlay?.classList.toggle('open', isOpen)
+    document.body.classList.toggle('sidebar-open', isOpen)
+}
 
-            elements.sidebar
-                ?.classList
-                .toggle(
-                    'open'
-                )
-        }
-    )
+elements.menuToggle
+    ?.addEventListener('click', () => {
+        setSidebarOpen(!elements.sidebar?.classList.contains('open'))
+    })
+
+elements.sidebarOverlay
+    ?.addEventListener('click', () => setSidebarOpen(false))
+
+elements.managementToggle
+    ?.addEventListener('click', () => {
+        const isOpen = elements.managementMenu?.classList.toggle('open') ?? false
+        elements.managementToggle.classList.toggle('open', isOpen)
+        elements.managementToggle.setAttribute('aria-expanded', String(isOpen))
+    })
+
+elements.sidebar
+    ?.querySelectorAll('a.menu-item')
+    .forEach(link => {
+        link.addEventListener('click', () => {
+            if (window.innerWidth <= 760 && link.id !== 'settingsMenu') {
+                setSidebarOpen(false)
+            }
+        })
+    })
+
+window.addEventListener('resize', () => {
+    if (window.innerWidth > 760) setSidebarOpen(false)
+})
 
 
 /* ========================================
