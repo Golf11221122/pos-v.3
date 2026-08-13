@@ -9,7 +9,9 @@ const state = {
     items: [],
     soundEnabled: false,
     knownItemIds: new Set(),
-    realtimeChannel: null
+    realtimeChannel: null,
+    realtimeRetryTimer: null,
+    realtimePollTimer: null
 }
 
 const $ = id => document.getElementById(id)
@@ -743,17 +745,103 @@ async function cancelItem(itemId) {
    REALTIME
 ======================================== */
 
+function clearRealtimeRetry() {
+
+    if (state.realtimeRetryTimer) {
+
+        clearTimeout(
+            state.realtimeRetryTimer
+        )
+
+        state.realtimeRetryTimer =
+            null
+    }
+}
+
+
+function scheduleRealtimeRetry() {
+
+    clearRealtimeRetry()
+
+    state.realtimeRetryTimer =
+        setTimeout(
+            () => {
+
+                console.warn(
+                    'Retry kitchen realtime subscription...'
+                )
+
+                subscribeRealtime()
+
+            },
+            3000
+        )
+}
+
+
+function startRealtimeFallbackPolling() {
+
+    if (state.realtimePollTimer) {
+
+        clearInterval(
+            state.realtimePollTimer
+        )
+    }
+
+    state.realtimePollTimer =
+        setInterval(
+            async () => {
+
+                if (document.hidden) {
+                    return
+                }
+
+                try {
+
+                    await loadKitchenItems({
+                        notifyNew: true
+                    })
+
+                } catch (error) {
+
+                    console.warn(
+                        'Kitchen fallback polling error:',
+                        error
+                    )
+                }
+
+            },
+            5000
+        )
+}
+
+
 function subscribeRealtime() {
+
+    clearRealtimeRetry()
+
     if (state.realtimeChannel) {
+
         supabase.removeChannel(
             state.realtimeChannel
         )
+
+        state.realtimeChannel =
+            null
     }
+
+    const channelName =
+        `kitchen-${state.profile.branch_id}-${Date.now()}`
+
+    console.log(
+        'Subscribe kitchen realtime:',
+        channelName
+    )
 
     state.realtimeChannel =
         supabase
             .channel(
-                `kitchen-${state.profile.branch_id}`
+                channelName
             )
             .on(
                 'postgres_changes',
@@ -763,29 +851,137 @@ function subscribeRealtime() {
                     table: 'restaurant_order_items'
                 },
                 async payload => {
+
+                    console.log(
+                        '[Kitchen Realtime] restaurant_order_items',
+                        payload
+                    )
+
                     try {
+
                         const notify =
-                            payload.eventType === 'INSERT'
-                            && payload.new?.order_source === 'qr'
-                            && payload.new?.item_status === 'pending'
+                            payload.eventType ===
+                            'INSERT'
+                            &&
+                            payload.new
+                                ?.order_source ===
+                                'qr'
+                            &&
+                            payload.new
+                                ?.item_status ===
+                                'pending'
 
                         await loadKitchenItems({
-                            notifyNew: notify
+                            notifyNew:
+                                notify
                         })
+
                     } catch (error) {
+
                         console.error(
-                            'Realtime kitchen reload error:',
+                            'Realtime kitchen item reload error:',
+                            error
+                        )
+
+                        msg(
+                            el.pageMessage,
+                            error.message
+                            ||
+                            'รับออเดอร์แบบเรียลไทม์ไม่สำเร็จ'
+                        )
+                    }
+                }
+            )
+            .on(
+                'postgres_changes',
+                {
+                    event: '*',
+                    schema: 'public',
+                    table: 'restaurant_orders'
+                },
+                async payload => {
+
+                    console.log(
+                        '[Kitchen Realtime] restaurant_orders',
+                        payload
+                    )
+
+                    try {
+
+                        await loadKitchenItems({
+                            notifyNew:
+                                false
+                        })
+
+                    } catch (error) {
+
+                        console.error(
+                            'Realtime restaurant order reload error:',
                             error
                         )
                     }
                 }
             )
-            .subscribe(status => {
-                if (status === 'SUBSCRIBED') {
-                    el.statusText.textContent =
-                        'เชื่อมต่อครัวแบบเรียลไทม์แล้ว'
+            .subscribe(
+                status => {
+
+                    console.log(
+                        '[Kitchen Realtime Status]',
+                        status
+                    )
+
+                    if (status === 'SUBSCRIBED') {
+
+                        clearRealtimeRetry()
+
+                        el.statusText.textContent =
+                            '🟢 เชื่อมต่อครัวแบบเรียลไทม์แล้ว'
+
+                        msg(
+                            el.pageMessage,
+                            ''
+                        )
+
+                        return
+                    }
+
+                    if (status === 'CHANNEL_ERROR') {
+
+                        el.statusText.textContent =
+                            '🔴 Realtime เชื่อมต่อผิดพลาด'
+
+                        msg(
+                            el.pageMessage,
+                            'Realtime มีปัญหา ระบบกำลังเชื่อมต่อใหม่อัตโนมัติ'
+                        )
+
+                        scheduleRealtimeRetry()
+                        return
+                    }
+
+                    if (status === 'TIMED_OUT') {
+
+                        el.statusText.textContent =
+                            '🟠 Realtime หมดเวลาการเชื่อมต่อ'
+
+                        msg(
+                            el.pageMessage,
+                            'Realtime หมดเวลา ระบบกำลังเชื่อมต่อใหม่อัตโนมัติ'
+                        )
+
+                        scheduleRealtimeRetry()
+                        return
+                    }
+
+                    if (status === 'CLOSED') {
+
+                        el.statusText.textContent =
+                            '🟠 Realtime ถูกตัดการเชื่อมต่อ'
+
+                        scheduleRealtimeRetry()
+                    }
                 }
-            })
+            )
 }
 
 
@@ -813,6 +1009,8 @@ async function init() {
         })
 
         subscribeRealtime()
+
+        startRealtimeFallbackPolling()
 
     } catch (error) {
         console.error(
@@ -973,15 +1171,54 @@ document
         }
     )
 
+document.addEventListener(
+    'visibilitychange',
+    async () => {
+
+        if (document.hidden) {
+            return
+        }
+
+        try {
+
+            await loadKitchenItems({
+                notifyNew: true
+            })
+
+            subscribeRealtime()
+
+        } catch (error) {
+
+            console.warn(
+                'Kitchen visibility reconnect error:',
+                error
+            )
+        }
+    }
+)
+
+
 window.addEventListener(
     'beforeunload',
     () => {
+
+        clearRealtimeRetry()
+
+        if (state.realtimePollTimer) {
+
+            clearInterval(
+                state.realtimePollTimer
+            )
+        }
+
         if (state.realtimeChannel) {
+
             supabase.removeChannel(
                 state.realtimeChannel
             )
         }
     }
 )
+
 
 init()
