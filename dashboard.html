@@ -33,91 +33,32 @@
 
             <nav class="sidebar-menu">
 
-                <a href="./dashboard.html" class="menu-item active">
-                    <span class="menu-icon">📊</span>
-                    <span>แดชบอร์ด</span>
-                </a>
+                <div class="menu-scroll">
+                    <a href="./dashboard.html" class="menu-item active"><span class="menu-icon">📊</span><span>แดชบอร์ด</span></a>
+                    <a href="./pos.html" class="menu-item"><span class="menu-icon">🛒</span><span>หน้าขาย POS</span></a>
+                    <a href="./shift.html" class="menu-item"><span class="menu-icon">🕐</span><span>เปิดกะ / ปิดกะ</span></a>
+                    <a href="./sales-history.html" class="menu-item"><span class="menu-icon">🧾</span><span>รายการขาย</span></a>
+                    <a href="./kitchen.html" class="menu-item"><span class="menu-icon">👨‍🍳</span><span>จอครัว</span></a>
+                    <a href="./tables.html" class="menu-item"><span class="menu-icon">🪑</span><span>จัดการโต๊ะ</span></a>
 
+                    <button type="button" class="management-toggle" id="managementToggle" aria-expanded="false">
+                        <span class="management-title"><span class="menu-icon">⚙️</span><span>ระบบจัดการ</span></span>
+                        <span class="management-arrow">⌄</span>
+                    </button>
 
-                <a href="./pos.html" class="menu-item">
-                    <span class="menu-icon">🛒</span>
-                    <span>หน้าขาย POS</span>
-                </a>
-
-                <a href="./shift.html" class="menu-item">
-                    <span class="menu-icon">🕐</span>
-                    <span>เปิดกะ / ปิดกะ</span>
-                </a>
-
-
-                <a href="./products.html" class="menu-item">
-                    <span class="menu-icon">📦</span>
-                    <span>สินค้า</span>
-                </a>
-
-
-                <a href="./categories.html" class="menu-item">
-                    <span class="menu-icon">🏷️</span>
-                    <span>หมวดหมู่</span>
-                </a>
-
-
-                <a href="./sales-history.html" class="menu-item">
-                    <span class="menu-icon">🧾</span>
-                    <span>รายการขาย</span>
-                </a>
-
-
-                <a href="./ingredients.html" class="menu-item">
-                    <span class="menu-icon">🥬</span>
-                    <span>วัตถุดิบ</span></a>
-
-                <a href="./recipes.html" class="menu-item">
-                    <span class="menu-icon">📋</span>
-                    <span>สูตรสินค้า</span>
-                </a>
-
-                <a href="./stock-movements.html" class="menu-item">
-                    <span class="menu-icon">🔄</span>
-                    <span>รับเข้า / ปรับสต็อก</span>
-                </a>
-
-
-
-
-                <a href="./inventory-report.html" class="menu-item">
-                    <span class="menu-icon">📊</span>
-                    <span>รายงานวัตถุดิบ</span>
-                </a>
-
-                <a href="./sales-report.html" class="menu-item">
-                    <span class="menu-icon">📈</span>
-                    <span>รายงานยอดขาย</span>
-                </a>
-                <a href="./kitchen-stations.html" class="menu-item">
-                    <span class="menu-icon">🍳</span>
-                    <span>จัดการครัว</span>
-                </a>
-
-                <a href="./kitchen.html" class="menu-item">
-                    <span class="menu-icon">👨‍🍳</span>
-                    <span>จอครัว</span>
-                </a>
-
-                <a href="./employees.html" class="menu-item">
-                    👥 จัดการพนักงาน
-                </a>
-
-                <a href="./tables.html" class="menu-item">
-                    <span class="menu-icon"> 🪑 </span>
-                    <span>จัดการโต๊ะ</span>
-                </a>
-
-
-                <a href="#" class="menu-item" id="settingsMenu">
-                    <span class="menu-icon">⚙️</span>
-                    <span>ตั้งค่า</span>
-                </a>
+                    <div class="management-menu" id="managementMenu">
+                        <a href="./products.html" class="menu-item"><span class="menu-icon">📦</span><span>สินค้า</span></a>
+                        <a href="./categories.html" class="menu-item"><span class="menu-icon">🏷️</span><span>หมวดหมู่</span></a>
+                        <a href="./ingredients.html" class="menu-item"><span class="menu-icon">🥬</span><span>วัตถุดิบ</span></a>
+                        <a href="./recipes.html" class="menu-item"><span class="menu-icon">📋</span><span>สูตรสินค้า</span></a>
+                        <a href="./stock-movements.html" class="menu-item"><span class="menu-icon">🔄</span><span>รับเข้า / ปรับสต็อก</span></a>
+                        <a href="./inventory-report.html" class="menu-item"><span class="menu-icon">📊</span><span>รายงานวัตถุดิบ</span></a>
+                        <a href="./sales-report.html" class="menu-item"><span class="menu-icon">📈</span><span>รายงานยอดขาย</span></a>
+                        <a href="./kitchen-stations.html" class="menu-item"><span class="menu-icon">🍳</span><span>จัดการครัว</span></a>
+                        <a href="./employees.html" class="menu-item"><span class="menu-icon">👥</span><span>จัดการพนักงาน</span></a>
+                        <a href="#" class="menu-item" id="settingsMenu"><span class="menu-icon">⚙️</span><span>ตั้งค่า</span></a>
+                    </div>
+                </div>
 
             </nav>
 
@@ -128,6 +69,8 @@
             </button>
 
         </aside>
+
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 
         <!-- MAIN -->
