@@ -77,7 +77,11 @@ const PAGE_PERMISSIONS = {
         'admin',
         'manager'
     ],
-
+    'kitchen.html': [
+        'admin',
+        'manager',
+        'staff'
+    ],
 
     'employees.html': [
         'admin'
@@ -160,7 +164,11 @@ const MENU_PERMISSIONS = {
         'admin',
         'manager'
     ],
-
+   kitchen: [
+    'admin',
+    'manager',
+    'staff'
+],
 
     employees: [
         'admin'
@@ -498,7 +506,11 @@ function applySidebarPermissions(
         role,
         MENU_PERMISSIONS.kitchenStations
     )
-
+setMenuVisibility(
+    'a[href="./kitchen.html"]',
+    role,
+    MENU_PERMISSIONS.kitchen
+)
 
     setMenuVisibility(
         'a[href="./employees.html"]',
