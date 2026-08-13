@@ -1,59 +1,397 @@
 <!doctype html>
 <html lang="th">
-
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <title>จัดการครัว | JOKJUNG POS</title>
     <link rel="stylesheet" href="./css/kitchen-stations.css">
 </head>
-
 <body>
-    <header>
-        <div>
-            <h1>จัดการ Kitchen Station</h1><small id="branchText">กำลังโหลด...</small>
-        </div>
-        <nav><button id="addBtn">+ เพิ่มครัว</button><button id="backBtn">← Dashboard</button></nav>
-    </header>
-    <main>
-        <section class="stats">
-            <div>Kitchen Station <b id="stationCount">0</b></div>
-            <div>เมนูทั้งหมด <b id="productCount">0</b></div>
-            <div>ยังไม่กำหนดครัว <b id="unassignedCount">0</b></div>
-        </section>
-        <section class="layout">
-            <aside>
-                <h2>จุดครัว</h2><button class="filter active" data-filter="">เมนูทั้งหมด <b
-                        id="allCount">0</b></button><button class="filter" data-filter="unassigned">⚠️ ยังไม่กำหนด <b
-                        id="noneCount">0</b></button>
-                <div id="stations"></div>
-            </aside>
-            <section class="products">
-                <div class="toolbar">
-                    <div>
-                        <h2 id="title">เมนูทั้งหมด</h2><small>เลือกครัวให้แต่ละเมนู</small>
-                    </div><input id="search" type="search" placeholder="ค้นหาเมนู...">
-                </div>
-                <div id="products"></div>
-                <div id="empty" class="empty hidden">ไม่พบเมนู</div>
-            </section>
-        </section>
-        <p id="message"></p>
-    </main>
-    <div id="modal" class="modal hidden">
-        <form id="form">
-            <div class="modalHead">
-                <h2 id="modalTitle">เพิ่มครัว</h2><button id="closeBtn" type="button">✕</button>
-            </div><input id="id" type="hidden"><label>ชื่อครัว<input id="name" required
-                    placeholder="เช่น ครัวก๋วยเตี๋ยว"></label><label>Code<input id="code" required
-                    placeholder="เช่น noodle"></label><label>ลำดับ<input id="order" type="number" min="0"
-                    value="0"></label><label class="check">เปิดใช้งาน <input id="active" type="checkbox"
-                    checked></label>
-            <div class="actions"><button id="deleteBtn" type="button" class="danger hidden">ลบครัว</button><button
-                    type="submit" class="primary">บันทึก</button></div>
-        </form>
-    </div>
-    <script type="module" src="./js/kitchen-stations.js"></script>
-</body>
 
+<header>
+    <div>
+        <h1>จัดการ Kitchen Station</h1>
+        <small id="branchText">กำลังโหลด...</small>
+    </div>
+
+    <nav>
+        <button id="addBtn" class="primary" type="button">
+            + เพิ่มครัว
+        </button>
+
+        <button id="addPrinterBtn" type="button">
+            🖨️ เพิ่มเครื่องพิมพ์
+        </button>
+
+        <button id="backBtn" type="button">
+            ← Dashboard
+        </button>
+    </nav>
+</header>
+
+
+<main>
+
+    <section class="stats">
+        <div>
+            Kitchen Station
+            <b id="stationCount">0</b>
+        </div>
+
+        <div>
+            เมนูทั้งหมด
+            <b id="productCount">0</b>
+        </div>
+
+        <div>
+            ยังไม่กำหนดครัว
+            <b id="unassignedCount">0</b>
+        </div>
+
+        <div>
+            เครื่องพิมพ์
+            <b id="printerCount">0</b>
+        </div>
+    </section>
+
+
+    <section class="layout">
+
+        <aside>
+            <h2>จุดครัว</h2>
+
+            <button
+                class="filter active"
+                data-filter=""
+                type="button"
+            >
+                เมนูทั้งหมด
+                <b id="allCount">0</b>
+            </button>
+
+            <button
+                class="filter"
+                data-filter="unassigned"
+                type="button"
+            >
+                ⚠️ ยังไม่กำหนด
+                <b id="noneCount">0</b>
+            </button>
+
+            <div id="stations"></div>
+        </aside>
+
+
+        <section class="products">
+
+            <div class="toolbar">
+                <div>
+                    <h2 id="title">เมนูทั้งหมด</h2>
+                    <small>
+                        เลือกครัวให้แต่ละเมนู
+                    </small>
+                </div>
+
+                <input
+                    id="search"
+                    type="search"
+                    placeholder="ค้นหาเมนู..."
+                >
+            </div>
+
+            <div id="products"></div>
+
+            <div id="empty" class="empty hidden">
+                ไม่พบเมนู
+            </div>
+
+        </section>
+
+    </section>
+
+
+    <section class="printer-section">
+
+        <div class="section-head">
+            <div>
+                <h2>🖨️ เครื่องพิมพ์ในสาขา</h2>
+                <small>
+                    สร้างเครื่องพิมพ์ก่อน แล้วนำไปผูกกับ Kitchen Station
+                </small>
+            </div>
+
+            <button
+                id="addPrinterBtn2"
+                class="primary"
+                type="button"
+            >
+                + เพิ่มเครื่องพิมพ์
+            </button>
+        </div>
+
+        <div id="printerList" class="printer-list"></div>
+
+        <div id="printerEmpty" class="empty hidden">
+            ยังไม่มีเครื่องพิมพ์
+        </div>
+
+    </section>
+
+
+    <section class="printer-section">
+
+        <div class="section-head">
+            <div>
+                <h2>🍳 Kitchen Station → Printer</h2>
+                <small>
+                    กำหนดเครื่องพิมพ์หลัก, Auto Print และจำนวนสำเนา
+                </small>
+            </div>
+        </div>
+
+        <div id="mappingList" class="mapping-list"></div>
+
+        <div id="mappingEmpty" class="empty hidden">
+            ยังไม่มี Kitchen Station
+        </div>
+
+    </section>
+
+
+    <p id="message"></p>
+
+</main>
+
+
+<!-- ========================================
+     STATION MODAL
+======================================== -->
+
+<div id="modal" class="modal hidden">
+
+    <form id="form">
+
+        <div class="modalHead">
+            <h2 id="modalTitle">
+                เพิ่มครัว
+            </h2>
+
+            <button
+                id="closeBtn"
+                type="button"
+            >
+                ✕
+            </button>
+        </div>
+
+        <input id="id" type="hidden">
+
+        <label>
+            ชื่อครัว
+
+            <input
+                id="name"
+                required
+                placeholder="เช่น ครัวก๋วยเตี๋ยว"
+            >
+        </label>
+
+        <label>
+            Code
+
+            <input
+                id="code"
+                required
+                placeholder="เช่น noodle"
+            >
+        </label>
+
+        <label>
+            ลำดับ
+
+            <input
+                id="order"
+                type="number"
+                min="0"
+                value="0"
+            >
+        </label>
+
+        <label class="check">
+            เปิดใช้งาน
+
+            <input
+                id="active"
+                type="checkbox"
+                checked
+            >
+        </label>
+
+        <div class="actions">
+
+            <button
+                id="deleteBtn"
+                type="button"
+                class="danger hidden"
+            >
+                ลบครัว
+            </button>
+
+            <button
+                type="submit"
+                class="primary"
+            >
+                บันทึก
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+<!-- ========================================
+     PRINTER MODAL
+======================================== -->
+
+<div id="printerModal" class="modal hidden">
+
+    <form id="printerForm">
+
+        <div class="modalHead">
+            <h2 id="printerModalTitle">
+                เพิ่มเครื่องพิมพ์
+            </h2>
+
+            <button
+                id="closePrinterBtn"
+                type="button"
+            >
+                ✕
+            </button>
+        </div>
+
+        <input
+            id="printerId"
+            type="hidden"
+        >
+
+        <label>
+            ชื่อเครื่องพิมพ์
+
+            <input
+                id="printerName"
+                required
+                placeholder="เช่น Printer ครัว 1"
+            >
+        </label>
+
+        <label>
+            Printer Key
+
+            <input
+                id="printerKey"
+                required
+                placeholder="เช่น kitchen_1"
+            >
+
+            <small>
+                ใช้อังกฤษ/ตัวเลข/_/- และห้ามซ้ำในสาขา
+            </small>
+        </label>
+
+        <label>
+            การเชื่อมต่อ
+
+            <select id="connectionType">
+                <option value="browser">
+                    Browser Print
+                </option>
+
+                <option value="network">
+                    Network / LAN
+                </option>
+
+                <option value="usb">
+                    USB
+                </option>
+
+                <option value="bluetooth">
+                    Bluetooth
+                </option>
+
+                <option value="bridge">
+                    Local Print Bridge
+                </option>
+            </select>
+        </label>
+
+        <label>
+            Device Address
+
+            <input
+                id="deviceAddress"
+                placeholder="เช่น 192.168.1.50 หรือชื่อ Device"
+            >
+
+            <small>
+                Browser Print สามารถเว้นว่างได้
+            </small>
+        </label>
+
+        <label>
+            ขนาดกระดาษ
+
+            <select id="paperWidth">
+                <option value="80">
+                    80 mm
+                </option>
+
+                <option value="58">
+                    58 mm
+                </option>
+            </select>
+        </label>
+
+        <label class="check">
+            เปิดใช้งาน
+
+            <input
+                id="printerActive"
+                type="checkbox"
+                checked
+            >
+        </label>
+
+        <div class="actions">
+
+            <button
+                id="deletePrinterBtn"
+                type="button"
+                class="danger hidden"
+            >
+                ลบเครื่อง
+            </button>
+
+            <button
+                type="submit"
+                class="primary"
+            >
+                บันทึก
+            </button>
+
+        </div>
+
+    </form>
+
+</div>
+
+
+<script
+    type="module"
+    src="./js/kitchen-stations.js"
+></script>
+
+</body>
 </html>
