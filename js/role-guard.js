@@ -67,6 +67,11 @@ const PAGE_PERMISSIONS = {
         'manager'
     ],
 
+    'tables.html': [
+        'admin',
+        'manager'
+    ],
+
     'employees.html': [
         'admin'
     ]
@@ -134,6 +139,11 @@ const MENU_PERMISSIONS = {
     ],
 
     inventoryReport: [
+        'admin',
+        'manager'
+    ],
+
+    tables: [
         'admin',
         'manager'
     ],
@@ -463,6 +473,13 @@ function applySidebarPermissions(
 
 
     setMenuVisibility(
+        'a[href="./tables.html"]',
+        role,
+        MENU_PERMISSIONS.tables
+    )
+
+
+    setMenuVisibility(
         'a[href="./employees.html"]',
         role,
         MENU_PERMISSIONS.employees
@@ -520,13 +537,13 @@ function applyDashboardQuickActions(
  * เฉพาะ Admin / Manager
  */
     setMenuVisibility(
-    '#openReportsBtn',
-    role,
-    [
-        'admin',
-        'manager'
-    ]
-)
+        '#openReportsBtn',
+        role,
+        [
+            'admin',
+            'manager'
+        ]
+    )
 }
 
 
@@ -600,7 +617,7 @@ function checkPagePermission(
 
     const allowedRoles =
         PAGE_PERMISSIONS[
-            pageName
+        pageName
         ]
 
 
