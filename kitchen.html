@@ -4,19 +4,13 @@
 <head>
     <meta charset="UTF-8">
 
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1, viewport-fit=cover"
-    >
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 
     <title>
         Kitchen | JOKJUNG POS
     </title>
 
-    <link
-        rel="stylesheet"
-        href="./css/kitchen.css"
-    >
+    <link rel="stylesheet" href="./css/kitchen.css">
 </head>
 
 <body>
@@ -33,27 +27,15 @@
 
         <div class="top-actions">
 
-            <button
-                id="enableSoundBtn"
-                class="sound-btn"
-                type="button"
-            >
+            <button id="enableSoundBtn" class="sound-btn" type="button">
                 🔔 เปิดเสียงแจ้งเตือน
             </button>
 
-            <button
-                id="refreshBtn"
-                class="outline-btn"
-                type="button"
-            >
+            <button id="refreshBtn" class="outline-btn" type="button">
                 ↻ รีเฟรช
             </button>
 
-            <button
-                id="backBtn"
-                class="outline-btn"
-                type="button"
-            >
+            <button id="backBtn" class="outline-btn" type="button">
                 ← Dashboard
             </button>
 
@@ -66,12 +48,19 @@
 
         <section class="summary">
 
-            <div>
-                <span>ออเดอร์ QR ที่รอ</span>
+            <div class="summary-stat">
+                <span>รอรับ</span>
+                <strong id="pendingCount">0</strong>
+            </div>
 
-                <strong id="pendingCount">
-                    0
-                </strong>
+            <div class="summary-stat">
+                <span>กำลังทำ</span>
+                <strong id="preparingCount">0</strong>
+            </div>
+
+            <div class="summary-stat">
+                <span>พร้อมเสิร์ฟ</span>
+                <strong id="readyCount">0</strong>
             </div>
 
             <p id="statusText">
@@ -81,39 +70,68 @@
         </section>
 
 
-        <section
-            id="emptyState"
-            class="empty-state"
-        >
-            ✅ ยังไม่มีออเดอร์ใหม่
+        <section class="kitchen-board">
+
+            <section class="kitchen-column">
+                <div class="column-head pending-head">
+                    <div>
+                        <h2>🆕 รอรับออเดอร์</h2>
+                        <small>ออเดอร์ใหม่จากลูกค้า</small>
+                    </div>
+                    <strong id="pendingBadge">0</strong>
+                </div>
+
+                <div id="pendingGrid" class="ticket-grid"></div>
+                <div id="pendingEmpty" class="column-empty">
+                    ไม่มีออเดอร์ใหม่
+                </div>
+            </section>
+
+
+            <section class="kitchen-column">
+                <div class="column-head preparing-head">
+                    <div>
+                        <h2>🍳 กำลังทำ</h2>
+                        <small>รายการที่ครัวรับแล้ว</small>
+                    </div>
+                    <strong id="preparingBadge">0</strong>
+                </div>
+
+                <div id="preparingGrid" class="ticket-grid"></div>
+                <div id="preparingEmpty" class="column-empty">
+                    ยังไม่มีรายการกำลังทำ
+                </div>
+            </section>
+
+
+            <section class="kitchen-column">
+                <div class="column-head ready-head">
+                    <div>
+                        <h2>✅ พร้อมเสิร์ฟ</h2>
+                        <small>รอพนักงานนำไปเสิร์ฟ</small>
+                    </div>
+                    <strong id="readyBadge">0</strong>
+                </div>
+
+                <div id="readyGrid" class="ticket-grid"></div>
+                <div id="readyEmpty" class="column-empty">
+                    ยังไม่มีรายการพร้อมเสิร์ฟ
+                </div>
+            </section>
+
         </section>
 
 
-        <section
-            id="ticketGrid"
-            class="ticket-grid hidden"
-        ></section>
-
-
-        <p
-            id="pageMessage"
-            class="message"
-        ></p>
+        <p id="pageMessage" class="message"></p>
 
     </main>
 
 
     <!-- พื้นที่พิมพ์ใบครัว -->
-    <section
-        id="kitchenPrintArea"
-        class="kitchen-print-area"
-    ></section>
+    <section id="kitchenPrintArea" class="kitchen-print-area"></section>
 
 
-    <script
-        type="module"
-        src="./js/kitchen.js"
-    ></script>
+    <script type="module" src="./js/kitchen.js"></script>
 
 </body>
 
