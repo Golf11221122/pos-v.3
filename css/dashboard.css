@@ -1159,3 +1159,33 @@ button {
         min-height: 115px;
     }
 }
+
+
+/* ========================================
+   SIDEBAR GROUP / MOBILE DRAWER
+======================================== */
+.sidebar-menu { min-height: 0; overflow: hidden; }
+.menu-scroll { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; padding-right: 3px; }
+.management-toggle { display:flex; align-items:center; justify-content:space-between; width:100%; margin-top:8px; padding:13px 14px; border:0; border-radius:11px; background:transparent; color:#d7d9dd; text-align:left; }
+.management-toggle:hover { background:var(--sidebar-hover); color:white; }
+.management-title { display:flex; align-items:center; gap:14px; }
+.management-arrow { font-size:20px; transition:transform .2s ease; }
+.management-toggle.open .management-arrow { transform:rotate(180deg); }
+.management-menu { display:none; margin:4px 0 6px 14px; padding-left:8px; border-left:1px solid #45474c; }
+.management-menu.open { display:block; }
+.management-menu .menu-item { padding:11px 12px; font-size:14px; }
+.sidebar-overlay { display:none; }
+
+@media (max-width:760px) {
+    body.sidebar-open { overflow:hidden; }
+    .sidebar { width:min(82vw, 320px); height:100dvh; padding:calc(14px + env(safe-area-inset-top)) 14px calc(14px + env(safe-area-inset-bottom)); box-shadow:12px 0 30px rgba(0,0,0,.22); }
+    .sidebar .brand { flex:0 0 auto; padding:2px 6px 14px; }
+    .sidebar .brand-icon { width:42px; height:42px; font-size:22px; }
+    .sidebar .brand h1 { font-size:19px; }
+    .sidebar-menu { flex:1; min-height:0; }
+    .menu-scroll { padding-bottom:10px; }
+    .menu-item, .management-toggle { min-height:48px; padding:11px 12px; }
+    .logout-button { flex:0 0 auto; margin-top:8px; }
+    .sidebar-overlay { position:fixed; inset:0; z-index:999; background:rgba(0,0,0,.42); opacity:0; visibility:hidden; display:block; transition:opacity .25s ease, visibility .25s ease; }
+    .sidebar-overlay.open { opacity:1; visibility:visible; }
+}
