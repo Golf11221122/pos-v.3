@@ -3045,6 +3045,7 @@ and
         grid-template-columns: repeat(3, 1fr);
     }
 }
+
 /* ========================================
    START ORDER MODAL - MOBILE FIX
 ======================================== */
@@ -3052,8 +3053,7 @@ and
 @media (max-width: 760px) {
 
     /* ซ่อนแถบตะกร้าตอนเปิดหน้าต่างเริ่มออเดอร์ */
-    body:has(#orderStartModal:not(.hidden))
-    .mobile-cart-bar {
+    body:has(#orderStartModal:not(.hidden)) .mobile-cart-bar {
         display: none !important;
     }
 
@@ -3077,10 +3077,7 @@ and
         overflow-y: auto !important;
 
         padding:
-            18px 18px
-            calc(
-                22px + env(safe-area-inset-bottom)
-            ) !important;
+            18px 18px calc(22px + env(safe-area-inset-bottom)) !important;
 
         border-radius:
             24px 24px 0 0 !important;
@@ -3097,8 +3094,7 @@ and
         z-index: 5 !important;
 
         margin:
-            -18px -18px
-            12px !important;
+            -18px -18px 12px !important;
 
         padding:
             18px !important;
@@ -3179,4 +3175,101 @@ and
 
         z-index: 5 !important;
     }
+}
+
+/* ========================================
+   TABLE STATUS
+======================================== */
+
+/* โต๊ะว่าง */
+.table-select-btn {
+    background: #ffffff;
+    border: 1px solid #dfe3e8;
+}
+
+
+/* โต๊ะมีลูกค้า แต่ยังไม่ได้เลือก */
+.table-select-btn.occupied {
+    background: #fff7df !important;
+    border: 1px solid #f2c14e !important;
+}
+
+.table-select-btn.occupied strong,
+.table-select-btn.occupied small {
+    color: #9a6500 !important;
+}
+
+
+/* โต๊ะที่กำลังเลือก */
+.table-select-btn.active {
+    border: 2px solid #f5a800 !important;
+    background: #fff1b8 !important;
+    box-shadow: 0 0 0 3px rgba(245, 168, 0, 0.15);
+}
+
+
+/* โต๊ะค้าง + กำลังเลือก */
+.table-select-btn.occupied.active {
+    background: #ffc928 !important;
+    border: 2px solid #e29100 !important;
+    box-shadow: 0 0 0 4px rgba(255, 190, 0, 0.20) !important;
+}
+
+.table-select-btn.occupied.active strong {
+    color: #1f1f1f !important;
+}
+
+.table-select-btn.occupied.active small {
+    color: #5c4300 !important;
+    font-weight: 800 !important;
+}
+
+.back-dashboard-btn {
+    width: 100%;
+    margin-top: 10px;
+    padding: 11px 16px;
+
+    border: 1px solid #d9dee5;
+    border-radius: 10px;
+
+    background: #ffffff;
+    color: #4b5563;
+
+    font-size: 14px;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
+.back-dashboard-btn:hover {
+    background: #f5f6f8;
+    border-color: #c8cdd4;
+}
+
+.back-dashboard-btn:active {
+    transform: scale(0.99);
+}
+.hold-table-btn {
+    width: 100%;
+    margin-bottom: 10px;
+    padding: 12px 14px;
+
+    border: 1px solid #f0ad00;
+    border-radius: 10px;
+
+    background: #fff7d6;
+    color: #8a5b00;
+
+    font-size: 14px;
+    font-weight: 800;
+
+    cursor: pointer;
+}
+
+.hold-table-btn:hover {
+    background: #ffefb4;
+}
+
+.hold-table-btn:active {
+    transform: scale(0.99);
 }
