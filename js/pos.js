@@ -1625,12 +1625,31 @@ function heldItemToCartItem(row) {
     const itemNote =
         row.item_note || ''
 
-    const cartKey =
+    /*
+     * IMPORTANT
+     * รายการที่ถูกบันทึกลง restaurant_order_items แล้ว
+     * ต้องแยก key ตาม row.id ด้วย
+     *
+     * เหตุผล:
+     * ลูกค้าอาจสั่งเมนูเดิม + modifier เดิม + หมายเหตุเดิม
+     * หลายรอบในโต๊ะเดียวกัน เช่น
+     *
+     * รอบแรก  บะหมี่หมูแดง x1
+     * พักโต๊ะ
+     * รอบสอง  บะหมี่หมูแดง x1
+     *
+     * ถ้าใช้ buildCartKey อย่างเดียว key จะเหมือนกัน
+     * และ state.cart.set() จะทับรายการรอบก่อน
+     */
+    const baseCartKey =
         buildCartKey(
             row.product_id,
             modifiers,
             itemNote
         )
+
+    const cartKey =
+        `${baseCartKey}::${row.id}`
 
     const product =
         state.products.find(
