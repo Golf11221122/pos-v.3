@@ -69,7 +69,8 @@ const PAGE_PERMISSIONS = {
 
     'tables.html': [
         'admin',
-        'manager'
+        'manager',
+        'staff'
     ],
 
     'kitchen-stations.html': [
@@ -151,7 +152,8 @@ const MENU_PERMISSIONS = {
 
     tables: [
         'admin',
-        'manager'
+        'manager',
+        'staff'
     ],
 
     kitchenStations: [
