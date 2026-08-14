@@ -112,6 +112,9 @@ const el = {
     totalText:
         $('totalText'),
 
+    confirmOrderBtn:
+        $('confirmOrderBtn'),
+
     checkoutBtn:
         $('checkoutBtn'),
 
@@ -329,6 +332,26 @@ const money = value =>
 
 const items = () =>
     [...state.cart.values()]
+
+
+const draftItems = () =>
+    items().filter(
+        item =>
+            !item.restaurant_item_id
+    )
+
+
+const confirmedItems = () =>
+    items().filter(
+        item =>
+            Boolean(
+                item.restaurant_item_id
+            )
+    )
+
+
+const hasDraftItems = () =>
+    draftItems().length > 0
 
 
 const subtotal = () =>
@@ -979,6 +1002,19 @@ function updateShiftSaleState() {
 
 
     if (
+        el.confirmOrderBtn
+    ) {
+
+        el.confirmOrderBtn.disabled =
+            !canSell
+            ||
+            !state.currentOrder
+            ||
+            !hasDraftItems()
+    }
+
+
+    if (
         el.checkoutBtn
     ) {
 
@@ -986,6 +1022,8 @@ function updateShiftSaleState() {
             !canSell
             ||
             !hasItems
+            ||
+            hasDraftItems()
     }
 
 
@@ -1697,6 +1735,9 @@ function heldItemToCartItem(row) {
 
         restaurant_item_id:
             row.id,
+
+        is_confirmed:
+            true,
 
         base_price:
             Number(
@@ -3732,6 +3773,14 @@ async function addConfiguredProduct(
     itemNote = ''
 ) {
 
+    if (!isLiveRestaurantOrder()) {
+        msg(
+            el.pageMessage,
+            'กรุณาเริ่มออเดอร์ก่อนเลือกสินค้า'
+        )
+        return false
+    }
+
     const availability =
         getAvailability(product.id)
 
@@ -3751,10 +3800,7 @@ async function addConfiguredProduct(
         return false
     }
 
-    if (
-        currentProductQty >=
-        availableQty
-    ) {
+    if (currentProductQty >= availableQty) {
         msg(
             el.pageMessage,
             `เพิ่มไม่ได้ สามารถขาย ${product.name} ได้สูงสุด ${availableQty} จาน`
@@ -3777,220 +3823,50 @@ async function addConfiguredProduct(
         +
         modifierTotal
 
-    const cartKey =
+    const baseCartKey =
         buildCartKey(
             product.id,
             modifiers,
             itemNote
         )
 
-    const old =
+    /*
+     * Draft แยก key จากรายการที่ส่งครัวแล้ว
+     * เพื่อให้การสั่งเพิ่มภายหลังสร้างใบครัวรอบใหม่
+     */
+    const cartKey =
+        `draft::${baseCartKey}`
+
+    const oldDraft =
         state.cart.get(cartKey)
 
-    /*
-     * LIVE RESTAURANT ORDER
-     *
-     * ทั้งทานที่ร้านและกลับบ้าน
-     * ต้องบันทึกลง Supabase ทันที
-     * เพื่อส่งเข้าครัวแบบ Realtime
-     */
-    if (isLiveRestaurantOrder()) {
-
-        try {
-
-            if (
-                old?.restaurant_item_id
-            ) {
-
-                const newQuantity =
-                    Number(old.quantity || 0)
-                    +
-                    1
-
-                const {
-                    error
-                } =
-                    await supabase.rpc(
-                        'update_restaurant_order_item_quantity',
-                        {
-                            p_item_id:
-                                old.restaurant_item_id,
-
-                            p_quantity:
-                                newQuantity
-                        }
-                    )
-
-                if (error) {
-                    throw error
-                }
-
-                old.quantity =
-                    newQuantity
-
-            } else {
-
-                const {
-                    data,
-                    error
-                } =
-                    await supabase.rpc(
-                        'add_restaurant_order_item',
-                        {
-                            p_order_id:
-                                state.currentOrder.id,
-
-                            p_product_id:
-                                product.id,
-
-                            p_quantity:
-                                1,
-
-                            p_modifiers:
-                                modifiers.map(
-                                    modifier => ({
-                                        group_id:
-                                            modifier.group_id,
-
-                                        option_id:
-                                            modifier.option_id
-                                    })
-                                ),
-
-                            p_item_note:
-                                String(
-                                    itemNote || ''
-                                ).trim()
-                                || null
-                        }
-                    )
-
-                if (error) {
-                    throw error
-                }
-
-                const saved =
-                    Array.isArray(data)
-                        ? data[0]
-                        : data
-
-                state.cart.set(
-                    cartKey,
-                    {
-                        ...product,
-
-                        cartKey,
-
-                        restaurant_item_id:
-                            saved?.item_id || null,
-
-                        base_price:
-                            Number(
-                                product.price || 0
-                            ),
-
-                        price:
-                            Number(
-                                saved?.unit_price
-                                ?? unitPrice
-                            ),
-
-                        modifier_total:
-                            modifierTotal,
-
-                        modifiers,
-
-                        item_note:
-                            String(
-                                itemNote || ''
-                            ).trim(),
-
-                        quantity:
-                            1
-                    }
-                )
-            }
-
-            renderCart()
-
-            msg(
-                el.pageMessage,
-                'บันทึกรายการเข้าบิลโต๊ะแล้ว'
-            )
-
-            setTimeout(
-                () => {
-                    if (
-                        el.pageMessage?.textContent ===
-                        'บันทึกรายการเข้าบิลโต๊ะแล้ว'
-                    ) {
-                        msg(
-                            el.pageMessage,
-                            ''
-                        )
-                    }
-                },
-                1000
-            )
-
-            return true
-
-        } catch (error) {
-
-            console.error(
-                'Save held order item error:',
-                error
-            )
-
-            msg(
-                el.pageMessage,
-                error.message
-                || 'บันทึกรายการลงโต๊ะไม่สำเร็จ'
-            )
-
-            return false
-        }
-    }
-
-    /*
-     * FALLBACK CART
-     * ใช้เฉพาะกรณีไม่มี live restaurant order
-     * (ปกติระบบจะไม่เข้าบล็อกนี้)
-     */
-    if (old) {
-        old.quantity++
+    if (
+        oldDraft
+        &&
+        !oldDraft.restaurant_item_id
+    ) {
+        oldDraft.quantity =
+            Number(oldDraft.quantity || 0) + 1
     } else {
         state.cart.set(
             cartKey,
             {
                 ...product,
                 cartKey,
-                base_price:
-                    Number(
-                        product.price || 0
-                    ),
-                price:
-                    unitPrice,
-                modifier_total:
-                    modifierTotal,
+                restaurant_item_id: null,
+                is_confirmed: false,
+                base_price: Number(product.price || 0),
+                price: unitPrice,
+                modifier_total: modifierTotal,
                 modifiers,
-                item_note:
-                    String(
-                        itemNote || ''
-                    ).trim(),
-                quantity:
-                    1
+                item_note: String(itemNote || '').trim(),
+                quantity: 1
             }
         )
     }
 
-    msg(
-        el.pageMessage,
-        ''
-    )
-
+    msg(el.pageMessage, '')
     renderCart()
-
     return true
 }
 
@@ -4318,12 +4194,17 @@ async function qty(
     const item =
         state.cart.get(cartKey)
 
-    if (!item) {
+    if (!item) return
+
+    if (item.restaurant_item_id) {
+        msg(
+            el.pageMessage,
+            'รายการนี้ส่งเข้าครัวแล้ว หากต้องการเพิ่มให้กดสินค้าเป็นรอบใหม่'
+        )
         return
     }
 
     if (change > 0) {
-
         const availability =
             getAvailability(item.id)
 
@@ -4335,10 +4216,7 @@ async function qty(
         const currentProductQty =
             cartProductQuantity(item.id)
 
-        if (
-            currentProductQty >=
-            availableQty
-        ) {
+        if (currentProductQty >= availableQty) {
             msg(
                 el.pageMessage,
                 `เพิ่มไม่ได้ สามารถขาย ${item.name} ได้สูงสุด ${availableQty} จาน`
@@ -4347,100 +4225,14 @@ async function qty(
         }
     }
 
-    const newQuantity =
-        Number(item.quantity || 0)
-        +
-        change
-
-    if (
-        isLiveRestaurantOrder()
-        &&
-        item.restaurant_item_id
-    ) {
-
-        try {
-
-            if (newQuantity <= 0) {
-
-                const {
-                    error
-                } =
-                    await supabase.rpc(
-                        'remove_restaurant_order_item',
-                        {
-                            p_item_id:
-                                item.restaurant_item_id
-                        }
-                    )
-
-                if (error) {
-                    throw error
-                }
-
-                state.cart.delete(cartKey)
-
-            } else {
-
-                const {
-                    error
-                } =
-                    await supabase.rpc(
-                        'update_restaurant_order_item_quantity',
-                        {
-                            p_item_id:
-                                item.restaurant_item_id,
-
-                            p_quantity:
-                                newQuantity
-                        }
-                    )
-
-                if (error) {
-                    throw error
-                }
-
-                item.quantity =
-                    newQuantity
-            }
-
-            msg(
-                el.pageMessage,
-                ''
-            )
-
-            renderCart()
-
-            return
-
-        } catch (error) {
-
-            console.error(
-                'Update held order quantity error:',
-                error
-            )
-
-            msg(
-                el.pageMessage,
-                error.message
-                || 'แก้จำนวนสินค้าไม่สำเร็จ'
-            )
-
-            return
-        }
-    }
-
     item.quantity =
-        newQuantity
+        Number(item.quantity || 0) + change
 
     if (item.quantity <= 0) {
         state.cart.delete(cartKey)
     }
 
-    msg(
-        el.pageMessage,
-        ''
-    )
-
+    msg(el.pageMessage, '')
     renderCart()
 }
 
@@ -4453,79 +4245,215 @@ async function removeCartItem(
     const item =
         state.cart.get(cartKey)
 
-    if (!item) {
+    if (!item) return
+
+    if (item.restaurant_item_id) {
+        msg(
+            el.pageMessage,
+            'รายการนี้ส่งเข้าครัวแล้ว ไม่สามารถลบจากตะกร้าโดยตรง'
+        )
         return
     }
 
-    if (
-        isLiveRestaurantOrder()
-        &&
-        item.restaurant_item_id
-    ) {
-
-        const {
-            error
-        } =
-            await supabase.rpc(
-                'remove_restaurant_order_item',
-                {
-                    p_item_id:
-                        item.restaurant_item_id
-                }
-            )
-
-        if (error) {
-            throw error
-        }
-    }
-
     state.cart.delete(cartKey)
-
     renderCart()
 }
 
 
+
 async function clearCurrentCart() {
 
-    const list =
-        items()
+    const drafts =
+        draftItems()
 
-    if (isLiveRestaurantOrder()) {
-
-        for (
-            const item
-            of
-            list
-        ) {
-
-            if (
-                item.restaurant_item_id
-            ) {
-
-                const {
-                    error
-                } =
-                    await supabase.rpc(
-                        'remove_restaurant_order_item',
-                        {
-                            p_item_id:
-                                item.restaurant_item_id
-                        }
-                    )
-
-                if (error) {
-                    throw error
-                }
-            }
-        }
+    if (!drafts.length) {
+        msg(
+            el.pageMessage,
+            'ไม่มีรายการ Draft ที่จะล้าง'
+        )
+        return
     }
 
-    state.cart.clear()
+    for (const item of drafts) {
+        state.cart.delete(item.cartKey)
+    }
 
-    el.discountInput.value =
-        '0'
-
+    msg(el.pageMessage, '')
     renderCart()
+}
+
+
+
+/* ========================================
+   CONFIRM ORDER / SEND TO KITCHEN
+======================================== */
+
+async function confirmCurrentOrder() {
+
+    if (!isLiveRestaurantOrder()) {
+        msg(
+            el.pageMessage,
+            'กรุณาเริ่มออเดอร์ก่อน'
+        )
+        return
+    }
+
+    const shiftReady =
+        await requireOpenShift()
+
+    if (!shiftReady) return
+
+    const drafts =
+        draftItems()
+
+    if (!drafts.length) {
+        msg(
+            el.pageMessage,
+            'ไม่มีรายการใหม่ที่รอยืนยัน'
+        )
+        return
+    }
+
+    if (el.confirmOrderBtn) {
+        el.confirmOrderBtn.disabled = true
+        el.confirmOrderBtn.textContent =
+            'กำลังส่งเข้าครัว...'
+    }
+
+    let sentCount = 0
+
+    try {
+        for (const draft of drafts) {
+
+            const {
+                data,
+                error
+            } =
+                await supabase.rpc(
+                    'add_restaurant_order_item',
+                    {
+                        p_order_id:
+                            state.currentOrder.id,
+
+                        p_product_id:
+                            draft.id,
+
+                        p_quantity:
+                            Number(draft.quantity || 0),
+
+                        p_modifiers:
+                            (draft.modifiers || [])
+                                .map(
+                                    modifier => ({
+                                        group_id:
+                                            modifier.group_id,
+
+                                        option_id:
+                                            modifier.option_id
+                                    })
+                                ),
+
+                        p_item_note:
+                            String(
+                                draft.item_note || ''
+                            ).trim() || null
+                    }
+                )
+
+            if (error) throw error
+
+            const saved =
+                Array.isArray(data)
+                    ? data[0]
+                    : data
+
+            if (!saved?.item_id) {
+                throw new Error(
+                    `ส่ง ${draft.name} เข้าครัวไม่สำเร็จ`
+                )
+            }
+
+            state.cart.delete(
+                draft.cartKey
+            )
+
+            const baseCartKey =
+                buildCartKey(
+                    draft.id,
+                    draft.modifiers || [],
+                    draft.item_note || ''
+                )
+
+            const confirmedKey =
+                `${baseCartKey}::${saved.item_id}`
+
+            state.cart.set(
+                confirmedKey,
+                {
+                    ...draft,
+                    cartKey: confirmedKey,
+                    restaurant_item_id: saved.item_id,
+                    is_confirmed: true,
+                    price:
+                        Number(
+                            saved.unit_price
+                            ?? draft.price
+                            ?? 0
+                        )
+                }
+            )
+
+            sentCount++
+        }
+
+        renderCart()
+        closeMobileCart()
+
+        msg(
+            el.pageMessage,
+            `✅ ยืนยันออเดอร์แล้ว • ส่งเข้าครัว ${sentCount.toLocaleString('th-TH')} รายการ`
+        )
+
+        setTimeout(
+            () => {
+                if (
+                    el.pageMessage?.textContent?.includes(
+                        'ยืนยันออเดอร์แล้ว'
+                    )
+                ) {
+                    msg(el.pageMessage, '')
+                }
+            },
+            2200
+        )
+
+    } catch (error) {
+        console.error(
+            'Confirm order error:',
+            error
+        )
+
+        renderCart()
+
+        msg(
+            el.pageMessage,
+            error.message ||
+            'ส่งออเดอร์เข้าครัวไม่สำเร็จ'
+        )
+
+    } finally {
+        if (el.confirmOrderBtn) {
+            el.confirmOrderBtn.textContent =
+                '✅ ยืนยันออเดอร์'
+
+            el.confirmOrderBtn.disabled =
+                !hasOpenShift()
+                ||
+                !state.currentOrder
+                ||
+                !hasDraftItems()
+        }
+    }
 }
 
 
@@ -4659,6 +4587,26 @@ function renderCart() {
                             : ''
 
 
+                    const isConfirmed =
+                        Boolean(
+                            item.restaurant_item_id
+                        )
+
+
+                    const itemStatusHtml =
+                        isConfirmed
+                            ? `
+                                <small class="cart-order-status confirmed">
+                                    ✓ ส่งเข้าครัวแล้ว
+                                </small>
+                            `
+                            : `
+                                <small class="cart-order-status draft">
+                                    รอยืนยันออเดอร์
+                                </small>
+                            `
+
+
                     return `
                         <div
                             class="cart-item"
@@ -4671,6 +4619,8 @@ function renderCart() {
                         item.name
                     )}
                                 </strong>
+
+                                ${itemStatusHtml}
 
 
                                 ${modifierText
@@ -4720,49 +4670,55 @@ function renderCart() {
                                     class="qty"
                                 >
 
-                                    <button
-                                        type="button"
-                                        data-act="dec"
-                                        data-id="${esc(
-                            item.cartKey
-                            ||
-                            item.id
-                        )}"
-                                    >
-                                        −
-                                    </button>
+                                    ${isConfirmed
+                            ? `
+                                                <span class="confirmed-qty">
+                                                    จำนวน ${item.quantity}
+                                                </span>
+                                            `
+                            : `
+                                                <button
+                                                    type="button"
+                                                    data-act="dec"
+                                                    data-id="${esc(
+                                item.cartKey
+                                ||
+                                item.id
+                            )}"
+                                                >
+                                                    −
+                                                </button>
 
+                                                <b>
+                                                    ${item.quantity}
+                                                </b>
 
-                                    <b>
-                                        ${item.quantity}
-                                    </b>
+                                                <button
+                                                    type="button"
+                                                    data-act="inc"
+                                                    data-id="${esc(
+                                item.cartKey
+                                ||
+                                item.id
+                            )}"
+                                                >
+                                                    ＋
+                                                </button>
 
-
-                                    <button
-                                        type="button"
-                                        data-act="inc"
-                                        data-id="${esc(
-                            item.cartKey
-                            ||
-                            item.id
-                        )}"
-                                    >
-                                        ＋
-                                    </button>
-
-
-                                    <button
-                                        type="button"
-                                        class="remove"
-                                        data-act="remove"
-                                        data-id="${esc(
-                            item.cartKey
-                            ||
-                            item.id
-                        )}"
-                                    >
-                                        ลบ
-                                    </button>
+                                                <button
+                                                    type="button"
+                                                    class="remove"
+                                                    data-act="remove"
+                                                    data-id="${esc(
+                                item.cartKey
+                                ||
+                                item.id
+                            )}"
+                                                >
+                                                    ลบ
+                                                </button>
+                                            `
+                        }
 
                                 </div>
 
@@ -4798,10 +4754,25 @@ function renderCart() {
         )
 
 
+    if (
+        el.confirmOrderBtn
+    ) {
+
+        el.confirmOrderBtn.disabled =
+            !hasOpenShift()
+            ||
+            !state.currentOrder
+            ||
+            !hasDraftItems()
+    }
+
+
     el.checkoutBtn.disabled =
         !list.length
         ||
         !hasOpenShift()
+        ||
+        hasDraftItems()
 
 
     if (
@@ -4834,6 +4805,19 @@ function renderCart() {
 ======================================== */
 
 async function openPayment() {
+
+    if (
+        hasDraftItems()
+    ) {
+
+        msg(
+            el.pageMessage,
+            'กรุณากด “ยืนยันออเดอร์” เพื่อส่งรายการใหม่เข้าครัวก่อนชำระเงิน'
+        )
+
+        return
+    }
+
 
     if (
         !items().length
@@ -7136,6 +7120,17 @@ el.closeOrderStartBtn
     ?.addEventListener(
         'click',
         closeOrderStartModal
+    )
+
+
+/* ========================================
+   CONFIRM ORDER
+======================================== */
+
+el.confirmOrderBtn
+    ?.addEventListener(
+        'click',
+        confirmCurrentOrder
     )
 
 
