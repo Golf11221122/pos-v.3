@@ -2011,14 +2011,18 @@ async function startRestaurantOrder() {
 
         /*
          * TAKEAWAY
-         * คงระบบเดิมไว้เพื่อรักษาเลขคิว
+         *
+         * สำคัญ:
+         * ต้องสร้างใน public.restaurant_orders
+         * เพื่อให้ add_restaurant_order_item / Kitchen
+         * ใช้ Order ID ชุดเดียวกัน
          */
         const {
             data,
             error
         } =
             await supabase.rpc(
-                'create_restaurant_order',
+                'create_takeaway_restaurant_order',
                 {
                     p_branch_id:
                         state.profile.branch_id,
@@ -2027,17 +2031,8 @@ async function startRestaurantOrder() {
                         state.currentShift?.id
                         || null,
 
-                    p_order_type:
-                        'takeaway',
-
-                    p_table_id:
-                        null,
-
                     p_guest_count:
                         state.guestCount,
-
-                    p_order_source:
-                        'pos',
 
                     p_note:
                         null
@@ -2055,13 +2050,29 @@ async function startRestaurantOrder() {
 
         if (!order?.id) {
             throw new Error(
-                'สร้างออเดอร์ไม่สำเร็จ'
+                'สร้างออเดอร์กลับบ้านไม่สำเร็จ'
             )
         }
 
         state.currentOrder = {
             ...order,
-            table_name: null
+
+            order_type:
+                'takeaway',
+
+            order_source:
+                order.order_source
+                || 'pos',
+
+            status:
+                order.status
+                || 'open',
+
+            table_id:
+                null,
+
+            table_name:
+                null
         }
 
         renderOrderContext()
