@@ -3273,3 +3273,85 @@ and
 .hold-table-btn:active {
     transform: scale(0.99);
 }
+
+/* ========================================
+   CONFIRM ORDER / DRAFT CART
+======================================== */
+
+.confirm-order-btn {
+    width: 100%;
+    min-height: 54px;
+    margin-top: 12px;
+    padding: 11px 16px;
+    border: 1px solid #188038;
+    border-radius: 12px;
+    background: #188038;
+    color: #ffffff;
+    font-weight: 900;
+    font-size: 16px;
+    box-shadow: 0 4px 12px rgba(24, 128, 56, .18);
+}
+
+.confirm-order-btn:hover {
+    background: #137333;
+}
+
+.confirm-order-btn:disabled {
+    background: #dfe3e7;
+    border-color: #dfe3e7;
+    color: #8a9096;
+    box-shadow: none;
+}
+
+.confirm-order-help {
+    display: block;
+    margin: 6px 2px 12px;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.4;
+    text-align: center;
+}
+
+.cart-order-status {
+    display: block;
+    width: fit-content;
+    margin-top: 5px;
+    padding: 3px 7px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+.cart-order-status.draft {
+    background: #fff4c7;
+    color: #8a5a00;
+}
+
+.cart-order-status.confirmed {
+    background: #e6f4ea;
+    color: #137333;
+}
+
+.confirmed-qty {
+    display: inline-flex;
+    min-height: 32px;
+    align-items: center;
+    padding: 0 9px;
+    border-radius: 8px;
+    background: #f1f3f4;
+    color: #5f6368;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+@media (max-width: 760px) {
+    .confirm-order-btn {
+        min-height: 58px;
+        font-size: 17px;
+    }
+
+    .confirm-order-help {
+        font-size: 12px;
+    }
+}
+
