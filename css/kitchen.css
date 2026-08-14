@@ -604,3 +604,54 @@ button {
         min-width: 0
     }
 }
+
+/* ================================
+   KITCHEN LIVE TIMER
+   ใหญ่ขึ้น 20% + ชิดขวา
+================================ */
+
+[data-kitchen-timer] {
+    font-size: 1.2em;
+    font-weight: 800;
+    line-height: 1.3;
+
+    margin-top: 7px;
+    margin-left: auto;
+    padding: 5px 9px;
+
+    width: fit-content;
+    display: block;
+
+    border: 1px solid #dcdcdc;
+    border-radius: 8px;
+
+    background: #fff;
+
+    text-align: right;
+}
+
+/* ========================================
+   KITCHEN TIMER
+   ชิดขวา + ใหญ่ + เตือนเมื่อเกินเวลา
+======================================== */
+
+[data-kitchen-timer] {
+    display: block;
+    width: fit-content;
+
+    margin-left: auto;
+    margin-top: 4px;
+
+    text-align: right;
+
+    font-size: 1.2em;
+    font-weight: 800;
+    line-height: 1.15;
+}
+
+/* เกินเวลาที่กำหนด */
+[data-kitchen-timer].timer-overdue {
+    color: #e11919;
+    font-weight: 900;
+}
+
