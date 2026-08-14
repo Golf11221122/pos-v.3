@@ -78,16 +78,16 @@ function tableName(item) {
     return item.table_name
         || (
             item.table_no
-                ? `โต๊ะ ${item.table_no}`
-                : 'ไม่ระบุโต๊ะ'
+                ? `à¹à¸à¹à¸° ${item.table_no}`
+                : 'à¹à¸¡à¹à¸£à¸°à¸à¸¸à¹à¸à¹à¸°'
         )
 }
 
 function statusText(status) {
     return {
-        pending: 'ออเดอร์ใหม่',
-        preparing: 'กำลังทำ',
-        ready: 'พร้อมเสิร์ฟ'
+        pending: 'à¸­à¸­à¹à¸à¸­à¸£à¹à¹à¸«à¸¡à¹',
+        preparing: 'à¸à¸³à¸¥à¸±à¸à¸à¸³',
+        ready: 'à¸à¸£à¹à¸­à¸¡à¹à¸ªà¸´à¸£à¹à¸'
     }[status] || status
 }
 
@@ -187,7 +187,7 @@ async function loadProfile(userId) {
 
     if (!data?.branch_id) {
         throw new Error(
-            'บัญชียังไม่ได้กำหนดสาขา'
+            'à¸à¸±à¸à¸à¸µà¸¢à¸±à¸à¹à¸¡à¹à¹à¸à¹à¸à¸³à¸«à¸à¸à¸ªà¸²à¸à¸²'
         )
     }
 
@@ -207,13 +207,13 @@ async function loadBranch() {
     if (error) throw error
 
     if (!data) {
-        throw new Error('ไม่พบสาขา')
+        throw new Error('à¹à¸¡à¹à¸à¸à¸ªà¸²à¸à¸²')
     }
 
     state.branch = data
 
     el.branchText.textContent =
-        `สาขา: ${data.name}`
+        `à¸ªà¸²à¸à¸²: ${data.name}`
 }
 
 /* ========================================
@@ -246,7 +246,7 @@ function renderStationSelect() {
     if (!el.stationSelect) return
 
     el.stationSelect.innerHTML = `
-        <option value="">ทุกครัว</option>
+        <option value="">à¸à¸¸à¸à¸à¸£à¸±à¸§</option>
         ${state.stations.map(station => `
             <option value="${esc(station.id)}">${esc(station.name)}</option>
         `).join('')}
@@ -258,7 +258,7 @@ function renderStationSelect() {
 
 function renderSelectedStationText() {
     const station = state.stations.find(row => row.id === state.selectedStation)
-    const text = station?.name || 'ทุกครัว'
+    const text = station?.name || 'à¸à¸¸à¸à¸à¸£à¸±à¸§'
     if (el.selectedStationText) el.selectedStationText.textContent = text
     document.title = state.selectedStation ? `${text} | JOKJUNG POS` : 'Kitchen | JOKJUNG POS'
 }
@@ -289,10 +289,17 @@ async function loadKitchenItems({
             ? data
             : []
 
-    const newQrPending =
+    /*
+     * à¹à¸à¹à¸à¹à¸à¸·à¸­à¸à¸­à¸­à¹à¸à¸­à¸£à¹à¹à¸«à¸¡à¹à¸à¸¸à¸à¹à¸«à¸¥à¹à¸:
+     * - QR
+     * - POS à¸à¸²à¸à¸à¸µà¹à¸£à¹à¸²à¸
+     * - POS à¸à¸¥à¸±à¸à¸à¹à¸²à¸
+     *
+     * à¹à¸¡à¹à¸à¸³à¸à¸±à¸à¹à¸à¸à¸²à¸° order_source === 'qr'
+     */
+    const newPending =
         list.filter(item =>
             item.item_status === 'pending'
-            && item.order_source === 'qr'
             && !state.knownItemIds.has(item.item_id)
         )
 
@@ -304,11 +311,11 @@ async function loadKitchenItems({
 
     renderBoard()
 
-    if (notifyNew && newQrPending.length > 0) {
+    if (notifyNew && newPending.length > 0) {
         playAlertSound()
 
         const toPrint =
-            newQrPending.filter(
+            newPending.filter(
                 item => !item.kitchen_printed_at
             )
 
@@ -359,12 +366,12 @@ function renderBoard() {
     const selectedStation = state.stations.find(
         station => station.id === state.selectedStation
     )
-    const stationName = selectedStation?.name || 'ทุกครัว'
+    const stationName = selectedStation?.name || 'à¸à¸¸à¸à¸à¸£à¸±à¸§'
 
     el.statusText.textContent =
         state.items.length
-            ? `${stationName} • ${state.items.length.toLocaleString('th-TH')} รายการ`
-            : `${stationName} • รอออเดอร์ใหม่...`
+            ? `${stationName} â¢ ${state.items.length.toLocaleString('th-TH')} à¸£à¸²à¸¢à¸à¸²à¸£`
+            : `${stationName} â¢ à¸£à¸­à¸­à¸­à¹à¸à¸­à¸£à¹à¹à¸«à¸¡à¹...`
 
     renderColumn(
         el.pendingGrid,
@@ -426,7 +433,7 @@ function renderTicket(item) {
                     data-act="print"
                     data-id="${esc(item.item_id)}"
                 >
-                    🖨️ พิมพ์
+                    ð¨ï¸ à¸à¸´à¸¡à¸à¹
                 </button>
 
                 <button
@@ -435,7 +442,7 @@ function renderTicket(item) {
                     data-act="start"
                     data-id="${esc(item.item_id)}"
                 >
-                    🍳 เริ่มทำ
+                    ð³ à¹à¸£à¸´à¹à¸¡à¸à¸³
                 </button>
 
                 <button
@@ -444,7 +451,7 @@ function renderTicket(item) {
                     data-act="cancel"
                     data-id="${esc(item.item_id)}"
                 >
-                    ยกเลิกรายการ
+                    à¸¢à¸à¹à¸¥à¸´à¸à¸£à¸²à¸¢à¸à¸²à¸£
                 </button>
             </div>
         `
@@ -459,7 +466,7 @@ function renderTicket(item) {
                     data-act="print"
                     data-id="${esc(item.item_id)}"
                 >
-                    🖨️ พิมพ์ซ้ำ
+                    ð¨ï¸ à¸à¸´à¸¡à¸à¹à¸à¹à¸³
                 </button>
 
                 <button
@@ -468,7 +475,7 @@ function renderTicket(item) {
                     data-act="ready"
                     data-id="${esc(item.item_id)}"
                 >
-                    ✅ พร้อมเสิร์ฟ
+                    â à¸à¸£à¹à¸­à¸¡à¹à¸ªà¸´à¸£à¹à¸
                 </button>
 
                 <button
@@ -477,7 +484,7 @@ function renderTicket(item) {
                     data-act="cancel"
                     data-id="${esc(item.item_id)}"
                 >
-                    ยกเลิกรายการ
+                    à¸¢à¸à¹à¸¥à¸´à¸à¸£à¸²à¸¢à¸à¸²à¸£
                 </button>
             </div>
         `
@@ -492,7 +499,7 @@ function renderTicket(item) {
                     data-act="served"
                     data-id="${esc(item.item_id)}"
                 >
-                    🍽️ เสิร์ฟแล้ว
+                    ð½ï¸ à¹à¸ªà¸´à¸£à¹à¸à¹à¸¥à¹à¸§
                 </button>
             </div>
         `
@@ -511,7 +518,7 @@ function renderTicket(item) {
                     </div>
 
                     ${item.kitchen_station_name
-                        ? `<div class="ticket-time">🍳 ${esc(item.kitchen_station_name)}</div>`
+                        ? `<div class="ticket-time">ð³ ${esc(item.kitchen_station_name)}</div>`
                         : ''
                     }
                 </div>
@@ -529,7 +536,7 @@ function renderTicket(item) {
                 </div>
 
                 <div class="quantity">
-                    × ${Number(item.quantity || 0).toLocaleString('th-TH')}
+                    Ã ${Number(item.quantity || 0).toLocaleString('th-TH')}
                 </div>
 
                 ${modifierHtml
@@ -544,7 +551,7 @@ function renderTicket(item) {
                 ${item.item_note
             ? `
                             <div class="note">
-                                หมายเหตุ:
+                                à¸«à¸¡à¸²à¸¢à¹à¸«à¸à¸¸:
                                 ${esc(item.item_note)}
                             </div>
                         `
@@ -583,7 +590,7 @@ function renderPrintTicket(item) {
     el.kitchenPrintArea.innerHTML = `
         <div class="print-ticket">
             <div class="print-center">
-                <strong>JOKJUNG - ใบครัว</strong>
+                <strong>JOKJUNG - à¹à¸à¸à¸£à¸±à¸§</strong>
             </div>
 
             ${item.kitchen_station_name
@@ -606,7 +613,7 @@ function renderPrintTicket(item) {
             </div>
 
             <div class="print-qty">
-                จำนวน:
+                à¸à¸³à¸à¸§à¸:
                 ${Number(item.quantity || 0).toLocaleString('th-TH')}
             </div>
 
@@ -622,7 +629,7 @@ function renderPrintTicket(item) {
             ${item.item_note
             ? `
                         <div class="print-note">
-                            หมายเหตุ:
+                            à¸«à¸¡à¸²à¸¢à¹à¸«à¸à¸¸:
                             ${esc(item.item_note)}
                         </div>
                     `
@@ -729,7 +736,7 @@ async function markServed(itemId) {
 async function cancelItem(itemId) {
     const confirmed =
         confirm(
-            'ยกเลิกรายการอาหารนี้หรือไม่?'
+            'à¸¢à¸à¹à¸¥à¸´à¸à¸£à¸²à¸¢à¸à¸²à¸£à¸­à¸²à¸«à¸²à¸£à¸à¸µà¹à¸«à¸£à¸·à¸­à¹à¸¡à¹?'
         )
 
     if (!confirmed) return
@@ -864,10 +871,6 @@ function subscribeRealtime() {
                             'INSERT'
                             &&
                             payload.new
-                                ?.order_source ===
-                                'qr'
-                            &&
-                            payload.new
                                 ?.item_status ===
                                 'pending'
 
@@ -887,7 +890,7 @@ function subscribeRealtime() {
                             el.pageMessage,
                             error.message
                             ||
-                            'รับออเดอร์แบบเรียลไทม์ไม่สำเร็จ'
+                            'à¸£à¸±à¸à¸­à¸­à¹à¸à¸­à¸£à¹à¹à¸à¸à¹à¸£à¸µà¸¢à¸¥à¹à¸à¸¡à¹à¹à¸¡à¹à¸ªà¸³à¹à¸£à¹à¸'
                         )
                     }
                 }
@@ -935,7 +938,7 @@ function subscribeRealtime() {
                         clearRealtimeRetry()
 
                         el.statusText.textContent =
-                            '🟢 เชื่อมต่อครัวแบบเรียลไทม์แล้ว'
+                            'ð¢ à¹à¸à¸·à¹à¸­à¸¡à¸à¹à¸­à¸à¸£à¸±à¸§à¹à¸à¸à¹à¸£à¸µà¸¢à¸¥à¹à¸à¸¡à¹à¹à¸¥à¹à¸§'
 
                         msg(
                             el.pageMessage,
@@ -948,11 +951,11 @@ function subscribeRealtime() {
                     if (status === 'CHANNEL_ERROR') {
 
                         el.statusText.textContent =
-                            '🔴 Realtime เชื่อมต่อผิดพลาด'
+                            'ð´ Realtime à¹à¸à¸·à¹à¸­à¸¡à¸à¹à¸­à¸à¸´à¸à¸à¸¥à¸²à¸'
 
                         msg(
                             el.pageMessage,
-                            'Realtime มีปัญหา ระบบกำลังเชื่อมต่อใหม่อัตโนมัติ'
+                            'Realtime à¸¡à¸µà¸à¸±à¸à¸«à¸² à¸£à¸°à¸à¸à¸à¸³à¸¥à¸±à¸à¹à¸à¸·à¹à¸­à¸¡à¸à¹à¸­à¹à¸«à¸¡à¹à¸­à¸±à¸à¹à¸à¸¡à¸±à¸à¸´'
                         )
 
                         scheduleRealtimeRetry()
@@ -962,11 +965,11 @@ function subscribeRealtime() {
                     if (status === 'TIMED_OUT') {
 
                         el.statusText.textContent =
-                            '🟠 Realtime หมดเวลาการเชื่อมต่อ'
+                            'ð  Realtime à¸«à¸¡à¸à¹à¸§à¸¥à¸²à¸à¸²à¸£à¹à¸à¸·à¹à¸­à¸¡à¸à¹à¸­'
 
                         msg(
                             el.pageMessage,
-                            'Realtime หมดเวลา ระบบกำลังเชื่อมต่อใหม่อัตโนมัติ'
+                            'Realtime à¸«à¸¡à¸à¹à¸§à¸¥à¸² à¸£à¸°à¸à¸à¸à¸³à¸¥à¸±à¸à¹à¸à¸·à¹à¸­à¸¡à¸à¹à¸­à¹à¸«à¸¡à¹à¸­à¸±à¸à¹à¸à¸¡à¸±à¸à¸´'
                         )
 
                         scheduleRealtimeRetry()
@@ -976,7 +979,7 @@ function subscribeRealtime() {
                     if (status === 'CLOSED') {
 
                         el.statusText.textContent =
-                            '🟠 Realtime ถูกตัดการเชื่อมต่อ'
+                            'ð  Realtime à¸à¸¹à¸à¸à¸±à¸à¸à¸²à¸£à¹à¸à¸·à¹à¸­à¸¡à¸à¹à¸­'
 
                         scheduleRealtimeRetry()
                     }
@@ -1021,7 +1024,7 @@ async function init() {
         msg(
             el.pageMessage,
             error.message
-            || 'เปิดหน้าครัวไม่สำเร็จ'
+            || 'à¹à¸à¸´à¸à¸«à¸à¹à¸²à¸à¸£à¸±à¸§à¹à¸¡à¹à¸ªà¸³à¹à¸£à¹à¸'
         )
     }
 }
@@ -1045,7 +1048,7 @@ el.stationSelect
                 msg(el.pageMessage, '')
             } catch (error) {
                 console.error('Change kitchen station error:', error)
-                msg(el.pageMessage, error.message || 'เปลี่ยนครัวไม่สำเร็จ')
+                msg(el.pageMessage, error.message || 'à¹à¸à¸¥à¸µà¹à¸¢à¸à¸à¸£à¸±à¸§à¹à¸¡à¹à¸ªà¸³à¹à¸£à¹à¸')
             }
         }
     )
@@ -1062,7 +1065,7 @@ el.enableSoundBtn
                 .add('active')
 
             el.enableSoundBtn.textContent =
-                '🔔 เสียงแจ้งเตือน: เปิดแล้ว'
+                'ð à¹à¸ªà¸µà¸¢à¸à¹à¸à¹à¸à¹à¸à¸·à¸­à¸: à¹à¸à¸´à¸à¹à¸¥à¹à¸§'
 
             playAlertSound()
         }
@@ -1085,7 +1088,7 @@ el.refreshBtn
                 msg(
                     el.pageMessage,
                     error.message
-                    || 'รีเฟรชไม่สำเร็จ'
+                    || 'à¸£à¸µà¹à¸à¸£à¸à¹à¸¡à¹à¸ªà¸³à¹à¸£à¹à¸'
                 )
             }
         }
@@ -1162,7 +1165,7 @@ document
                 msg(
                     el.pageMessage,
                     error.message
-                    || 'ดำเนินการไม่สำเร็จ'
+                    || 'à¸à¸³à¹à¸à¸´à¸à¸à¸²à¸£à¹à¸¡à¹à¸ªà¸³à¹à¸£à¹à¸'
                 )
 
             } finally {
