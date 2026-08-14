@@ -763,7 +763,7 @@ async function loadSales(
 
             : (
                 sevenDaysAgo <
-                monthStart
+                    monthStart
 
                     ? sevenDaysAgo
 
@@ -1401,18 +1401,17 @@ function renderSevenDayChart() {
                                 "
                             >
 
-                                ${
-                                    day.total > 0
+                                ${day.total > 0
 
-                                        ? Math.round(
-                                            day.total
-                                        )
-                                            .toLocaleString(
-                                                'th-TH'
-                                            )
+                            ? Math.round(
+                                day.total
+                            )
+                                .toLocaleString(
+                                    'th-TH'
+                                )
 
-                                        : '0'
-                                }
+                            : '0'
+                        }
 
                             </div>
 
@@ -1433,11 +1432,10 @@ function renderSevenDayChart() {
                                         ${height}%;
                                     "
 
-                                    title="${
-                                        money(
-                                            day.total
-                                        )
-                                    }"
+                                    title="${money(
+                            day.total
+                        )
+                        }"
                                 >
                                 </div>
 
@@ -1643,11 +1641,10 @@ function renderTopProducts() {
 
                             <strong>
 
-                                ${
-                                    escapeHtml(
-                                        product.name
-                                    )
-                                }
+                                ${escapeHtml(
+                    product.name
+                )
+                    }
 
                             </strong>
 
@@ -1656,11 +1653,10 @@ function renderTopProducts() {
 
                                 ยอดขาย
 
-                                ${
-                                    money(
-                                        product.total
-                                    )
-                                }
+                                ${money(
+                        product.total
+                    )
+                    }
 
                             </small>
 
@@ -1673,13 +1669,12 @@ function renderTopProducts() {
                             "
                         >
 
-                            ${
-                                product
-                                    .quantity
-                                    .toLocaleString(
-                                        'th-TH'
-                                    )
-                            }
+                            ${product
+                        .quantity
+                        .toLocaleString(
+                            'th-TH'
+                        )
+                    }
 
                         </div>
 
@@ -2220,10 +2215,9 @@ async function loadDashboard() {
 
 
         showStatus(
-            `โหลดข้อมูลไม่สำเร็จ: ${
-                error.message
-                ||
-                'เกิดข้อผิดพลาด'
+            `โหลดข้อมูลไม่สำเร็จ: ${error.message
+            ||
+            'เกิดข้อผิดพลาด'
             }`
         )
 
@@ -2286,8 +2280,7 @@ async function logout() {
 
 
         showStatus(
-            `ออกจากระบบไม่สำเร็จ: ${
-                error.message
+            `ออกจากระบบไม่สำเร็จ: ${error.message
             }`
         )
 
