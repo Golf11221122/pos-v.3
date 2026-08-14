@@ -39,7 +39,11 @@ const state = {
 
     // Modifier / ตัวเลือกสินค้า
     modifierCache: new Map(),
-    modifierProduct: null
+    modifierProduct: null,
+
+    // จัดการตัวเลือกเมนู
+    modifierManagerProductId: null,
+    modifierManagerGroups: []
 }
 
 
@@ -2838,6 +2842,317 @@ function renderProducts() {
 }
 
 
+
+/* ========================================
+   MODIFIER MANAGER
+======================================== */
+
+function ensureModifierManagerModal() {
+    let modal = document.getElementById('modifierManagerModal')
+    if (modal) return modal
+
+    modal = document.createElement('div')
+    modal.id = 'modifierManagerModal'
+    modal.className = 'modal hidden'
+    modal.innerHTML = `
+        <div class="modal-card modifier-manager-card">
+            <div class="modal-head modifier-manager-head">
+                <div>
+                    <h2>⚙ จัดการตัวเลือกเมนู</h2>
+                    <small>สร้างตัวเลือกเอง และแก้ไขราคาเพิ่ม/ลดได้</small>
+                </div>
+                <button id="closeModifierManagerBtn" class="icon-btn" type="button">×</button>
+            </div>
+
+            <label class="modifier-manager-label" for="modifierManagerProduct">เมนู</label>
+            <select id="modifierManagerProduct" class="modifier-manager-select"></select>
+
+            <div class="modifier-template-row">
+                <button type="button" data-template="size">+ ธรรมดา / พิเศษ</button>
+                <button type="button" data-template="spicy">+ ระดับความเผ็ด</button>
+                <button type="button" data-template="custom">+ สร้างเอง</button>
+            </div>
+
+            <p id="modifierManagerMessage" class="message"></p>
+            <div id="modifierManagerGroups" class="modifier-manager-groups"></div>
+        </div>`
+
+    document.body.appendChild(modal)
+
+    modal.querySelector('#closeModifierManagerBtn')?.addEventListener('click', closeModifierManager)
+    modal.querySelector('#modifierManagerProduct')?.addEventListener('change', async e => {
+        state.modifierManagerProductId = e.target.value || null
+        await loadModifierManagerGroups()
+    })
+    modal.querySelectorAll('[data-template]').forEach(btn => btn.addEventListener('click', async () => {
+        if (btn.dataset.template === 'size') return createModifierTemplateSize()
+        if (btn.dataset.template === 'spicy') return createModifierTemplateSpicy()
+        return createCustomModifierGroup()
+    }))
+    modal.querySelector('#modifierManagerGroups')?.addEventListener('click', handleModifierManagerClick)
+    modal.addEventListener('click', e => { if (e.target === modal) closeModifierManager() })
+    return modal
+}
+
+function modifierManagerMessage(text='') {
+    msg(document.getElementById('modifierManagerMessage'), text)
+}
+
+function closeModifierManager() {
+    document.getElementById('modifierManagerModal')?.classList.add('hidden')
+}
+
+async function openModifierManager(productId=null) {
+    const modal = ensureModifierManagerModal()
+    const select = document.getElementById('modifierManagerProduct')
+    if (!select) return
+
+    select.innerHTML = state.products.map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')
+    state.modifierManagerProductId = productId || state.modifierManagerProductId || state.products[0]?.id || null
+    if (state.modifierManagerProductId) select.value = state.modifierManagerProductId
+
+    modifierManagerMessage('')
+    closeMobileCart()
+    modal.classList.remove('hidden')
+    await loadModifierManagerGroups()
+}
+
+async function loadModifierManagerGroups() {
+    const productId = state.modifierManagerProductId
+    const container = document.getElementById('modifierManagerGroups')
+    if (!container) return
+    if (!productId) {
+        container.innerHTML = '<div class="modifier-manager-empty">กรุณาเลือกเมนู</div>'
+        return
+    }
+
+    container.innerHTML = '<div class="modifier-manager-empty">กำลังโหลด...</div>'
+    try {
+        const {data:links,error:linkError} = await supabase.from('product_modifier_groups')
+            .select('modifier_group_id,display_order').eq('product_id',productId).order('display_order',{ascending:true})
+        if (linkError) throw linkError
+        if (!links?.length) {
+            state.modifierManagerGroups=[]
+            renderModifierManagerGroups(); return
+        }
+
+        const groupIds=[...new Set(links.map(x=>x.modifier_group_id))]
+        const [gr,op] = await Promise.all([
+            supabase.from('modifier_groups').select('id,name,selection_type,is_required,min_select,max_select,display_order,is_active').in('id',groupIds),
+            supabase.from('modifier_options').select('id,modifier_group_id,name,price_adjustment,display_order,is_active').in('modifier_group_id',groupIds)
+        ])
+        if (gr.error) throw gr.error
+        if (op.error) throw op.error
+
+        const orderMap=new Map(links.map(x=>[x.modifier_group_id,Number(x.display_order||0)]))
+        state.modifierManagerGroups=(gr.data||[]).filter(g=>g.is_active!==false).map(g=>({
+            ...g,
+            product_display_order:orderMap.get(g.id)??Number(g.display_order||0),
+            options:(op.data||[]).filter(o=>o.modifier_group_id===g.id&&o.is_active!==false)
+                .sort((a,b)=>Number(a.display_order||0)-Number(b.display_order||0))
+        })).sort((a,b)=>a.product_display_order-b.product_display_order)
+        renderModifierManagerGroups()
+    } catch(error) {
+        console.error('Load modifier manager error:',error)
+        container.innerHTML=''
+        modifierManagerMessage(error.message||'โหลดตัวเลือกไม่สำเร็จ')
+    }
+}
+
+function renderModifierManagerGroups() {
+    const container=document.getElementById('modifierManagerGroups')
+    if (!container) return
+    const groups=state.modifierManagerGroups||[]
+    if (!groups.length) {
+        container.innerHTML=`<div class="modifier-manager-empty"><strong>เมนูนี้ยังไม่มีตัวเลือก</strong><span>เลือก Template หรือกด “สร้างเอง”</span></div>`
+        return
+    }
+
+    container.innerHTML=groups.map(g=>`
+        <section class="modifier-manager-group">
+            <div class="modifier-manager-group-head">
+                <div><strong>${esc(g.name)}</strong><small>${g.selection_type==='multiple'?'เลือกได้หลายข้อ':'เลือกได้ 1 ข้อ'} • ${g.is_required?'บังคับเลือก':'ไม่บังคับ'}</small></div>
+                <div class="modifier-manager-actions">
+                    <button type="button" class="outline-btn" data-mm-action="edit-group" data-group-id="${esc(g.id)}">แก้กลุ่ม</button>
+                    <button type="button" class="danger-link" data-mm-action="unlink-group" data-group-id="${esc(g.id)}">เอาออก</button>
+                </div>
+            </div>
+            <div class="modifier-manager-options">
+                ${(g.options||[]).map(o=>{
+                    const price=Number(o.price_adjustment||0)
+                    const priceText=price===0?'ไม่เพิ่มราคา':(price>0?`+${money(price)}`:money(price))
+                    return `<div class="modifier-manager-option">
+                        <div><strong>${esc(o.name)}</strong><small>${esc(priceText)}</small></div>
+                        <div class="modifier-manager-actions">
+                            <button type="button" class="outline-btn" data-mm-action="edit-option" data-group-id="${esc(g.id)}" data-option-id="${esc(o.id)}">แก้ชื่อ/ราคา</button>
+                            <button type="button" class="danger-link" data-mm-action="delete-option" data-group-id="${esc(g.id)}" data-option-id="${esc(o.id)}">ลบ</button>
+                        </div>
+                    </div>`
+                }).join('') || '<div class="modifier-manager-empty small">ยังไม่มีตัวเลือก</div>'}
+            </div>
+            <button type="button" class="modifier-add-option-btn" data-mm-action="add-option" data-group-id="${esc(g.id)}">+ เพิ่มตัวเลือก</button>
+        </section>`).join('')
+}
+
+function findManagerGroup(id) {
+    return (state.modifierManagerGroups||[]).find(g=>g.id===id)||null
+}
+
+async function handleModifierManagerClick(event) {
+    const btn=event.target.closest('[data-mm-action]')
+    if (!btn) return
+    const a=btn.dataset.mmAction, g=btn.dataset.groupId||null, o=btn.dataset.optionId||null
+    if (a==='add-option') return addModifierOption(g)
+    if (a==='edit-option') return editModifierOption(g,o)
+    if (a==='delete-option') return deleteModifierOption(g,o)
+    if (a==='edit-group') return editModifierGroup(g)
+    if (a==='unlink-group') return unlinkModifierGroup(g)
+}
+
+async function nextModifierDisplayOrder(tableName,filterColumn=null,filterValue=null) {
+    let q=supabase.from(tableName).select('display_order')
+    if (filterColumn&&filterValue) q=q.eq(filterColumn,filterValue)
+    const {data,error}=await q.order('display_order',{ascending:false}).limit(1)
+    if (error) throw error
+    return Number(data?.[0]?.display_order||0)+10
+}
+
+async function createModifierGroupWithOptions({name,selectionType='single',required=true,minSelect=1,maxSelect=1,options=[]}) {
+    const productId=state.modifierManagerProductId
+    const cleanName=String(name||'').trim()
+    if (!productId) return modifierManagerMessage('กรุณาเลือกเมนูก่อน')
+    if (!cleanName) return modifierManagerMessage('กรุณาระบุชื่อกลุ่ม')
+
+    try {
+        modifierManagerMessage('กำลังบันทึก...')
+        const groupOrder=await nextModifierDisplayOrder('modifier_groups')
+        const {data:group,error:groupError}=await supabase.from('modifier_groups').insert({
+            name:cleanName,selection_type:selectionType,is_required:!!required,
+            min_select:Number(minSelect||0),max_select:Number(maxSelect||0),display_order:groupOrder,is_active:true
+        }).select('id').single()
+        if (groupError) throw groupError
+
+        const productOrder=await nextModifierDisplayOrder('product_modifier_groups','product_id',productId)
+        const {error:linkError}=await supabase.from('product_modifier_groups').insert({
+            product_id:productId,modifier_group_id:group.id,display_order:productOrder
+        })
+        if (linkError) throw linkError
+
+        if (options.length) {
+            const rows=options.map((o,i)=>({modifier_group_id:group.id,name:String(o.name||'').trim(),price_adjustment:Number(o.price||0),display_order:(i+1)*10,is_active:true})).filter(o=>o.name)
+            if (rows.length) {
+                const {error}=await supabase.from('modifier_options').insert(rows)
+                if (error) throw error
+            }
+        }
+        state.modifierCache.delete(productId)
+        await loadModifierManagerGroups()
+        modifierManagerMessage('บันทึกตัวเลือกแล้ว')
+    } catch(error) {
+        console.error('Create modifier group error:',error)
+        modifierManagerMessage(error.message||'สร้างตัวเลือกไม่สำเร็จ')
+    }
+}
+
+async function createModifierTemplateSize() {
+    const priceText=prompt('ราคา “พิเศษ” เพิ่มจากธรรมดากี่บาท?','10')
+    if (priceText===null) return
+    const price=Number(priceText||0)
+    if (!Number.isFinite(price)) return modifierManagerMessage('ราคาไม่ถูกต้อง')
+    return createModifierGroupWithOptions({name:'ขนาด',selectionType:'single',required:true,minSelect:1,maxSelect:1,options:[{name:'ธรรมดา',price:0},{name:'พิเศษ',price}]})
+}
+
+async function createModifierTemplateSpicy() {
+    return createModifierGroupWithOptions({name:'ระดับความเผ็ด',selectionType:'single',required:true,minSelect:1,maxSelect:1,options:[
+        {name:'ไม่เผ็ด',price:0},{name:'เผ็ดน้อย',price:0},{name:'เผ็ดกลาง',price:0},{name:'เผ็ดมาก',price:0}
+    ]})
+}
+
+async function createCustomModifierGroup() {
+    const name=prompt('ชื่อกลุ่ม เช่น เส้น / ท็อปปิ้ง / ระดับหวาน')
+    if (name===null) return
+    const type=prompt('1 = เลือกได้ 1 ข้อ\n2 = เลือกได้หลายข้อ','1')
+    if (type===null) return
+    const selectionType=String(type).trim()==='2'?'multiple':'single'
+    const required=confirm('บังคับให้ต้องเลือกหรือไม่?')
+    let maxSelect=1
+    if (selectionType==='multiple') {
+        const maxText=prompt('เลือกได้สูงสุดกี่ข้อ? (0 = ไม่จำกัด)','0')
+        if (maxText===null) return
+        maxSelect=Math.max(0,Number(maxText||0))
+    }
+    return createModifierGroupWithOptions({name:String(name).trim(),selectionType,required,minSelect:required?1:0,maxSelect})
+}
+
+async function addModifierOption(groupId) {
+    const group=findManagerGroup(groupId); if (!group) return
+    const name=prompt(`ชื่อตัวเลือกใน “${group.name}”`); if (name===null) return
+    const clean=String(name).trim(); if (!clean) return modifierManagerMessage('กรุณาระบุชื่อตัวเลือก')
+    const priceText=prompt('ราคาเพิ่ม/ลดจากราคาปกติ\nเช่น 10 หรือ -5','0'); if (priceText===null) return
+    const price=Number(priceText||0); if (!Number.isFinite(price)) return modifierManagerMessage('ราคาไม่ถูกต้อง')
+    try {
+        const displayOrder=await nextModifierDisplayOrder('modifier_options','modifier_group_id',groupId)
+        const {error}=await supabase.from('modifier_options').insert({modifier_group_id:groupId,name:clean,price_adjustment:price,display_order:displayOrder,is_active:true})
+        if (error) throw error
+        state.modifierCache.delete(state.modifierManagerProductId)
+        await loadModifierManagerGroups(); modifierManagerMessage('เพิ่มตัวเลือกแล้ว')
+    } catch(error) { console.error(error); modifierManagerMessage(error.message||'เพิ่มตัวเลือกไม่สำเร็จ') }
+}
+
+async function editModifierOption(groupId,optionId) {
+    const group=findManagerGroup(groupId); const option=group?.options?.find(o=>o.id===optionId); if (!option) return
+    const name=prompt('ชื่อตัวเลือก',option.name); if (name===null) return
+    const priceText=prompt('ราคาเพิ่ม/ลดจากราคาปกติ',String(Number(option.price_adjustment||0))); if (priceText===null) return
+    const price=Number(priceText||0); if (!Number.isFinite(price)) return modifierManagerMessage('ราคาไม่ถูกต้อง')
+    try {
+        const {error}=await supabase.from('modifier_options').update({name:String(name).trim(),price_adjustment:price}).eq('id',optionId)
+        if (error) throw error
+        state.modifierCache.delete(state.modifierManagerProductId)
+        await loadModifierManagerGroups(); modifierManagerMessage('แก้ไขชื่อ/ราคาแล้ว')
+    } catch(error) { console.error(error); modifierManagerMessage(error.message||'แก้ไขไม่สำเร็จ') }
+}
+
+async function deleteModifierOption(groupId,optionId) {
+    const group=findManagerGroup(groupId); const option=group?.options?.find(o=>o.id===optionId); if (!option) return
+    if (!confirm(`ลบตัวเลือก “${option.name}” หรือไม่?`)) return
+    try {
+        const {error}=await supabase.from('modifier_options').update({is_active:false}).eq('id',optionId)
+        if (error) throw error
+        state.modifierCache.delete(state.modifierManagerProductId)
+        await loadModifierManagerGroups(); modifierManagerMessage('ลบตัวเลือกแล้ว')
+    } catch(error) { console.error(error); modifierManagerMessage(error.message||'ลบไม่สำเร็จ') }
+}
+
+async function editModifierGroup(groupId) {
+    const group=findManagerGroup(groupId); if (!group) return
+    const name=prompt('ชื่อกลุ่ม',group.name); if (name===null) return
+    const type=prompt('1 = เลือกได้ 1 ข้อ\n2 = เลือกได้หลายข้อ',group.selection_type==='multiple'?'2':'1'); if (type===null) return
+    const selectionType=String(type).trim()==='2'?'multiple':'single'
+    const required=confirm('บังคับให้ต้องเลือกหรือไม่?')
+    let maxSelect=1
+    if (selectionType==='multiple') {
+        const maxText=prompt('เลือกได้สูงสุดกี่ข้อ? (0 = ไม่จำกัด)',String(Number(group.max_select||0))); if (maxText===null) return
+        maxSelect=Math.max(0,Number(maxText||0))
+    }
+    try {
+        const {error}=await supabase.from('modifier_groups').update({name:String(name).trim(),selection_type:selectionType,is_required:required,min_select:required?1:0,max_select:selectionType==='single'?1:maxSelect}).eq('id',groupId)
+        if (error) throw error
+        state.modifierCache.delete(state.modifierManagerProductId)
+        await loadModifierManagerGroups(); modifierManagerMessage('แก้ไขกลุ่มแล้ว')
+    } catch(error) { console.error(error); modifierManagerMessage(error.message||'แก้ไขกลุ่มไม่สำเร็จ') }
+}
+
+async function unlinkModifierGroup(groupId) {
+    const group=findManagerGroup(groupId); if (!group) return
+    if (!confirm(`เอากลุ่ม “${group.name}” ออกจากเมนูนี้หรือไม่?`)) return
+    try {
+        const {error}=await supabase.from('product_modifier_groups').delete().eq('product_id',state.modifierManagerProductId).eq('modifier_group_id',groupId)
+        if (error) throw error
+        state.modifierCache.delete(state.modifierManagerProductId)
+        await loadModifierManagerGroups(); modifierManagerMessage('เอากลุ่มออกจากเมนูแล้ว')
+    } catch(error) { console.error(error); modifierManagerMessage(error.message||'เอากลุ่มออกไม่สำเร็จ') }
+}
+
 /* ========================================
    PRODUCT MODIFIERS
 ======================================== */
@@ -2941,6 +3256,14 @@ function ensureModifierModal() {
                 type="button"
             >
                 เพิ่มลงตะกร้า
+            </button>
+
+            <button
+                id="manageCurrentModifierBtn"
+                class="outline-btn modifier-manage-current-btn"
+                type="button"
+            >
+                ⚙ จัดการตัวเลือกเมนูนี้
             </button>
 
         </div>
@@ -3136,6 +3459,20 @@ function ensureModifierModal() {
         ?.addEventListener(
             'click',
             confirmModifierSelection
+        )
+
+
+    modal
+        .querySelector(
+            '#manageCurrentModifierBtn'
+        )
+        ?.addEventListener(
+            'click',
+            async () => {
+                const productId = state.modifierProduct?.id || null
+                closeModifierModal()
+                await openModifierManager(productId)
+            }
         )
 
 
