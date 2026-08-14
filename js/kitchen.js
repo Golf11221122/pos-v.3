@@ -10,7 +10,7 @@ const state = {
     soundEnabled: false,
     knownItemIds: new Set(),
     realtimeChannel: null,
-    realtimeRetryTimer: null,
+    timerInterval: null,
     realtimePollTimer: null
 }
 
@@ -74,7 +74,33 @@ function formatTime(value) {
     }
 }
 
-function tableName(item) {
+function padQueue(value) {
+    const queueNo =
+        Number(value || 0)
+
+    if (!Number.isFinite(queueNo) || queueNo <= 0) {
+        return '-'
+    }
+
+    return String(
+        Math.trunc(queueNo)
+    ).padStart(3, '0')
+}
+
+
+function orderName(item) {
+
+    if (
+        item.order_type ===
+        'takeaway'
+    ) {
+
+        return item.queue_no
+            ? `กลับบ้าน • คิว ${padQueue(item.queue_no)}`
+            : 'กลับบ้าน'
+    }
+
+
     return item.table_name
         || (
             item.table_no
@@ -83,12 +109,323 @@ function tableName(item) {
         )
 }
 
-function statusText(status) {
+
+function statusText(
+    status,
+    item = null
+) {
+
+    const takeaway =
+        item?.order_type ===
+        'takeaway'
+
     return {
-        pending: 'ออเดอร์ใหม่',
-        preparing: 'กำลังทำ',
-        ready: 'พร้อมเสิร์ฟ'
+        pending:
+            'ออเดอร์ใหม่',
+
+        preparing:
+            'กำลังทำ',
+
+        ready:
+            takeaway
+                ? 'พร้อมรับ'
+                : 'พร้อมเสิร์ฟ'
+
     }[status] || status
+}
+
+
+function elapsedText(
+    startedAt
+) {
+
+    if (!startedAt) {
+        return '00:00'
+    }
+
+
+    const start =
+        new Date(
+            startedAt
+        )
+            .getTime()
+
+
+    if (!Number.isFinite(start)) {
+        return '00:00'
+    }
+
+
+    const totalSeconds =
+        Math.max(
+            0,
+            Math.floor(
+                (
+                    Date.now()
+                    -
+                    start
+                )
+                /
+                1000
+            )
+        )
+
+
+    const hours =
+        Math.floor(
+            totalSeconds
+            /
+            3600
+        )
+
+
+    const minutes =
+        Math.floor(
+            (
+                totalSeconds
+                %
+                3600
+            )
+            /
+            60
+        )
+
+
+    const seconds =
+        totalSeconds
+        %
+        60
+
+
+    if (hours > 0) {
+
+        return [
+            hours,
+            String(minutes)
+                .padStart(2, '0'),
+            String(seconds)
+                .padStart(2, '0')
+        ].join(':')
+    }
+
+
+    return [
+        String(minutes)
+            .padStart(2, '0'),
+        String(seconds)
+            .padStart(2, '0')
+    ].join(':')
+}
+
+
+function timerInfo(item) {
+
+    /*
+     * กำลังทำ
+     * เริ่มนับใหม่จากเวลาที่กด "เริ่มทำ"
+     */
+    if (
+        item.item_status ===
+        'preparing'
+    ) {
+
+        return {
+            label:
+                'กำลังทำ',
+
+            startedAt:
+                item.kitchen_started_at
+                ||
+                item.created_at
+        }
+    }
+
+
+    /*
+     * พร้อมเสิร์ฟ / พร้อมรับ
+     * เริ่มนับใหม่จากเวลาที่กด "พร้อม"
+     */
+    if (
+        item.item_status ===
+        'ready'
+    ) {
+
+        return {
+            label:
+                item.order_type ===
+                'takeaway'
+                    ? 'พร้อมรับแล้ว'
+                    : 'พร้อมเสิร์ฟแล้ว',
+
+            startedAt:
+                item.kitchen_ready_at
+                ||
+                item.created_at
+        }
+    }
+
+
+    /*
+     * รอรับออเดอร์
+     *
+     * สำคัญ:
+     * ต้องนับจากเวลาที่ "รายการอาหารนี้"
+     * ถูกส่งเข้าครัว
+     *
+     * ไม่ใช้ order_opened_at
+     * เพราะโต๊ะเดิมสามารถสั่งเพิ่มทีหลังได้
+     */
+    return {
+        label:
+            'รอมาแล้ว',
+
+        startedAt:
+            item.created_at
+    }
+}
+
+
+function refreshLiveTimers() {
+
+    document
+        .querySelectorAll(
+            '[data-kitchen-timer]'
+        )
+        .forEach(node => {
+
+            const item =
+                state.items.find(
+                    row =>
+                        row.item_id ===
+                        node.dataset.kitchenTimer
+                )
+
+            if (!item) {
+                return
+            }
+
+
+            const timer =
+                timerInfo(item)
+
+
+            /* ==========================
+               คำนวณเวลาที่ผ่านไป
+            ========================== */
+
+            const startTime =
+                new Date(
+                    timer.startedAt
+                ).getTime()
+
+
+            const elapsedSeconds =
+                Number.isFinite(startTime)
+                    ? Math.max(
+                        0,
+                        Math.floor(
+                            (
+                                Date.now()
+                                -
+                                startTime
+                            )
+                            /
+                            1000
+                        )
+                    )
+                    : 0
+
+
+            /* ==========================
+               กำหนดเวลามาตรฐาน
+            ========================== */
+
+            let limitSeconds = 0
+
+
+            if (
+                item.item_status ===
+                'pending'
+            ) {
+
+                // รอรับออเดอร์
+                // เตือนเมื่อเกิน 5 นาที
+
+                limitSeconds =
+                    5 * 60
+            }
+
+
+            else if (
+                item.item_status ===
+                'preparing'
+            ) {
+
+                // กำลังทำ
+                // เตือนเมื่อเกิน 15 นาที
+
+                limitSeconds =
+                    15 * 60
+            }
+
+
+            else if (
+                item.item_status ===
+                'ready'
+            ) {
+
+                // พร้อมเสิร์ฟ / พร้อมรับ
+                // เตือนเมื่อเกิน 5 นาที
+
+                limitSeconds =
+                    5 * 60
+            }
+
+
+            /* ==========================
+               แสดงเวลา
+            ========================== */
+
+            node.textContent =
+                `${timer.label} ${elapsedText(timer.startedAt)}`
+
+
+            /* ==========================
+               เปลี่ยนเป็นสีแดงเมื่อเกิน
+            ========================== */
+
+            const overdue =
+                limitSeconds > 0
+                &&
+                elapsedSeconds >
+                    limitSeconds
+
+
+            node.classList.toggle(
+                'timer-overdue',
+                overdue
+            )
+
+        })
+}
+function startLiveTimers() {
+
+    // ถ้ามี Timer เดิมอยู่ ให้หยุดก่อน
+    if (state.timerInterval) {
+        clearInterval(
+            state.timerInterval
+        )
+    }
+
+    // อัปเดตทันทีครั้งแรก
+    refreshLiveTimers()
+
+    // จากนั้นอัปเดตทุก 1 วินาที
+    state.timerInterval =
+        setInterval(
+            refreshLiveTimers,
+            1000
+        )
 }
 
 
@@ -269,6 +606,83 @@ function renderSelectedStationText() {
    LOAD / RENDER
 ======================================== */
 
+async function enrichKitchenContext(
+    list
+) {
+
+    if (!list.length) {
+        return list
+    }
+
+
+    const itemIds =
+        [
+            ...new Set(
+                list
+                    .map(
+                        item =>
+                            item.item_id
+                    )
+                    .filter(Boolean)
+            )
+        ]
+
+
+    if (!itemIds.length) {
+        return list
+    }
+
+
+    const {
+        data,
+        error
+    } =
+        await supabase.rpc(
+            'get_kitchen_display_context',
+            {
+                p_item_ids:
+                    itemIds
+            }
+        )
+
+
+    if (error) {
+        throw error
+    }
+
+
+    const contextRows =
+        Array.isArray(data)
+            ? data
+            : []
+
+
+    const contextMap =
+        new Map(
+            contextRows.map(
+                row => [
+                    row.item_id,
+                    row
+                ]
+            )
+        )
+
+
+    return list.map(
+        item => ({
+            ...item,
+            ...(
+                contextMap.get(
+                    item.item_id
+                )
+                ||
+                {}
+            )
+        })
+    )
+}
+
+
 async function loadKitchenItems({
     notifyNew = false
 } = {}) {
@@ -284,18 +698,21 @@ async function loadKitchenItems({
 
     if (error) throw error
 
-    const list =
+    const rawList =
         Array.isArray(data)
             ? data
             : []
 
+
+    const list =
+        await enrichKitchenContext(
+            rawList
+        )
+
+
     /*
-     * แจ้งเตือนออเดอร์ใหม่ทุกแหล่ง:
-     * - QR
-     * - POS ทานที่ร้าน
-     * - POS กลับบ้าน
-     *
-     * ไม่จำกัดเฉพาะ order_source === 'qr'
+     * แจ้งเตือนออเดอร์ใหม่ทุกแหล่ง
+     * QR / POS โต๊ะ / POS กลับบ้าน
      */
     const newPending =
         list.filter(item =>
@@ -390,6 +807,9 @@ function renderBoard() {
         el.readyEmpty,
         ready
     )
+
+
+    refreshLiveTimers()
 }
 
 function renderColumn(grid, empty, list) {
@@ -475,7 +895,10 @@ function renderTicket(item) {
                     data-act="ready"
                     data-id="${esc(item.item_id)}"
                 >
-                    ✅ พร้อมเสิร์ฟ
+                    ${item.order_type === 'takeaway'
+                ? '✅ พร้อมรับ'
+                : '✅ พร้อมเสิร์ฟ'
+            }
                 </button>
 
                 <button
@@ -499,7 +922,10 @@ function renderTicket(item) {
                     data-act="served"
                     data-id="${esc(item.item_id)}"
                 >
-                    🍽️ เสิร์ฟแล้ว
+                    ${item.order_type === 'takeaway'
+                ? '🛍️ รับแล้ว'
+                : '🍽️ เสิร์ฟแล้ว'
+            }
                 </button>
             </div>
         `
@@ -511,22 +937,31 @@ function renderTicket(item) {
         >
             <div class="ticket-head">
                 <div>
-                    <h2>${esc(tableName(item))}</h2>
+                    <h2>${esc(orderName(item))}</h2>
 
                     <div class="ticket-time">
                         ${formatTime(item.created_at)}
                     </div>
 
+                    <div
+                        class="ticket-time"
+                        data-kitchen-timer="${esc(item.item_id)}"
+                    >
+                        ${esc(
+        `${timerInfo(item).label} ${elapsedText(timerInfo(item).startedAt)}`
+    )}
+                    </div>
+
                     ${item.kitchen_station_name
-                        ? `<div class="ticket-time">🍳 ${esc(item.kitchen_station_name)}</div>`
-                        : ''
-                    }
+            ? `<div class="ticket-time">🍳 ${esc(item.kitchen_station_name)}</div>`
+            : ''
+        }
                 </div>
 
                 <span
                     class="status-badge ${esc(item.item_status)}"
                 >
-                    ${esc(statusText(item.item_status))}
+                    ${esc(statusText(item.item_status, item))}
                 </span>
             </div>
 
@@ -594,16 +1029,22 @@ function renderPrintTicket(item) {
             </div>
 
             ${item.kitchen_station_name
-                ? `<div class="print-center">${esc(item.kitchen_station_name)}</div>`
-                : ''
-            }
+            ? `<div class="print-center">${esc(item.kitchen_station_name)}</div>`
+            : ''
+        }
 
             <div class="print-table">
-                ${esc(tableName(item))}
+                ${esc(orderName(item))}
             </div>
 
             <div class="print-center">
                 ${formatTime(item.created_at)}
+            </div>
+
+            <div class="print-center">
+                ${esc(
+            `${timerInfo(item).label} ${elapsedText(timerInfo(item).startedAt)}`
+        )}
             </div>
 
             <div class="print-line"></div>
@@ -752,61 +1193,34 @@ async function cancelItem(itemId) {
    REALTIME
 ======================================== */
 
-function clearRealtimeRetry() {
-
-    if (state.realtimeRetryTimer) {
-
-        clearTimeout(
-            state.realtimeRetryTimer
-        )
-
-        state.realtimeRetryTimer =
-            null
-    }
-}
-
-
-function scheduleRealtimeRetry() {
-
-    clearRealtimeRetry()
-
-    state.realtimeRetryTimer =
-        setTimeout(
-            () => {
-
-                console.warn(
-                    'Retry kitchen realtime subscription...'
-                )
-
-                subscribeRealtime()
-
-            },
-            3000
-        )
-}
-
-
 function startRealtimeFallbackPolling() {
 
-    if (state.realtimePollTimer) {
+    if (
+        state.realtimePollTimer
+    ) {
 
         clearInterval(
             state.realtimePollTimer
         )
     }
 
+
     state.realtimePollTimer =
         setInterval(
             async () => {
 
-                if (document.hidden) {
+                if (
+                    document.hidden
+                ) {
                     return
                 }
+
 
                 try {
 
                     await loadKitchenItems({
-                        notifyNew: true
+                        notifyNew:
+                            true
                     })
 
                 } catch (error) {
@@ -824,31 +1238,16 @@ function startRealtimeFallbackPolling() {
 
 
 function subscribeRealtime() {
-
-    clearRealtimeRetry()
-
     if (state.realtimeChannel) {
-
         supabase.removeChannel(
             state.realtimeChannel
         )
-
-        state.realtimeChannel =
-            null
     }
-
-    const channelName =
-        `kitchen-${state.profile.branch_id}-${Date.now()}`
-
-    console.log(
-        'Subscribe kitchen realtime:',
-        channelName
-    )
 
     state.realtimeChannel =
         supabase
             .channel(
-                channelName
+                `kitchen-${state.profile.branch_id}`
             )
             .on(
                 'postgres_changes',
@@ -858,133 +1257,28 @@ function subscribeRealtime() {
                     table: 'restaurant_order_items'
                 },
                 async payload => {
-
-                    console.log(
-                        '[Kitchen Realtime] restaurant_order_items',
-                        payload
-                    )
-
                     try {
-
                         const notify =
-                            payload.eventType ===
-                            'INSERT'
-                            &&
-                            payload.new
-                                ?.item_status ===
-                                'pending'
+                            payload.eventType === 'INSERT'
+                            && payload.new?.item_status === 'pending'
 
                         await loadKitchenItems({
-                            notifyNew:
-                                notify
+                            notifyNew: notify
                         })
-
                     } catch (error) {
-
                         console.error(
-                            'Realtime kitchen item reload error:',
-                            error
-                        )
-
-                        msg(
-                            el.pageMessage,
-                            error.message
-                            ||
-                            'รับออเดอร์แบบเรียลไทม์ไม่สำเร็จ'
-                        )
-                    }
-                }
-            )
-            .on(
-                'postgres_changes',
-                {
-                    event: '*',
-                    schema: 'public',
-                    table: 'restaurant_orders'
-                },
-                async payload => {
-
-                    console.log(
-                        '[Kitchen Realtime] restaurant_orders',
-                        payload
-                    )
-
-                    try {
-
-                        await loadKitchenItems({
-                            notifyNew:
-                                false
-                        })
-
-                    } catch (error) {
-
-                        console.error(
-                            'Realtime restaurant order reload error:',
+                            'Realtime kitchen reload error:',
                             error
                         )
                     }
                 }
             )
-            .subscribe(
-                status => {
-
-                    console.log(
-                        '[Kitchen Realtime Status]',
-                        status
-                    )
-
-                    if (status === 'SUBSCRIBED') {
-
-                        clearRealtimeRetry()
-
-                        el.statusText.textContent =
-                            '🟢 เชื่อมต่อครัวแบบเรียลไทม์แล้ว'
-
-                        msg(
-                            el.pageMessage,
-                            ''
-                        )
-
-                        return
-                    }
-
-                    if (status === 'CHANNEL_ERROR') {
-
-                        el.statusText.textContent =
-                            '🔴 Realtime เชื่อมต่อผิดพลาด'
-
-                        msg(
-                            el.pageMessage,
-                            'Realtime มีปัญหา ระบบกำลังเชื่อมต่อใหม่อัตโนมัติ'
-                        )
-
-                        scheduleRealtimeRetry()
-                        return
-                    }
-
-                    if (status === 'TIMED_OUT') {
-
-                        el.statusText.textContent =
-                            '🟠 Realtime หมดเวลาการเชื่อมต่อ'
-
-                        msg(
-                            el.pageMessage,
-                            'Realtime หมดเวลา ระบบกำลังเชื่อมต่อใหม่อัตโนมัติ'
-                        )
-
-                        scheduleRealtimeRetry()
-                        return
-                    }
-
-                    if (status === 'CLOSED') {
-
-                        el.statusText.textContent =
-                            '🟠 Realtime ถูกตัดการเชื่อมต่อ'
-
-                        scheduleRealtimeRetry()
-                    }
+            .subscribe(status => {
+                if (status === 'SUBSCRIBED') {
+                    el.statusText.textContent =
+                        'เชื่อมต่อครัวแบบเรียลไทม์แล้ว'
                 }
-            )
+            })
 }
 
 
@@ -1014,6 +1308,8 @@ async function init() {
         subscribeRealtime()
 
         startRealtimeFallbackPolling()
+
+        startLiveTimers()
 
     } catch (error) {
         console.error(
@@ -1174,54 +1470,27 @@ document
         }
     )
 
-document.addEventListener(
-    'visibilitychange',
-    async () => {
-
-        if (document.hidden) {
-            return
-        }
-
-        try {
-
-            await loadKitchenItems({
-                notifyNew: true
-            })
-
-            subscribeRealtime()
-
-        } catch (error) {
-
-            console.warn(
-                'Kitchen visibility reconnect error:',
-                error
-            )
-        }
-    }
-)
-
-
 window.addEventListener(
     'beforeunload',
     () => {
-
-        clearRealtimeRetry()
-
-        if (state.realtimePollTimer) {
-
-            clearInterval(
-                state.realtimePollTimer
-            )
-        }
-
         if (state.realtimeChannel) {
-
             supabase.removeChannel(
                 state.realtimeChannel
             )
         }
+
+        if (state.timerInterval) {
+            clearInterval(
+                state.timerInterval
+            )
+        }
+
+        if (state.realtimePollTimer) {
+            clearInterval(
+                state.realtimePollTimer
+            )
+        }
     }
 )
-
 
 init()
