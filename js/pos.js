@@ -1606,11 +1606,9 @@ function closeOrderStartModal() {
 
 
 
-function isHeldDineInOrder() {
-    return (
-        state.currentOrder?.order_type === 'dine_in'
-        &&
-        Boolean(state.currentOrder?.id)
+function isLiveRestaurantOrder() {
+    return Boolean(
+        state.currentOrder?.id
     )
 }
 
@@ -3744,11 +3742,13 @@ async function addConfiguredProduct(
         state.cart.get(cartKey)
 
     /*
-     * DINE-IN
-     * บันทึกลง Supabase ทันที
-     */
-    if (isHeldDineInOrder()) {
-
+ * LIVE RESTAURANT ORDER
+ *
+ * ทั้งทานที่ร้านและกลับบ้าน
+ * ต้องบันทึกลง Supabase ทันที
+ * เพื่อส่งเข้าครัวแบบ Realtime
+ */
+if (isLiveRestaurantOrder()) {
         try {
 
             if (
@@ -4305,9 +4305,9 @@ async function qty(
         change
 
     if (
-        isHeldDineInOrder()
-        &&
-        item.restaurant_item_id
+        isLiveRestaurantOrder()
+&&
+item.restaurant_item_id
     ) {
 
         try {
@@ -4410,9 +4410,9 @@ async function removeCartItem(
     }
 
     if (
-        isHeldDineInOrder()
-        &&
-        item.restaurant_item_id
+        isLiveRestaurantOrder()
+&&
+item.restaurant_item_id
     ) {
 
         const {
@@ -4442,7 +4442,7 @@ async function clearCurrentCart() {
     const list =
         items()
 
-    if (isHeldDineInOrder()) {
+    if (isLiveRestaurantOrder()) {
 
         for (
             const item
@@ -6578,7 +6578,7 @@ el.backBtn
         async () => {
 
             if (
-                isHeldDineInOrder()
+                isLiveRestaurantOrder()
             ) {
 
                 await holdCurrentTableAndChooseAnother()
@@ -6657,7 +6657,7 @@ el.refreshBtn
                  * ถ้าเป็นโต๊ะค้าง โหลดรายการล่าสุดจาก Supabase
                  */
                 if (
-                    isHeldDineInOrder()
+                    isLiveRestaurantOrder()
                 ) {
 
                     const table =
