@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>ตัวเลือกเมนู | JOKJUNG POS</title>
+  <link rel="stylesheet" href="./css/modifier-options.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <button id="backBtn" class="outline-btn" type="button">← แดชบอร์ด</button>
+      <strong>⚙️ จัดการตัวเลือกเมนู</strong>
+    </div>
+    <div class="user"><span id="branchText">กำลังโหลด...</span><span id="userName"></span></div>
+  </header>
+  <main class="page">
+    <section class="card">
+      <div class="head">
+        <div><h1>ตัวเลือกเมนู</h1><p>สร้างตัวเลือก เช่น ธรรมดา/พิเศษ ระดับความเผ็ด หรือสร้างเอง พร้อมกำหนดราคาเพิ่ม/ลด</p></div>
+      </div>
+      <label for="modifierManagerProduct">เลือกเมนู</label>
+      <select id="modifierManagerProduct"></select>
+      <div class="templates">
+        <button type="button" data-template="size">+ ธรรมดา / พิเศษ</button>
+        <button type="button" data-template="spicy">+ ระดับความเผ็ด</button>
+        <button type="button" data-template="custom">+ สร้างเอง</button>
+      </div>
+      <p id="modifierManagerMessage" class="message"></p>
+      <div id="modifierManagerGroups" class="groups"></div>
+    </section>
+  </main>
+  <script type="module" src="./js/modifier-options.js"></script>
+</body>
+</html>
