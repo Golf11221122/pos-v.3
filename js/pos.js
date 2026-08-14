@@ -1606,6 +1606,23 @@ function closeOrderStartModal() {
 
 
 
+function isHeldDineInOrder() {
+    return (
+        state.currentOrder?.order_type === 'dine_in'
+        &&
+        Boolean(state.currentOrder?.id)
+    )
+}
+
+
+/*
+ * ออเดอร์ที่เปิดอยู่ทั้ง:
+ * - ทานที่ร้าน
+ * - กลับบ้าน
+ *
+ * ต้องบันทึกรายการลง restaurant_order_items ทันที
+ * เพื่อให้ Kitchen / Realtime / Print Queue เห็นออเดอร์ทันที
+ */
 function isLiveRestaurantOrder() {
     return Boolean(
         state.currentOrder?.id
@@ -3742,13 +3759,14 @@ async function addConfiguredProduct(
         state.cart.get(cartKey)
 
     /*
- * LIVE RESTAURANT ORDER
- *
- * ทั้งทานที่ร้านและกลับบ้าน
- * ต้องบันทึกลง Supabase ทันที
- * เพื่อส่งเข้าครัวแบบ Realtime
- */
-if (isLiveRestaurantOrder()) {
+     * LIVE RESTAURANT ORDER
+     *
+     * ทั้งทานที่ร้านและกลับบ้าน
+     * ต้องบันทึกลง Supabase ทันที
+     * เพื่อส่งเข้าครัวแบบ Realtime
+     */
+    if (isLiveRestaurantOrder()) {
+
         try {
 
             if (
@@ -3906,8 +3924,9 @@ if (isLiveRestaurantOrder()) {
     }
 
     /*
-     * TAKEAWAY
-     * ใช้ตะกร้าในหน้าเว็บเหมือนเดิม
+     * FALLBACK CART
+     * ใช้เฉพาะกรณีไม่มี live restaurant order
+     * (ปกติระบบจะไม่เข้าบล็อกนี้)
      */
     if (old) {
         old.quantity++
@@ -4306,8 +4325,8 @@ async function qty(
 
     if (
         isLiveRestaurantOrder()
-&&
-item.restaurant_item_id
+        &&
+        item.restaurant_item_id
     ) {
 
         try {
@@ -4411,8 +4430,8 @@ async function removeCartItem(
 
     if (
         isLiveRestaurantOrder()
-&&
-item.restaurant_item_id
+        &&
+        item.restaurant_item_id
     ) {
 
         const {
@@ -6578,7 +6597,7 @@ el.backBtn
         async () => {
 
             if (
-                isLiveRestaurantOrder()
+                isHeldDineInOrder()
             ) {
 
                 await holdCurrentTableAndChooseAnother()
@@ -6657,7 +6676,7 @@ el.refreshBtn
                  * ถ้าเป็นโต๊ะค้าง โหลดรายการล่าสุดจาก Supabase
                  */
                 if (
-                    isLiveRestaurantOrder()
+                    isHeldDineInOrder()
                 ) {
 
                     const table =
