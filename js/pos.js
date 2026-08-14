@@ -1435,9 +1435,9 @@ function renderTables() {
                         >
                             <strong>
                                 ${esc(
-                                    table.table_name
-                                    || `โต๊ะ ${table.table_no}`
-                                )}
+                        table.table_name
+                        || `โต๊ะ ${table.table_no}`
+                    )}
                             </strong>
 
                             <small>
@@ -1624,8 +1624,19 @@ function isHeldDineInOrder() {
  * เพื่อให้ Kitchen / Realtime / Print Queue เห็นออเดอร์ทันที
  */
 function isLiveRestaurantOrder() {
-    return Boolean(
-        state.currentOrder?.id
+
+    return (
+        Boolean(
+            state.currentOrder?.id
+        )
+        &&
+        String(
+            state.currentOrder?.status || ''
+        )
+            .trim()
+            .toLowerCase()
+        ===
+        'open'
     )
 }
 
@@ -2155,6 +2166,14 @@ async function completeCurrentOrder() {
         if (error) {
             throw error
         }
+
+
+        /*
+         * ป้องกัน Browser ค้างสถานะออเดอร์เก่า
+         * หลัง complete_restaurant_order สำเร็จ
+         */
+        state.currentOrder.status =
+            'completed'
 
 
         if (
@@ -3374,7 +3393,7 @@ function renderModifierGroups(
 
                     const type =
                         group.selection_type ===
-                        'multiple'
+                            'multiple'
 
                             ? 'checkbox'
 
@@ -3393,30 +3412,30 @@ function renderModifierGroups(
                         <section
                             class="modifier-group"
                             data-modifier-group="${esc(
-                                group.id
-                            )}"
+                        group.id
+                    )}"
                             data-selection-type="${esc(
-                                group.selection_type
-                            )}"
+                        group.selection_type
+                    )}"
                             data-required="${group.is_required ? 'true' : 'false'}"
                             data-min="${Number(
-                                group.min_select
-                                ||
-                                0
-                            )}"
+                        group.min_select
+                        ||
+                        0
+                    )}"
                             data-max="${Number(
-                                group.max_select
-                                ||
-                                0
-                            )}"
+                        group.max_select
+                        ||
+                        0
+                    )}"
                         >
 
                             <div class="modifier-group-head">
 
                                 <strong>
                                     ${esc(
-                                        group.name
-                                    )}
+                        group.name
+                    )}
                                 </strong>
 
                                 <span class="modifier-required">
@@ -3429,55 +3448,55 @@ function renderModifierGroups(
                             <div class="modifier-options">
 
                                 ${group.options
-                                    .map(
-                                        (
-                                            option,
-                                            index
-                                        ) => {
+                            .map(
+                                (
+                                    option,
+                                    index
+                                ) => {
 
-                                            /*
-                                             * กลุ่ม single ที่บังคับเลือก
-                                             * เลือกตัวเลือกแรกเป็นค่าเริ่มต้น
-                                             * เช่น "ธรรมดา"
-                                             */
-                                            const defaultChecked =
-                                                group.selection_type ===
-                                                'single'
-                                                &&
-                                                group.is_required
-                                                &&
-                                                index ===
-                                                0
-
-
-                                            const price =
-                                                Number(
-                                                    option.price_adjustment
-                                                    ||
-                                                    0
-                                                )
+                                    /*
+                                     * กลุ่ม single ที่บังคับเลือก
+                                     * เลือกตัวเลือกแรกเป็นค่าเริ่มต้น
+                                     * เช่น "ธรรมดา"
+                                     */
+                                    const defaultChecked =
+                                        group.selection_type ===
+                                        'single'
+                                        &&
+                                        group.is_required
+                                        &&
+                                        index ===
+                                        0
 
 
-                                            return `
+                                    const price =
+                                        Number(
+                                            option.price_adjustment
+                                            ||
+                                            0
+                                        )
+
+
+                                    return `
                                                 <label class="modifier-option">
 
                                                     <input
                                                         type="${type}"
                                                         name="modifier-${esc(
-                                                            group.id
-                                                        )}"
+                                        group.id
+                                    )}"
                                                         value="${esc(
-                                                            option.id
-                                                        )}"
+                                        option.id
+                                    )}"
                                                         data-group-id="${esc(
-                                                            group.id
-                                                        )}"
+                                        group.id
+                                    )}"
                                                         data-group-name="${esc(
-                                                            group.name
-                                                        )}"
+                                        group.name
+                                    )}"
                                                         data-option-name="${esc(
-                                                            option.name
-                                                        )}"
+                                        option.name
+                                    )}"
                                                         data-price="${price}"
                                                         ${defaultChecked ? 'checked' : ''}
                                                     >
@@ -3486,29 +3505,28 @@ function renderModifierGroups(
 
                                                         <span>
                                                             ${esc(
-                                                                option.name
-                                                            )}
+                                        option.name
+                                    )}
                                                         </span>
 
                                                         <span class="modifier-option-price">
-                                                            ${
-                                                                price > 0
+                                                            ${price > 0
 
-                                                                    ? `+${money(
-                                                                        price
-                                                                    )}`
+                                            ? `+${money(
+                                                price
+                                            )}`
 
-                                                                    : ''
-                                                            }
+                                            : ''
+                                        }
                                                         </span>
 
                                                     </span>
 
                                                 </label>
                                             `
-                                        }
-                                    )
-                                    .join('')}
+                                }
+                            )
+                            .join('')}
 
                             </div>
 
@@ -4639,15 +4657,14 @@ function renderCart() {
 
                                 <strong>
                                     ${esc(
-                                        item.name
-                                    )}
+                        item.name
+                    )}
                                 </strong>
 
 
-                                ${
-                                    modifierText
+                                ${modifierText
 
-                                        ? `
+                            ? `
                                             <small
                                                 style="
                                                     color:#5f6368;
@@ -4658,14 +4675,13 @@ function renderCart() {
                                             </small>
                                         `
 
-                                        : ''
-                                }
+                            : ''
+                        }
 
 
-                                ${
-                                    noteText
+                                ${noteText
 
-                                        ? `
+                            ? `
                                             <small
                                                 style="
                                                     color:#d97706;
@@ -4676,14 +4692,14 @@ function renderCart() {
                                             </small>
                                         `
 
-                                        : ''
-                                }
+                            : ''
+                        }
 
 
                                 <small>
                                     ${money(
-                                        item.price
-                                    )}
+                            item.price
+                        )}
                                     ×
                                     ${item.quantity}
                                 </small>
@@ -4697,10 +4713,10 @@ function renderCart() {
                                         type="button"
                                         data-act="dec"
                                         data-id="${esc(
-                                            item.cartKey
-                                            ||
-                                            item.id
-                                        )}"
+                            item.cartKey
+                            ||
+                            item.id
+                        )}"
                                     >
                                         −
                                     </button>
@@ -4715,10 +4731,10 @@ function renderCart() {
                                         type="button"
                                         data-act="inc"
                                         data-id="${esc(
-                                            item.cartKey
-                                            ||
-                                            item.id
-                                        )}"
+                            item.cartKey
+                            ||
+                            item.id
+                        )}"
                                     >
                                         ＋
                                     </button>
@@ -4729,10 +4745,10 @@ function renderCart() {
                                         class="remove"
                                         data-act="remove"
                                         data-id="${esc(
-                                            item.cartKey
-                                            ||
-                                            item.id
-                                        )}"
+                            item.cartKey
+                            ||
+                            item.id
+                        )}"
                                     >
                                         ลบ
                                     </button>
@@ -4744,12 +4760,12 @@ function renderCart() {
 
                             <strong>
                                 ${money(
-                                    Number(
-                                        item.price
-                                    )
-                                    *
-                                    item.quantity
-                                )}
+                            Number(
+                                item.price
+                            )
+                            *
+                            item.quantity
+                        )}
                             </strong>
 
                         </div>
@@ -5681,15 +5697,14 @@ function renderReceipt() {
                                 class="receipt-item-name"
                             >
                                 ${esc(
-                                    item.name
-                                )}
+                            item.name
+                        )}
                             </div>
 
 
-                            ${
-                                (item.modifiers || []).length
+                            ${(item.modifiers || []).length
 
-                                    ? `
+                            ? `
                                         <div
                                             style="
                                                 font-size:10px;
@@ -5697,40 +5712,38 @@ function renderReceipt() {
                                             "
                                         >
                                             ${(item.modifiers || [])
-                                                .map(
-                                                    modifier =>
-                                                        `${esc(
-                                                            modifier.group_name
-                                                            ||
-                                                            ''
-                                                        )}: ${esc(
-                                                            modifier.option_name
-                                                            ||
-                                                            ''
-                                                        )}${
-                                                            Number(
-                                                                modifier.price_adjustment
-                                                                ||
-                                                                0
-                                                            ) > 0
-                                                                ? ` +${money(
-                                                                    modifier.price_adjustment
-                                                                )}`
-                                                                : ''
-                                                        }`
-                                                )
-                                                .join('<br>')}
+                                .map(
+                                    modifier =>
+                                        `${esc(
+                                            modifier.group_name
+                                            ||
+                                            ''
+                                        )}: ${esc(
+                                            modifier.option_name
+                                            ||
+                                            ''
+                                        )}${Number(
+                                            modifier.price_adjustment
+                                            ||
+                                            0
+                                        ) > 0
+                                            ? ` +${money(
+                                                modifier.price_adjustment
+                                            )}`
+                                            : ''
+                                        }`
+                                )
+                                .join('<br>')}
                                         </div>
                                     `
 
-                                    : ''
-                            }
+                            : ''
+                        }
 
 
-                            ${
-                                item.item_note
+                            ${item.item_note
 
-                                    ? `
+                            ? `
                                         <div
                                             style="
                                                 font-size:10px;
@@ -5739,13 +5752,13 @@ function renderReceipt() {
                                         >
                                             หมายเหตุ:
                                             ${esc(
-                                                item.item_note
-                                            )}
+                                item.item_note
+                            )}
                                         </div>
                                     `
 
-                                    : ''
-                            }
+                            : ''
+                        }
 
 
                             <div
@@ -5756,19 +5769,19 @@ function renderReceipt() {
                                     ${item.quantity}
                                     ×
                                     ${money(
-                                        item.price
-                                    )}
+                            item.price
+                        )}
                                 </span>
 
 
                                 <strong>
                                     ${money(
-                                        Number(
-                                            item.price
-                                        )
-                                        *
-                                        item.quantity
-                                    )}
+                            Number(
+                                item.price
+                            )
+                            *
+                            item.quantity
+                        )}
                                 </strong>
 
                             </div>
@@ -6609,7 +6622,7 @@ el.backBtn
                 './dashboard.html'
         }
     )
-    el.holdTableBtn
+el.holdTableBtn
     ?.addEventListener(
         'click',
         async () => {
