@@ -47,11 +47,6 @@ const PAGE_PERMISSIONS = {
         'manager'
     ],
 
-    'modifier-options.html': [
-        'admin',
-        'manager'
-    ],
-
     'ingredients.html': [
         'admin',
         'manager'
@@ -91,6 +86,21 @@ const PAGE_PERMISSIONS = {
         'staff'
     ],
 
+
+    'modifier-options.html': [
+        'admin',
+        'manager'
+    ],
+
+    'marketing.html': [
+        'admin',
+        'manager'
+    ],
+
+    'cost-control.html': [
+        'admin',
+        'manager'
+    ],
 
     'employees.html': [
         'admin'
@@ -143,11 +153,6 @@ const MENU_PERMISSIONS = {
         'manager'
     ],
 
-    modifierOptions: [
-        'admin',
-        'manager'
-    ],
-
     ingredients: [
         'admin',
         'manager'
@@ -185,6 +190,21 @@ const MENU_PERMISSIONS = {
     'staff'
 ],
 
+
+    modifierOptions: [
+        'admin',
+        'manager'
+    ],
+
+    marketing: [
+        'admin',
+        'manager'
+    ],
+
+    costControl: [
+        'admin',
+        'manager'
+    ],
 
     employees: [
         'admin'
@@ -470,13 +490,6 @@ function applySidebarPermissions(
 
 
     setMenuVisibility(
-        'a[href="./modifier-options.html"]',
-        role,
-        MENU_PERMISSIONS.modifierOptions
-    )
-
-
-    setMenuVisibility(
         'a[href="./sales-history.html"]',
         role,
         MENU_PERMISSIONS.sales
@@ -538,6 +551,11 @@ function applySidebarPermissions(
 
 
     setMenuVisibility(
+        'a[href="./modifier-options.html"]',
+        role,
+        MENU_PERMISSIONS.modifierOptions
+    )
+setMenuVisibility(
         'a[href="./employees.html"]',
         role,
         MENU_PERMISSIONS.employees
