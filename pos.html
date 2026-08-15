@@ -108,6 +108,9 @@
 
                 </button>
 
+                <button id="modifierManagerBtn" class="outline-btn modifier-manager-open-btn" type="button">
+                    ⚙ ตัวเลือกเมนู
+                </button>
 
             </div>
 
@@ -224,19 +227,7 @@
 
                 </div>
 
-
-
-                <label>
-
-                    <span>
-                        ส่วนลด
-                    </span>
-
-                    <input id="discountInput" type="number" min="0" step="0.01" value="0">
-
-                </label>
-
-
+                <input id="discountInput" type="hidden" value="0">
 
                 <div class="total">
 
@@ -251,26 +242,17 @@
                 </div>
 
 
-                <button
-                    type="button"
-                    id="confirmOrderBtn"
-                    class="confirm-order-btn"
-                    disabled
-                >
+                <button type="button" id="confirmOrderBtn" class="confirm-order-btn" disabled>
                     ✅ ยืนยันออเดอร์
                 </button>
 
                 <small class="confirm-order-help">
                     ทวนรายการให้เรียบร้อย แล้วกดยืนยันเพื่อส่งเข้าครัว
                 </small>
-                    
-<button
-    type="button"
-    id="holdTableBtn"
-    class="hold-table-btn hidden"
->
-    🪑 พักโต๊ะ / เลือกโต๊ะใหม่
-</button>
+
+                <button type="button" id="holdTableBtn" class="hold-table-btn hidden">
+                    🪑 พักโต๊ะ / เลือกโต๊ะใหม่
+                </button>
 
                 <button id="checkoutBtn" class="primary-btn" type="button" disabled>
                     ชำระเงิน
@@ -414,13 +396,9 @@
             <button id="startOrderBtn" type="button" class="primary-btn">
                 เริ่มออเดอร์
             </button>
-            <button
-    type="button"
-    id="backToDashboardBtn"
-    class="back-dashboard-btn"
->
-    ← กลับหน้าแดชบอร์ด
-</button>
+            <button type="button" id="backToDashboardBtn" class="back-dashboard-btn">
+                ← กลับหน้าแดชบอร์ด
+            </button>
 
         </div>
 
@@ -463,6 +441,57 @@
                 </strong>
 
             </div>
+
+
+            <!-- ========================================
+                 DISCOUNT / PROMOTION
+            ========================================= -->
+
+            <section class="payment-discount-card">
+
+                <div class="payment-discount-head">
+                    <div>
+                        <strong>🏷️ ส่วนลด / โปรโมชั่น</strong>
+                        <small>เลือกโปรโมชั่นที่อยู่ในช่วงเวลา หรือขอส่วนลดพิเศษ</small>
+                    </div>
+
+                    <button id="clearPaymentDiscountBtn" class="discount-clear-btn hidden" type="button">
+                        ล้างส่วนลด
+                    </button>
+                </div>
+
+                <div id="activePromotionSection" class="promotion-select-row">
+
+                    <select id="activePromotionSelect">
+                        <option value="">ไม่มีโปรโมชั่นที่ใช้ได้</option>
+                    </select>
+
+                    <button id="applyPromotionBtn" class="outline-btn" type="button" disabled>
+                        ใช้โปรโมชั่น
+                    </button>
+
+                </div>
+
+
+                <div class="coupon-redeem-row">
+                    <input id="couponCodeInput" type="text" maxlength="40" autocomplete="off"
+                        placeholder="กรอกรหัสคูปอง / วอชเชอร์">
+
+                    <button id="applyCouponBtn" class="outline-btn" type="button">
+                        ใช้คูปอง
+                    </button>
+                </div>
+
+                <button id="manualDiscountBtn" class="manual-discount-btn" type="button">
+                    🔐 ขอส่วนลดพิเศษ
+                </button>
+
+                <div id="paymentDiscountSummary" class="payment-discount-summary hidden">
+                    <span id="paymentDiscountLabel">ส่วนลด</span>
+                    <strong id="paymentDiscountAmount">-฿0.00</strong>
+                </div>
+
+            </section>
 
 
 
@@ -583,6 +612,62 @@
 
     </div>
 
+
+
+    <!-- ========================================
+         MANUAL DISCOUNT APPROVAL
+    ========================================= -->
+
+    <div id="manualDiscountModal" class="modal hidden">
+
+        <div class="modal-card manual-discount-modal-card">
+
+            <div class="modal-head">
+                <div>
+                    <h2>🔐 อนุมัติส่วนลดพิเศษ</h2>
+                    <small>ต้องมีเหตุผลและ PIN ของผู้อนุมัติ</small>
+                </div>
+
+                <button id="closeManualDiscountBtn" class="icon-btn" type="button" aria-label="ปิด">
+                    ×
+                </button>
+            </div>
+
+            <label for="manualDiscountAmount">
+                จำนวนส่วนลด (บาท)
+            </label>
+
+            <input id="manualDiscountAmount" type="number" min="0.01" step="0.01" placeholder="0.00">
+
+            <label for="manualDiscountReason">
+                เหตุผลในการให้ส่วนลด
+            </label>
+
+            <textarea id="manualDiscountReason" rows="3"
+                placeholder="เช่น ลูกค้าร้องเรียน / อาหารล่าช้า / ชดเชยบริการ"></textarea>
+
+            <label for="manualDiscountPin">
+                PIN ผู้อนุมัติ 6 หลัก
+            </label>
+
+            <input id="manualDiscountPin" type="password" inputmode="numeric" maxlength="6" autocomplete="off"
+                placeholder="••••••">
+
+            <p id="manualDiscountMessage" class="message"></p>
+
+            <div class="actions">
+                <button id="cancelManualDiscountBtn" class="outline-btn" type="button">
+                    ยกเลิก
+                </button>
+
+                <button id="confirmManualDiscountBtn" class="primary-btn" type="button">
+                    ยืนยันส่วนลด
+                </button>
+            </div>
+
+        </div>
+
+    </div>
 
 
     <!-- ========================================
