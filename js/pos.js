@@ -24,6 +24,14 @@ const state = {
     // วิธีชำระเงิน
     paymentMethod: 'cash',
 
+    // ส่วนลด / โปรโมชั่นของหน้าชำระเงิน
+    activePromotions: [],
+    discountAuthorizationId: null,
+    discountSource: null,
+    discountLabel: '',
+    discountReason: '',
+    discountApprovedBy: null,
+
     // บิลล่าสุด
     lastSale: null,
 
@@ -41,9 +49,6 @@ const state = {
     modifierCache: new Map(),
     modifierProduct: null,
 
-    // จัดการตัวเลือกเมนู
-    modifierManagerProductId: null,
-    modifierManagerGroups: []
 }
 
 
@@ -218,6 +223,57 @@ const el = {
 
     paymentMessage:
         $('paymentMessage'),
+
+    activePromotionSelect:
+        $('activePromotionSelect'),
+
+    applyPromotionBtn:
+        $('applyPromotionBtn'),
+
+    clearPaymentDiscountBtn:
+        $('clearPaymentDiscountBtn'),
+
+    couponCodeInput:
+        $('couponCodeInput'),
+
+    applyCouponBtn:
+        $('applyCouponBtn'),
+
+    manualDiscountBtn:
+        $('manualDiscountBtn'),
+
+    paymentDiscountSummary:
+        $('paymentDiscountSummary'),
+
+    paymentDiscountLabel:
+        $('paymentDiscountLabel'),
+
+    paymentDiscountAmount:
+        $('paymentDiscountAmount'),
+
+    manualDiscountModal:
+        $('manualDiscountModal'),
+
+    closeManualDiscountBtn:
+        $('closeManualDiscountBtn'),
+
+    cancelManualDiscountBtn:
+        $('cancelManualDiscountBtn'),
+
+    manualDiscountAmount:
+        $('manualDiscountAmount'),
+
+    manualDiscountReason:
+        $('manualDiscountReason'),
+
+    manualDiscountPin:
+        $('manualDiscountPin'),
+
+    manualDiscountMessage:
+        $('manualDiscountMessage'),
+
+    confirmManualDiscountBtn:
+        $('confirmManualDiscountBtn'),
 
     confirmPaymentBtn:
         $('confirmPaymentBtn'),
@@ -486,11 +542,15 @@ function applyPaymentPermissionUi() {
 
         el.discountInput.disabled =
             !allowed
+    }
 
-        el.discountInput.title =
-            allowed
-                ? ''
-                : 'ผู้จัดการเท่านั้นที่สามารถให้ส่วนลดได้'
+
+    if (
+        el.manualDiscountBtn
+    ) {
+
+        el.manualDiscountBtn.disabled =
+            !allowed
     }
 }
 
@@ -2953,318 +3013,6 @@ function renderProducts() {
 
 
 /* ========================================
-   MODIFIER MANAGER
-======================================== */
-
-function ensureModifierManagerModal() {
-    let modal = document.getElementById('modifierManagerModal')
-    if (modal) return modal
-
-    modal = document.createElement('div')
-    modal.id = 'modifierManagerModal'
-    modal.className = 'modal hidden'
-    modal.innerHTML = `
-        <div class="modal-card modifier-manager-card">
-            <div class="modal-head modifier-manager-head">
-                <div>
-                    <h2>⚙ จัดการตัวเลือกเมนู</h2>
-                    <small>สร้างตัวเลือกเอง และแก้ไขราคาเพิ่ม/ลดได้</small>
-                </div>
-                <button id="closeModifierManagerBtn" class="icon-btn" type="button">×</button>
-            </div>
-
-            <label class="modifier-manager-label" for="modifierManagerProduct">เมนู</label>
-            <select id="modifierManagerProduct" class="modifier-manager-select"></select>
-
-            <div class="modifier-template-row">
-                <button type="button" data-template="size">+ ธรรมดา / พิเศษ</button>
-                <button type="button" data-template="spicy">+ ระดับความเผ็ด</button>
-                <button type="button" data-template="custom">+ สร้างเอง</button>
-            </div>
-
-            <p id="modifierManagerMessage" class="message"></p>
-            <div id="modifierManagerGroups" class="modifier-manager-groups"></div>
-        </div>`
-
-    document.body.appendChild(modal)
-
-    modal.querySelector('#closeModifierManagerBtn')?.addEventListener('click', closeModifierManager)
-    modal.querySelector('#modifierManagerProduct')?.addEventListener('change', async e => {
-        state.modifierManagerProductId = e.target.value || null
-        await loadModifierManagerGroups()
-    })
-    modal.querySelectorAll('[data-template]').forEach(btn => btn.addEventListener('click', async () => {
-        if (btn.dataset.template === 'size') return createModifierTemplateSize()
-        if (btn.dataset.template === 'spicy') return createModifierTemplateSpicy()
-        return createCustomModifierGroup()
-    }))
-    modal.querySelector('#modifierManagerGroups')?.addEventListener('click', handleModifierManagerClick)
-    modal.addEventListener('click', e => { if (e.target === modal) closeModifierManager() })
-    return modal
-}
-
-function modifierManagerMessage(text = '') {
-    msg(document.getElementById('modifierManagerMessage'), text)
-}
-
-function closeModifierManager() {
-    document.getElementById('modifierManagerModal')?.classList.add('hidden')
-}
-
-async function openModifierManager(productId = null) {
-    const modal = ensureModifierManagerModal()
-    const select = document.getElementById('modifierManagerProduct')
-    if (!select) return
-
-    select.innerHTML = state.products.map(p => `<option value="${esc(p.id)}">${esc(p.name)}</option>`).join('')
-    state.modifierManagerProductId = productId || state.modifierManagerProductId || state.products[0]?.id || null
-    if (state.modifierManagerProductId) select.value = state.modifierManagerProductId
-
-    modifierManagerMessage('')
-    closeMobileCart()
-    modal.classList.remove('hidden')
-    await loadModifierManagerGroups()
-}
-
-async function loadModifierManagerGroups() {
-    const productId = state.modifierManagerProductId
-    const container = document.getElementById('modifierManagerGroups')
-    if (!container) return
-    if (!productId) {
-        container.innerHTML = '<div class="modifier-manager-empty">กรุณาเลือกเมนู</div>'
-        return
-    }
-
-    container.innerHTML = '<div class="modifier-manager-empty">กำลังโหลด...</div>'
-    try {
-        const { data: links, error: linkError } = await supabase.from('product_modifier_groups')
-            .select('modifier_group_id,display_order').eq('product_id', productId).order('display_order', { ascending: true })
-        if (linkError) throw linkError
-        if (!links?.length) {
-            state.modifierManagerGroups = []
-            renderModifierManagerGroups(); return
-        }
-
-        const groupIds = [...new Set(links.map(x => x.modifier_group_id))]
-        const [gr, op] = await Promise.all([
-            supabase.from('modifier_groups').select('id,name,selection_type,is_required,min_select,max_select,display_order,is_active').in('id', groupIds),
-            supabase.from('modifier_options').select('id,modifier_group_id,name,price_adjustment,display_order,is_active').in('modifier_group_id', groupIds)
-        ])
-        if (gr.error) throw gr.error
-        if (op.error) throw op.error
-
-        const orderMap = new Map(links.map(x => [x.modifier_group_id, Number(x.display_order || 0)]))
-        state.modifierManagerGroups = (gr.data || []).filter(g => g.is_active !== false).map(g => ({
-            ...g,
-            product_display_order: orderMap.get(g.id) ?? Number(g.display_order || 0),
-            options: (op.data || []).filter(o => o.modifier_group_id === g.id && o.is_active !== false)
-                .sort((a, b) => Number(a.display_order || 0) - Number(b.display_order || 0))
-        })).sort((a, b) => a.product_display_order - b.product_display_order)
-        renderModifierManagerGroups()
-    } catch (error) {
-        console.error('Load modifier manager error:', error)
-        container.innerHTML = ''
-        modifierManagerMessage(error.message || 'โหลดตัวเลือกไม่สำเร็จ')
-    }
-}
-
-function renderModifierManagerGroups() {
-    const container = document.getElementById('modifierManagerGroups')
-    if (!container) return
-    const groups = state.modifierManagerGroups || []
-    if (!groups.length) {
-        container.innerHTML = `<div class="modifier-manager-empty"><strong>เมนูนี้ยังไม่มีตัวเลือก</strong><span>เลือก Template หรือกด “สร้างเอง”</span></div>`
-        return
-    }
-
-    container.innerHTML = groups.map(g => `
-        <section class="modifier-manager-group">
-            <div class="modifier-manager-group-head">
-                <div><strong>${esc(g.name)}</strong><small>${g.selection_type === 'multiple' ? 'เลือกได้หลายข้อ' : 'เลือกได้ 1 ข้อ'} • ${g.is_required ? 'บังคับเลือก' : 'ไม่บังคับ'}</small></div>
-                <div class="modifier-manager-actions">
-                    <button type="button" class="outline-btn" data-mm-action="edit-group" data-group-id="${esc(g.id)}">แก้กลุ่ม</button>
-                    <button type="button" class="danger-link" data-mm-action="unlink-group" data-group-id="${esc(g.id)}">เอาออก</button>
-                </div>
-            </div>
-            <div class="modifier-manager-options">
-                ${(g.options || []).map(o => {
-        const price = Number(o.price_adjustment || 0)
-        const priceText = price === 0 ? 'ไม่เพิ่มราคา' : (price > 0 ? `+${money(price)}` : money(price))
-        return `<div class="modifier-manager-option">
-                        <div><strong>${esc(o.name)}</strong><small>${esc(priceText)}</small></div>
-                        <div class="modifier-manager-actions">
-                            <button type="button" class="outline-btn" data-mm-action="edit-option" data-group-id="${esc(g.id)}" data-option-id="${esc(o.id)}">แก้ชื่อ/ราคา</button>
-                            <button type="button" class="danger-link" data-mm-action="delete-option" data-group-id="${esc(g.id)}" data-option-id="${esc(o.id)}">ลบ</button>
-                        </div>
-                    </div>`
-    }).join('') || '<div class="modifier-manager-empty small">ยังไม่มีตัวเลือก</div>'}
-            </div>
-            <button type="button" class="modifier-add-option-btn" data-mm-action="add-option" data-group-id="${esc(g.id)}">+ เพิ่มตัวเลือก</button>
-        </section>`).join('')
-}
-
-function findManagerGroup(id) {
-    return (state.modifierManagerGroups || []).find(g => g.id === id) || null
-}
-
-async function handleModifierManagerClick(event) {
-    const btn = event.target.closest('[data-mm-action]')
-    if (!btn) return
-    const a = btn.dataset.mmAction, g = btn.dataset.groupId || null, o = btn.dataset.optionId || null
-    if (a === 'add-option') return addModifierOption(g)
-    if (a === 'edit-option') return editModifierOption(g, o)
-    if (a === 'delete-option') return deleteModifierOption(g, o)
-    if (a === 'edit-group') return editModifierGroup(g)
-    if (a === 'unlink-group') return unlinkModifierGroup(g)
-}
-
-async function nextModifierDisplayOrder(tableName, filterColumn = null, filterValue = null) {
-    let q = supabase.from(tableName).select('display_order')
-    if (filterColumn && filterValue) q = q.eq(filterColumn, filterValue)
-    const { data, error } = await q.order('display_order', { ascending: false }).limit(1)
-    if (error) throw error
-    return Number(data?.[0]?.display_order || 0) + 10
-}
-
-async function createModifierGroupWithOptions({ name, selectionType = 'single', required = true, minSelect = 1, maxSelect = 1, options = [] }) {
-    const productId = state.modifierManagerProductId
-    const cleanName = String(name || '').trim()
-    if (!productId) return modifierManagerMessage('กรุณาเลือกเมนูก่อน')
-    if (!cleanName) return modifierManagerMessage('กรุณาระบุชื่อกลุ่ม')
-
-    try {
-        modifierManagerMessage('กำลังบันทึก...')
-        const groupOrder = await nextModifierDisplayOrder('modifier_groups')
-        const { data: group, error: groupError } = await supabase.from('modifier_groups').insert({
-            name: cleanName, selection_type: selectionType, is_required: !!required,
-            min_select: Number(minSelect || 0), max_select: Number(maxSelect || 0), display_order: groupOrder, is_active: true
-        }).select('id').single()
-        if (groupError) throw groupError
-
-        const productOrder = await nextModifierDisplayOrder('product_modifier_groups', 'product_id', productId)
-        const { error: linkError } = await supabase.from('product_modifier_groups').insert({
-            product_id: productId, modifier_group_id: group.id, display_order: productOrder
-        })
-        if (linkError) throw linkError
-
-        if (options.length) {
-            const rows = options.map((o, i) => ({ modifier_group_id: group.id, name: String(o.name || '').trim(), price_adjustment: Number(o.price || 0), display_order: (i + 1) * 10, is_active: true })).filter(o => o.name)
-            if (rows.length) {
-                const { error } = await supabase.from('modifier_options').insert(rows)
-                if (error) throw error
-            }
-        }
-        state.modifierCache.delete(productId)
-        await loadModifierManagerGroups()
-        modifierManagerMessage('บันทึกตัวเลือกแล้ว')
-    } catch (error) {
-        console.error('Create modifier group error:', error)
-        modifierManagerMessage(error.message || 'สร้างตัวเลือกไม่สำเร็จ')
-    }
-}
-
-async function createModifierTemplateSize() {
-    const priceText = prompt('ราคา “พิเศษ” เพิ่มจากธรรมดากี่บาท?', '10')
-    if (priceText === null) return
-    const price = Number(priceText || 0)
-    if (!Number.isFinite(price)) return modifierManagerMessage('ราคาไม่ถูกต้อง')
-    return createModifierGroupWithOptions({ name: 'ขนาด', selectionType: 'single', required: true, minSelect: 1, maxSelect: 1, options: [{ name: 'ธรรมดา', price: 0 }, { name: 'พิเศษ', price }] })
-}
-
-async function createModifierTemplateSpicy() {
-    return createModifierGroupWithOptions({
-        name: 'ระดับความเผ็ด', selectionType: 'single', required: true, minSelect: 1, maxSelect: 1, options: [
-            { name: 'ไม่เผ็ด', price: 0 }, { name: 'เผ็ดน้อย', price: 0 }, { name: 'เผ็ดกลาง', price: 0 }, { name: 'เผ็ดมาก', price: 0 }
-        ]
-    })
-}
-
-async function createCustomModifierGroup() {
-    const name = prompt('ชื่อกลุ่ม เช่น เส้น / ท็อปปิ้ง / ระดับหวาน')
-    if (name === null) return
-    const type = prompt('1 = เลือกได้ 1 ข้อ\n2 = เลือกได้หลายข้อ', '1')
-    if (type === null) return
-    const selectionType = String(type).trim() === '2' ? 'multiple' : 'single'
-    const required = confirm('บังคับให้ต้องเลือกหรือไม่?')
-    let maxSelect = 1
-    if (selectionType === 'multiple') {
-        const maxText = prompt('เลือกได้สูงสุดกี่ข้อ? (0 = ไม่จำกัด)', '0')
-        if (maxText === null) return
-        maxSelect = Math.max(0, Number(maxText || 0))
-    }
-    return createModifierGroupWithOptions({ name: String(name).trim(), selectionType, required, minSelect: required ? 1 : 0, maxSelect })
-}
-
-async function addModifierOption(groupId) {
-    const group = findManagerGroup(groupId); if (!group) return
-    const name = prompt(`ชื่อตัวเลือกใน “${group.name}”`); if (name === null) return
-    const clean = String(name).trim(); if (!clean) return modifierManagerMessage('กรุณาระบุชื่อตัวเลือก')
-    const priceText = prompt('ราคาเพิ่ม/ลดจากราคาปกติ\nเช่น 10 หรือ -5', '0'); if (priceText === null) return
-    const price = Number(priceText || 0); if (!Number.isFinite(price)) return modifierManagerMessage('ราคาไม่ถูกต้อง')
-    try {
-        const displayOrder = await nextModifierDisplayOrder('modifier_options', 'modifier_group_id', groupId)
-        const { error } = await supabase.from('modifier_options').insert({ modifier_group_id: groupId, name: clean, price_adjustment: price, display_order: displayOrder, is_active: true })
-        if (error) throw error
-        state.modifierCache.delete(state.modifierManagerProductId)
-        await loadModifierManagerGroups(); modifierManagerMessage('เพิ่มตัวเลือกแล้ว')
-    } catch (error) { console.error(error); modifierManagerMessage(error.message || 'เพิ่มตัวเลือกไม่สำเร็จ') }
-}
-
-async function editModifierOption(groupId, optionId) {
-    const group = findManagerGroup(groupId); const option = group?.options?.find(o => o.id === optionId); if (!option) return
-    const name = prompt('ชื่อตัวเลือก', option.name); if (name === null) return
-    const priceText = prompt('ราคาเพิ่ม/ลดจากราคาปกติ', String(Number(option.price_adjustment || 0))); if (priceText === null) return
-    const price = Number(priceText || 0); if (!Number.isFinite(price)) return modifierManagerMessage('ราคาไม่ถูกต้อง')
-    try {
-        const { error } = await supabase.from('modifier_options').update({ name: String(name).trim(), price_adjustment: price }).eq('id', optionId)
-        if (error) throw error
-        state.modifierCache.delete(state.modifierManagerProductId)
-        await loadModifierManagerGroups(); modifierManagerMessage('แก้ไขชื่อ/ราคาแล้ว')
-    } catch (error) { console.error(error); modifierManagerMessage(error.message || 'แก้ไขไม่สำเร็จ') }
-}
-
-async function deleteModifierOption(groupId, optionId) {
-    const group = findManagerGroup(groupId); const option = group?.options?.find(o => o.id === optionId); if (!option) return
-    if (!confirm(`ลบตัวเลือก “${option.name}” หรือไม่?`)) return
-    try {
-        const { error } = await supabase.from('modifier_options').update({ is_active: false }).eq('id', optionId)
-        if (error) throw error
-        state.modifierCache.delete(state.modifierManagerProductId)
-        await loadModifierManagerGroups(); modifierManagerMessage('ลบตัวเลือกแล้ว')
-    } catch (error) { console.error(error); modifierManagerMessage(error.message || 'ลบไม่สำเร็จ') }
-}
-
-async function editModifierGroup(groupId) {
-    const group = findManagerGroup(groupId); if (!group) return
-    const name = prompt('ชื่อกลุ่ม', group.name); if (name === null) return
-    const type = prompt('1 = เลือกได้ 1 ข้อ\n2 = เลือกได้หลายข้อ', group.selection_type === 'multiple' ? '2' : '1'); if (type === null) return
-    const selectionType = String(type).trim() === '2' ? 'multiple' : 'single'
-    const required = confirm('บังคับให้ต้องเลือกหรือไม่?')
-    let maxSelect = 1
-    if (selectionType === 'multiple') {
-        const maxText = prompt('เลือกได้สูงสุดกี่ข้อ? (0 = ไม่จำกัด)', String(Number(group.max_select || 0))); if (maxText === null) return
-        maxSelect = Math.max(0, Number(maxText || 0))
-    }
-    try {
-        const { error } = await supabase.from('modifier_groups').update({ name: String(name).trim(), selection_type: selectionType, is_required: required, min_select: required ? 1 : 0, max_select: selectionType === 'single' ? 1 : maxSelect }).eq('id', groupId)
-        if (error) throw error
-        state.modifierCache.delete(state.modifierManagerProductId)
-        await loadModifierManagerGroups(); modifierManagerMessage('แก้ไขกลุ่มแล้ว')
-    } catch (error) { console.error(error); modifierManagerMessage(error.message || 'แก้ไขกลุ่มไม่สำเร็จ') }
-}
-
-async function unlinkModifierGroup(groupId) {
-    const group = findManagerGroup(groupId); if (!group) return
-    if (!confirm(`เอากลุ่ม “${group.name}” ออกจากเมนูนี้หรือไม่?`)) return
-    try {
-        const { error } = await supabase.from('product_modifier_groups').delete().eq('product_id', state.modifierManagerProductId).eq('modifier_group_id', groupId)
-        if (error) throw error
-        state.modifierCache.delete(state.modifierManagerProductId)
-        await loadModifierManagerGroups(); modifierManagerMessage('เอากลุ่มออกจากเมนูแล้ว')
-    } catch (error) { console.error(error); modifierManagerMessage(error.message || 'เอากลุ่มออกไม่สำเร็จ') }
-}
-
-/* ========================================
    PRODUCT MODIFIERS
 ======================================== */
 
@@ -3369,13 +3117,6 @@ function ensureModifierModal() {
                 เพิ่มลงตะกร้า
             </button>
 
-            <button
-                id="manageCurrentModifierBtn"
-                class="outline-btn modifier-manage-current-btn"
-                type="button"
-            >
-                ⚙ จัดการตัวเลือกเมนูนี้
-            </button>
 
         </div>
         `
@@ -3573,18 +3314,6 @@ function ensureModifierModal() {
         )
 
 
-    modal
-        .querySelector(
-            '#manageCurrentModifierBtn'
-        )
-        ?.addEventListener(
-            'click',
-            async () => {
-                const productId = state.modifierProduct?.id || null
-                closeModifierModal()
-                await openModifierManager(productId)
-            }
-        )
 
 
     modal
@@ -5254,6 +4983,975 @@ function renderCart() {
 
 
 /* ========================================
+   PAYMENT DISCOUNT / PROMOTION
+======================================== */
+
+function resetPaymentDiscount() {
+
+    if (
+        el.discountInput
+    ) {
+        el.discountInput.value =
+            '0'
+    }
+
+
+    state.discountAuthorizationId =
+        null
+
+    state.discountSource =
+        null
+
+    state.discountLabel =
+        ''
+
+    state.discountReason =
+        ''
+
+    state.discountApprovedBy =
+        null
+
+
+    if (
+        el.couponCodeInput
+    ) {
+        el.couponCodeInput.value =
+            ''
+    }
+
+
+    renderPaymentDiscountSummary()
+}
+
+
+function renderPaymentDiscountSummary() {
+
+    const amount =
+        discount()
+
+
+    const hasDiscount =
+        amount > 0
+
+
+    el.paymentDiscountSummary
+        ?.classList
+        .toggle(
+            'hidden',
+            !hasDiscount
+        )
+
+
+    el.clearPaymentDiscountBtn
+        ?.classList
+        .toggle(
+            'hidden',
+            !hasDiscount
+        )
+
+
+    if (
+        el.paymentDiscountLabel
+    ) {
+
+        el.paymentDiscountLabel.textContent =
+            state.discountLabel
+            ||
+            'ส่วนลด'
+    }
+
+
+    if (
+        el.paymentDiscountAmount
+    ) {
+
+        el.paymentDiscountAmount.textContent =
+            `-${money(amount)}`
+    }
+
+
+    if (
+        el.paymentTotalText
+    ) {
+
+        el.paymentTotalText.textContent =
+            money(
+                total()
+            )
+    }
+
+
+    renderQuickCash()
+
+    updateChange()
+
+
+    if (
+        state.paymentMethod ===
+        'qr'
+    ) {
+
+        renderPromptPayQr()
+    }
+}
+
+
+async function loadActivePromotions() {
+
+    if (
+        !el.activePromotionSelect
+    ) {
+        return
+    }
+
+
+    el.activePromotionSelect.innerHTML =
+        '<option value="">กำลังโหลดโปรโมชั่น...</option>'
+
+
+    el.applyPromotionBtn.disabled =
+        true
+
+
+    try {
+
+        const {
+            data,
+            error
+        } =
+            await supabase.rpc(
+                'get_active_promotions',
+                {
+                    p_branch_id:
+                        state.profile.branch_id,
+
+                    p_subtotal:
+                        subtotal()
+                }
+            )
+
+
+        if (
+            error
+        ) {
+            throw error
+        }
+
+
+        const list =
+            Array.isArray(data)
+                ? data
+                : []
+
+
+        state.activePromotions =
+            list
+
+
+        if (
+            !list.length
+        ) {
+
+            el.activePromotionSelect.innerHTML =
+                '<option value="">ไม่มีโปรโมชั่นที่ใช้ได้ตอนนี้</option>'
+
+            return
+        }
+
+
+        el.activePromotionSelect.innerHTML =
+            `
+                <option value="">
+                    เลือกโปรโมชั่น
+                </option>
+            `
+            +
+            list
+                .map(
+                    promotion => {
+
+                        const amount =
+                            Number(
+                                promotion.discount_amount
+                                ||
+                                0
+                            )
+
+
+                        return `
+                            <option
+                                value="${esc(promotion.id)}"
+                            >
+                                ${esc(promotion.name)}
+                                • ลด ${money(amount)}
+                            </option>
+                        `
+                    }
+                )
+                .join('')
+
+
+        el.applyPromotionBtn.disabled =
+            false
+
+    } catch (error) {
+
+        console.error(
+            'Load active promotions error:',
+            error
+        )
+
+
+        el.activePromotionSelect.innerHTML =
+            '<option value="">โหลดโปรโมชั่นไม่สำเร็จ</option>'
+
+
+        msg(
+            el.paymentMessage,
+            error.message
+            ||
+            'โหลดโปรโมชั่นไม่สำเร็จ'
+        )
+    }
+}
+
+
+
+function hasActivePaymentDiscount() {
+
+    return (
+        discount() >
+        0
+    )
+}
+
+
+function requireNoExistingDiscount() {
+
+    if (
+        !hasActivePaymentDiscount()
+    ) {
+        return true
+    }
+
+
+    msg(
+        el.paymentMessage,
+        'บิลนี้มีส่วนลดอยู่แล้ว กรุณากด “ล้างส่วนลด” ก่อนเลือกส่วนลดแบบอื่น'
+    )
+
+
+    return false
+}
+
+
+async function applyCouponCode() {
+
+    if (
+        !requireNoExistingDiscount()
+    ) {
+        return
+    }
+
+
+    const code =
+        String(
+            el.couponCodeInput
+                ?.value
+            ||
+            ''
+        )
+            .trim()
+            .toUpperCase()
+
+
+    if (
+        !code
+    ) {
+
+        msg(
+            el.paymentMessage,
+            'กรุณากรอกรหัสคูปอง / วอชเชอร์'
+        )
+
+        return
+    }
+
+
+    el.applyCouponBtn.disabled =
+        true
+
+
+    try {
+
+        const {
+            data,
+            error
+        } =
+            await supabase.rpc(
+                'apply_coupon_code',
+                {
+                    p_code:
+                        code,
+
+                    p_subtotal:
+                        subtotal(),
+
+                    p_order_id:
+                        state.currentOrder?.id
+                        ||
+                        null
+                }
+            )
+
+
+        if (
+            error
+        ) {
+            throw error
+        }
+
+
+        const result =
+            Array.isArray(data)
+                ? data[0]
+                : data
+
+
+        const amount =
+            Number(
+                result?.discount_amount
+                ||
+                0
+            )
+
+
+        if (
+            amount <=
+            0
+        ) {
+
+            throw new Error(
+                'คูปองนี้ไม่สามารถใช้ได้'
+            )
+        }
+
+
+        el.discountInput.value =
+            String(
+                amount
+            )
+
+
+        state.discountAuthorizationId =
+            result.authorization_id
+            ||
+            null
+
+
+        state.discountSource =
+            'coupon'
+
+
+        state.discountLabel =
+            `${result.coupon_type ===
+                'voucher'
+                ? 'วอชเชอร์'
+                : 'คูปอง'
+            }: ${result.coupon_name
+            ||
+            code
+            }`
+
+
+        state.discountReason =
+            `CODE ${code}`
+
+
+        state.discountApprovedBy =
+            result.approved_by
+            ||
+            null
+
+
+        renderPaymentDiscountSummary()
+
+
+        msg(
+            el.paymentMessage,
+            'ใช้คูปอง / วอชเชอร์แล้ว'
+        )
+
+    } catch (error) {
+
+        console.error(
+            'Apply coupon error:',
+            error
+        )
+
+
+        let text =
+            error.message
+            ||
+            'ใช้คูปองไม่สำเร็จ'
+
+
+        if (
+            text.includes(
+                'COUPON_NOT_ACTIVE'
+            )
+        ) {
+
+            text =
+                'รหัสนี้ไม่ถูกต้อง หมดอายุ หรือยังไม่ถึงเวลาใช้งาน'
+        }
+
+
+        if (
+            text.includes(
+                'COUPON_MINIMUM_NOT_MET'
+            )
+        ) {
+
+            text =
+                'ยอดซื้อยังไม่ถึงขั้นต่ำของคูปอง'
+        }
+
+
+        msg(
+            el.paymentMessage,
+            text
+        )
+
+    } finally {
+
+        el.applyCouponBtn.disabled =
+            false
+    }
+}
+
+
+async function applySelectedPromotion() {
+
+    if (
+        !requireNoExistingDiscount()
+    ) {
+        return
+    }
+
+
+    const promotionId =
+        el.activePromotionSelect
+            ?.value
+        ||
+        ''
+
+
+    if (
+        !promotionId
+    ) {
+
+        msg(
+            el.paymentMessage,
+            'กรุณาเลือกโปรโมชั่น'
+        )
+
+        return
+    }
+
+
+    el.applyPromotionBtn.disabled =
+        true
+
+
+    try {
+
+        const {
+            data,
+            error
+        } =
+            await supabase.rpc(
+                'apply_promotion',
+                {
+                    p_promotion_id:
+                        promotionId,
+
+                    p_subtotal:
+                        subtotal(),
+
+                    p_order_id:
+                        state.currentOrder?.id
+                        ||
+                        null
+                }
+            )
+
+
+        if (
+            error
+        ) {
+            throw error
+        }
+
+
+        const result =
+            Array.isArray(data)
+                ? data[0]
+                : data
+
+
+        const amount =
+            Number(
+                result?.discount_amount
+                ||
+                0
+            )
+
+
+        if (
+            amount <=
+            0
+        ) {
+
+            throw new Error(
+                'โปรโมชั่นนี้ไม่สามารถใช้ได้'
+            )
+        }
+
+
+        el.discountInput.value =
+            String(
+                amount
+            )
+
+
+        state.discountAuthorizationId =
+            result.authorization_id
+            ||
+            null
+
+
+        state.discountSource =
+            'promotion'
+
+
+        state.discountLabel =
+            `โปรโมชั่น: ${result.promotion_name
+            ||
+            'ส่วนลด'
+            }`
+
+
+        state.discountReason =
+            result.promotion_name
+            ||
+            null
+
+
+        state.discountApprovedBy =
+            result.approved_by
+            ||
+            null
+
+
+        renderPaymentDiscountSummary()
+
+
+        msg(
+            el.paymentMessage,
+            'ใช้โปรโมชั่นแล้ว'
+        )
+
+    } catch (error) {
+
+        console.error(
+            'Apply promotion error:',
+            error
+        )
+
+
+        msg(
+            el.paymentMessage,
+            error.message
+            ||
+            'ใช้โปรโมชั่นไม่สำเร็จ'
+        )
+
+    } finally {
+
+        el.applyPromotionBtn.disabled =
+            false
+    }
+}
+
+
+function openManualDiscountModal() {
+
+    if (
+        !requireNoExistingDiscount()
+    ) {
+        return
+    }
+
+
+    if (
+        !canProcessPayment()
+    ) {
+
+        showPaymentDeniedMessage(
+            el.paymentMessage
+        )
+
+        return
+    }
+
+
+    el.manualDiscountAmount.value =
+        ''
+
+    el.manualDiscountReason.value =
+        ''
+
+    el.manualDiscountPin.value =
+        ''
+
+
+    msg(
+        el.manualDiscountMessage,
+        ''
+    )
+
+
+    el.manualDiscountModal
+        ?.classList
+        .remove(
+            'hidden'
+        )
+
+
+    setTimeout(
+        () =>
+            el.manualDiscountAmount
+                ?.focus(),
+        100
+    )
+}
+
+
+function closeManualDiscountModal() {
+
+    el.manualDiscountModal
+        ?.classList
+        .add(
+            'hidden'
+        )
+
+
+    if (
+        el.manualDiscountPin
+    ) {
+        el.manualDiscountPin.value =
+            ''
+    }
+}
+
+
+async function approveManualDiscount() {
+
+    const amount =
+        Number(
+            el.manualDiscountAmount
+                ?.value
+            ||
+            0
+        )
+
+
+    const reason =
+        String(
+            el.manualDiscountReason
+                ?.value
+            ||
+            ''
+        ).trim()
+
+
+    const pin =
+        String(
+            el.manualDiscountPin
+                ?.value
+            ||
+            ''
+        ).trim()
+
+
+    if (
+        amount <=
+        0
+    ) {
+
+        msg(
+            el.manualDiscountMessage,
+            'กรุณาระบุจำนวนส่วนลด'
+        )
+
+        return
+    }
+
+
+    if (
+        amount >
+        subtotal()
+    ) {
+
+        msg(
+            el.manualDiscountMessage,
+            'ส่วนลดมากกว่ายอดสินค้าไม่ได้'
+        )
+
+        return
+    }
+
+
+    if (
+        reason.length <
+        3
+    ) {
+
+        msg(
+            el.manualDiscountMessage,
+            'กรุณาระบุเหตุผลในการให้ส่วนลด'
+        )
+
+        return
+    }
+
+
+    if (
+        !/^\d{6}$/.test(
+            pin
+        )
+    ) {
+
+        msg(
+            el.manualDiscountMessage,
+            'PIN ผู้อนุมัติต้องเป็นตัวเลข 6 หลัก'
+        )
+
+        return
+    }
+
+
+    el.confirmManualDiscountBtn.disabled =
+        true
+
+
+    el.confirmManualDiscountBtn.textContent =
+        'กำลังตรวจสอบ...'
+
+
+    try {
+
+        const {
+            data,
+            error
+        } =
+            await supabase.rpc(
+                'approve_manual_discount',
+                {
+                    p_branch_id:
+                        state.profile.branch_id,
+
+                    p_subtotal:
+                        subtotal(),
+
+                    p_amount:
+                        amount,
+
+                    p_reason:
+                        reason,
+
+                    p_pin:
+                        pin,
+
+                    p_order_id:
+                        state.currentOrder?.id
+                        ||
+                        null
+                }
+            )
+
+
+        if (
+            error
+        ) {
+            throw error
+        }
+
+
+        const result =
+            Array.isArray(data)
+                ? data[0]
+                : data
+
+
+        const approvedAmount =
+            Number(
+                result?.discount_amount
+                ||
+                0
+            )
+
+
+        if (
+            approvedAmount <=
+            0
+        ) {
+
+            throw new Error(
+                'อนุมัติส่วนลดไม่สำเร็จ'
+            )
+        }
+
+
+        el.discountInput.value =
+            String(
+                approvedAmount
+            )
+
+
+        state.discountAuthorizationId =
+            result.authorization_id
+            ||
+            null
+
+
+        state.discountSource =
+            'manual'
+
+
+        state.discountLabel =
+            `ส่วนลดพิเศษ • อนุมัติโดย ${result.approved_by_name
+            ||
+            'ผู้ดูแล'
+            }`
+
+
+        state.discountReason =
+            reason
+
+
+        state.discountApprovedBy =
+            result.approved_by
+            ||
+            null
+
+
+        closeManualDiscountModal()
+
+
+        renderPaymentDiscountSummary()
+
+
+        msg(
+            el.paymentMessage,
+            'อนุมัติส่วนลดพิเศษแล้ว'
+        )
+
+    } catch (error) {
+
+        console.error(
+            'Manual discount approval error:',
+            error
+        )
+
+
+        let text =
+            error.message
+            ||
+            'อนุมัติส่วนลดไม่สำเร็จ'
+
+
+        if (
+            text.includes(
+                'INVALID_APPROVER_PIN'
+            )
+        ) {
+
+            text =
+                'PIN ผู้อนุมัติไม่ถูกต้อง'
+        }
+
+
+        if (
+            text.includes(
+                'APPROVER_PIN_NOT_CONFIGURED'
+            )
+        ) {
+
+            text =
+                'ยังไม่ได้ตั้ง PIN ผู้อนุมัติ กรุณาให้ Admin ตั้งค่าก่อน'
+        }
+
+
+        msg(
+            el.manualDiscountMessage,
+            text
+        )
+
+    } finally {
+
+        el.confirmManualDiscountBtn.disabled =
+            false
+
+
+        el.confirmManualDiscountBtn.textContent =
+            'ยืนยันส่วนลด'
+    }
+}
+
+
+async function finalizeDiscountAuthorization(
+    invoiceNo
+) {
+
+    if (
+        !state.discountAuthorizationId
+        ||
+        !invoiceNo
+    ) {
+        return
+    }
+
+
+    const {
+        error
+    } =
+        await supabase.rpc(
+            'finalize_discount_authorization',
+            {
+                p_authorization_id:
+                    state.discountAuthorizationId,
+
+                p_invoice_no:
+                    invoiceNo
+            }
+        )
+
+
+    if (
+        error
+    ) {
+
+        console.error(
+            'Finalize discount authorization error:',
+            error
+        )
+    }
+}
+
+
+/* ========================================
    PAYMENT
 ======================================== */
 
@@ -5312,6 +6010,16 @@ async function openPayment() {
 
         return
     }
+
+
+    /*
+     * เปิดหน้าชำระเงินใหม่
+     * เริ่มโดยยังไม่มีส่วนลด
+     */
+    resetPaymentDiscount()
+
+
+    await loadActivePromotions()
 
 
     /*
@@ -6273,9 +6981,11 @@ function renderReceipt() {
     ) {
 
         el.receiptDiscount.textContent =
-            money(
-                sale.discount
-            )
+            sale.discount_label
+                ? `${money(sale.discount)} (${sale.discount_label})`
+                : money(
+                    sale.discount
+                )
     }
 
 
@@ -6457,6 +7167,29 @@ async function confirmPayment() {
         discount:
             discount(),
 
+        discount_source:
+            state.discountSource,
+
+        discount_label:
+            state.discountLabel
+            ||
+            null,
+
+        discount_reason:
+            state.discountReason
+            ||
+            null,
+
+        discount_authorization_id:
+            state.discountAuthorizationId
+            ||
+            null,
+
+        discount_approved_by:
+            state.discountApprovedBy
+            ||
+            null,
+
         total:
             total(),
 
@@ -6600,6 +7333,11 @@ async function confirmPayment() {
         }
 
 
+        await finalizeDiscountAuthorization(
+            data.invoice_no
+        )
+
+
         state.lastSale = {
 
             ...saleSnapshot,
@@ -6709,7 +7447,7 @@ async function confirmPayment() {
 */
         state.cart.clear()
 
-        el.discountInput.value = '0'
+        resetPaymentDiscount()
 
         renderCart()
 
@@ -6898,8 +7636,7 @@ async function newSale() {
         null
 
 
-    el.discountInput.value =
-        '0'
+    resetPaymentDiscount()
 
 
     el.successModal
@@ -7360,13 +8097,91 @@ el.cartItems
 
 
 /* ========================================
-   DISCOUNT
+   DISCOUNT EVENTS
 ======================================== */
 
-el.discountInput
+
+
+/* ========================================
+   PAYMENT DISCOUNT EVENTS
+======================================== */
+
+el.activePromotionSelect
     ?.addEventListener(
-        'input',
-        renderCart
+        'change',
+        () => {
+
+            el.applyPromotionBtn.disabled =
+                !el.activePromotionSelect.value
+        }
+    )
+
+
+el.applyPromotionBtn
+    ?.addEventListener(
+        'click',
+        applySelectedPromotion
+    )
+
+
+el.clearPaymentDiscountBtn
+    ?.addEventListener(
+        'click',
+        async () => {
+
+            resetPaymentDiscount()
+
+            await loadActivePromotions()
+
+            msg(
+                el.paymentMessage,
+                ''
+            )
+        }
+    )
+
+
+el.manualDiscountBtn
+    ?.addEventListener(
+        'click',
+        openManualDiscountModal
+    )
+
+
+el.closeManualDiscountBtn
+    ?.addEventListener(
+        'click',
+        closeManualDiscountModal
+    )
+
+
+el.cancelManualDiscountBtn
+    ?.addEventListener(
+        'click',
+        closeManualDiscountModal
+    )
+
+
+el.confirmManualDiscountBtn
+    ?.addEventListener(
+        'click',
+        approveManualDiscount
+    )
+
+
+el.manualDiscountModal
+    ?.addEventListener(
+        'click',
+        event => {
+
+            if (
+                event.target ===
+                el.manualDiscountModal
+            ) {
+
+                closeManualDiscountModal()
+            }
+        }
     )
 
 
@@ -7924,6 +8739,32 @@ document
     )
 
 
+
+
+/* ========================================
+   REMOVE LEGACY MODIFIER-MANAGER CONTROL
+   การจัดการตัวเลือกเมนูอยู่ในระบบจัดการแล้ว
+======================================== */
+function removeLegacyModifierManagerControl() {
+    document
+        .querySelectorAll('button, a')
+        .forEach(element => {
+            const text = String(element.textContent || '')
+                .replace(/\s+/g, ' ')
+                .trim()
+
+            if (
+                text === 'ตัวเลือกเมนู' ||
+                text === '⚙ ตัวเลือกเมนู' ||
+                text === '⚙️ ตัวเลือกเมนู'
+            ) {
+                element.remove()
+            }
+        })
+}
+
+removeLegacyModifierManagerControl()
+
 /* ========================================
    AUTH CHANGE
 ======================================== */
@@ -7953,5 +8794,60 @@ supabase.auth
 /* ========================================
    START
 ======================================== */
+/* =========================================================
+   FIX: COUPON / VOUCHER BUTTON EVENT
+   ให้วางโค้ดนี้ใน pos.js ก่อนบรรทัด init()
+   ========================================================= */
 
+if (
+    el.applyCouponBtn
+    &&
+    el.applyCouponBtn.dataset.couponBound !== '1'
+) {
+
+    el.applyCouponBtn.dataset.couponBound =
+        '1'
+
+
+    el.applyCouponBtn.addEventListener(
+        'click',
+        async () => {
+
+            await applyCouponCode()
+
+        }
+    )
+}
+
+
+if (
+    el.couponCodeInput
+    &&
+    el.couponCodeInput.dataset.couponBound !== '1'
+) {
+
+    el.couponCodeInput.dataset.couponBound =
+        '1'
+
+
+    el.couponCodeInput.addEventListener(
+        'keydown',
+        async event => {
+
+            if (
+                event.key !==
+                'Enter'
+            ) {
+                return
+            }
+
+
+            event.preventDefault()
+
+
+            await applyCouponCode()
+
+        }
+    )
+}
 init()
