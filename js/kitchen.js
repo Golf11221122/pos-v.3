@@ -220,10 +220,6 @@ function elapsedText(
 
 function timerInfo(item) {
 
-    /*
-     * กำลังทำ
-     * เริ่มนับใหม่จากเวลาที่กด "เริ่มทำ"
-     */
     if (
         item.item_status ===
         'preparing'
@@ -241,10 +237,6 @@ function timerInfo(item) {
     }
 
 
-    /*
-     * พร้อมเสิร์ฟ / พร้อมรับ
-     * เริ่มนับใหม่จากเวลาที่กด "พร้อม"
-     */
     if (
         item.item_status ===
         'ready'
@@ -265,16 +257,6 @@ function timerInfo(item) {
     }
 
 
-    /*
-     * รอรับออเดอร์
-     *
-     * สำคัญ:
-     * ต้องนับจากเวลาที่ "รายการอาหารนี้"
-     * ถูกส่งเข้าครัว
-     *
-     * ไม่ใช้ order_opened_at
-     * เพราะโต๊ะเดิมสามารถสั่งเพิ่มทีหลังได้
-     */
     return {
         label:
             'รอมาแล้ว',
@@ -309,10 +291,6 @@ function refreshLiveTimers() {
                 timerInfo(item)
 
 
-            /* ==========================
-               คำนวณเวลาที่ผ่านไป
-            ========================== */
-
             const startTime =
                 new Date(
                     timer.startedAt
@@ -336,10 +314,6 @@ function refreshLiveTimers() {
                     : 0
 
 
-            /* ==========================
-               กำหนดเวลามาตรฐาน
-            ========================== */
-
             let limitSeconds = 0
 
 
@@ -347,9 +321,6 @@ function refreshLiveTimers() {
                 item.item_status ===
                 'pending'
             ) {
-
-                // รอรับออเดอร์
-                // เตือนเมื่อเกิน 5 นาที
 
                 limitSeconds =
                     5 * 60
@@ -361,9 +332,6 @@ function refreshLiveTimers() {
                 'preparing'
             ) {
 
-                // กำลังทำ
-                // เตือนเมื่อเกิน 15 นาที
-
                 limitSeconds =
                     15 * 60
             }
@@ -374,25 +342,14 @@ function refreshLiveTimers() {
                 'ready'
             ) {
 
-                // พร้อมเสิร์ฟ / พร้อมรับ
-                // เตือนเมื่อเกิน 5 นาที
-
                 limitSeconds =
                     5 * 60
             }
 
 
-            /* ==========================
-               แสดงเวลา
-            ========================== */
-
             node.textContent =
                 `${timer.label} ${elapsedText(timer.startedAt)}`
 
-
-            /* ==========================
-               เปลี่ยนเป็นสีแดงเมื่อเกิน
-            ========================== */
 
             const overdue =
                 limitSeconds > 0
@@ -408,24 +365,236 @@ function refreshLiveTimers() {
 
         })
 }
+
 function startLiveTimers() {
 
-    // ถ้ามี Timer เดิมอยู่ ให้หยุดก่อน
     if (state.timerInterval) {
         clearInterval(
             state.timerInterval
         )
     }
 
-    // อัปเดตทันทีครั้งแรก
     refreshLiveTimers()
 
-    // จากนั้นอัปเดตทุก 1 วินาที
     state.timerInterval =
         setInterval(
             refreshLiveTimers,
             1000
         )
+}
+
+
+/* ========================================
+   MODIFIER HIGHLIGHT
+======================================== */
+
+function modifierIcon(modifier) {
+    const group =
+        String(
+            modifier?.group_name
+            ||
+            ''
+        ).toLowerCase()
+
+    if (
+        group.includes('เผ็ด')
+        ||
+        group.includes('พริก')
+    ) {
+        return '🌶️'
+    }
+
+    if (
+        group.includes('ขนาด')
+        ||
+        group.includes('ธรรมดา')
+        ||
+        group.includes('พิเศษ')
+    ) {
+        return '🍜'
+    }
+
+    if (
+        group.includes('เส้น')
+    ) {
+        return '🍜'
+    }
+
+    if (
+        group.includes('เพิ่ม')
+        ||
+        group.includes('ท็อป')
+    ) {
+        return '➕'
+    }
+
+    return '•'
+}
+
+function modifierIsImportant(modifier) {
+    const option =
+        String(
+            modifier?.option_name
+            ||
+            ''
+        ).toLowerCase()
+
+    return [
+        'พิเศษ',
+        'เผ็ดมาก',
+        'ไม่ใส่',
+        'งด',
+        'เพิ่ม',
+        'ไม่เอา'
+    ].some(
+        keyword =>
+            option.includes(
+                keyword
+            )
+    )
+}
+
+function renderModifierBadges(modifiers) {
+    if (
+        !Array.isArray(modifiers)
+        ||
+        !modifiers.length
+    ) {
+        return ''
+    }
+
+    return `
+        <div class="modifier-badges">
+            ${modifiers.map(modifier => {
+                const option =
+                    String(
+                        modifier.option_name
+                        ||
+                        ''
+                    ).trim()
+
+                if (!option) {
+                    return ''
+                }
+
+                const important =
+                    modifierIsImportant(
+                        modifier
+                    )
+
+                return `
+                    <div
+                        class="modifier-badge ${
+                            important
+                                ? 'modifier-important'
+                                : ''
+                        }"
+                    >
+                        <span class="modifier-badge-icon">
+                            ${modifierIcon(modifier)}
+                        </span>
+
+                        <strong>
+                            ${esc(option)}
+                        </strong>
+                    </div>
+                `
+            }).join('')}
+        </div>
+    `
+}
+
+function ensureKitchenModifierStyle() {
+    if (
+        document.getElementById(
+            'kitchenModifierHighlightStyle'
+        )
+    ) {
+        return
+    }
+
+    const style =
+        document.createElement(
+            'style'
+        )
+
+    style.id =
+        'kitchenModifierHighlightStyle'
+
+    style.textContent = `
+        .modifier-badges {
+            display: grid;
+            gap: 8px;
+            margin-top: 14px;
+        }
+
+        .modifier-badge {
+            display: flex;
+            min-height: 48px;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 12px;
+            border: 2px solid #e1e5ea;
+            border-radius: 12px;
+            background: #f7f8fa;
+            color: #202124;
+            line-height: 1.25;
+        }
+
+        .modifier-badge-icon {
+            flex: 0 0 auto;
+            font-size: 21px;
+        }
+
+        .modifier-badge strong {
+            font-size: 18px;
+            font-weight: 900;
+        }
+
+        .modifier-badge.modifier-important {
+            border-color: #f4b400;
+            background: #fff4c7;
+        }
+
+        .modifier-badge.modifier-important strong {
+            font-size: 20px;
+        }
+
+        .ticket-body .note {
+            margin-top: 12px;
+            padding: 10px 12px;
+            border: 2px solid #d93025;
+            border-radius: 10px;
+            background: #fff0ef;
+            color: #b3261e;
+            font-size: 17px;
+            font-weight: 900;
+            line-height: 1.35;
+        }
+
+        @media (max-width: 760px) {
+            .modifier-badge {
+                min-height: 54px;
+                padding: 11px 13px;
+            }
+
+            .modifier-badge strong {
+                font-size: 19px;
+            }
+
+            .modifier-badge.modifier-important strong {
+                font-size: 21px;
+            }
+
+            .modifier-badge-icon {
+                font-size: 23px;
+            }
+        }
+    `
+
+    document.head.appendChild(
+        style
+    )
 }
 
 
@@ -710,10 +879,6 @@ async function loadKitchenItems({
         )
 
 
-    /*
-     * แจ้งเตือนออเดอร์ใหม่ทุกแหล่ง
-     * QR / POS โต๊ะ / POS กลับบ้าน
-     */
     const newPending =
         list.filter(item =>
             item.item_status === 'pending'
@@ -836,11 +1001,9 @@ function renderTicket(item) {
             : []
 
     const modifierHtml =
-        modifiers
-            .map(modifier =>
-                `${esc(modifier.group_name || '')}: ${esc(modifier.option_name || '')}`
-            )
-            .join('<br>')
+        renderModifierBadges(
+            modifiers
+        )
 
     let actions = ''
 
@@ -931,6 +1094,8 @@ function renderTicket(item) {
         `
     }
 
+    const timer = timerInfo(item)
+
     return `
         <article
             class="ticket-card status-${esc(item.item_status)}"
@@ -948,7 +1113,7 @@ function renderTicket(item) {
                         data-kitchen-timer="${esc(item.item_id)}"
                     >
                         ${esc(
-        `${timerInfo(item).label} ${elapsedText(timerInfo(item).startedAt)}`
+        `${timer.label} ${elapsedText(timer.startedAt)}`
     )}
                     </div>
 
@@ -974,20 +1139,12 @@ function renderTicket(item) {
                     × ${Number(item.quantity || 0).toLocaleString('th-TH')}
                 </div>
 
-                ${modifierHtml
-            ? `
-                            <div class="modifier-list">
-                                ${modifierHtml}
-                            </div>
-                        `
-            : ''
-        }
+                ${modifierHtml}
 
                 ${item.item_note
             ? `
                             <div class="note">
-                                หมายเหตุ:
-                                ${esc(item.item_note)}
+                                ⚠️ ${esc(item.item_note)}
                             </div>
                         `
             : ''
@@ -1012,15 +1169,45 @@ function renderPrintTicket(item) {
 
     const modifierHtml =
         modifiers
-            .map(modifier => `
-                <div>
-                    ${esc(modifier.group_name || '')}:
-                    <strong>
-                        ${esc(modifier.option_name || '')}
-                    </strong>
-                </div>
-            `)
+            .map(modifier => {
+                const group =
+                    String(
+                        modifier.group_name
+                        ||
+                        ''
+                    ).trim()
+
+                const option =
+                    String(
+                        modifier.option_name
+                        ||
+                        ''
+                    ).trim()
+
+                if (!option) {
+                    return ''
+                }
+
+                return `
+                    <div
+                        style="
+                            font-size:17px;
+                            font-weight:800;
+                            margin:5px 0;
+                        "
+                    >
+                        ${modifierIcon(modifier)}
+                        ${group ? `${esc(group)}: ` : ''}
+                        <strong>
+                            ${esc(option)}
+                        </strong>
+                    </div>
+                `
+            })
             .join('')
+
+    const timer =
+        timerInfo(item)
 
     el.kitchenPrintArea.innerHTML = `
         <div class="print-ticket">
@@ -1043,7 +1230,7 @@ function renderPrintTicket(item) {
 
             <div class="print-center">
                 ${esc(
-            `${timerInfo(item).label} ${elapsedText(timerInfo(item).startedAt)}`
+            `${timer.label} ${elapsedText(timer.startedAt)}`
         )}
             </div>
 
@@ -1069,8 +1256,14 @@ function renderPrintTicket(item) {
 
             ${item.item_note
             ? `
-                        <div class="print-note">
-                            หมายเหตุ:
+                        <div
+                            class="print-note"
+                            style="
+                                font-size:18px;
+                                font-weight:900;
+                            "
+                        >
+                            ⚠️ หมายเหตุ:
                             ${esc(item.item_note)}
                         </div>
                     `
@@ -1288,6 +1481,8 @@ function subscribeRealtime() {
 
 async function init() {
     try {
+        ensureKitchenModifierStyle()
+
         const session =
             await requireSession()
 
