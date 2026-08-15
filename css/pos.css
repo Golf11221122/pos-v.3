@@ -119,8 +119,7 @@ button:disabled {
         var(--white);
 
     border-bottom:
-        1px solid
-        var(--border);
+        1px solid var(--border);
 
 }
 
@@ -174,8 +173,7 @@ button:disabled {
         8px 13px;
 
     border:
-        1px solid
-        var(--border);
+        1px solid var(--border);
 
     border-radius: 10px;
 
@@ -213,13 +211,10 @@ button:disabled {
     display: grid;
 
     grid-template-columns:
-        minmax(0, 1fr)
-        390px;
+        minmax(0, 1fr) 390px;
 
     min-height:
-        calc(
-            100vh - 70px
-        );
+        calc(100vh - 70px);
 
 }
 
@@ -248,8 +243,7 @@ button:disabled {
     display: grid;
 
     grid-template-columns:
-        minmax(0, 1fr)
-        auto;
+        minmax(0, 1fr) auto;
 
     gap: 10px;
 
@@ -266,8 +260,7 @@ button:disabled {
         0 14px;
 
     border:
-        1px solid
-        var(--border);
+        1px solid var(--border);
 
     border-radius: 12px;
 
@@ -285,13 +278,10 @@ button:disabled {
         var(--primary);
 
     box-shadow:
-        0 0 0 3px
-        rgba(
-            245,
+        0 0 0 3px rgba(245,
             180,
             0,
-            .13
-        );
+            .13);
 
 }
 
@@ -362,8 +352,7 @@ button:disabled {
         8px 15px;
 
     border:
-        1px solid
-        var(--border);
+        1px solid var(--border);
 
     border-radius:
         999px;
@@ -425,13 +414,9 @@ button:disabled {
     display: grid;
 
     grid-template-columns:
-        repeat(
-            auto-fill,
-            minmax(
-                150px,
-                1fr
-            )
-        );
+        repeat(auto-fill,
+            minmax(150px,
+                1fr));
 
     gap: 12px;
 
@@ -450,8 +435,7 @@ button:disabled {
     overflow: hidden;
 
     border:
-        1px solid
-        var(--border);
+        1px solid var(--border);
 
     border-radius: 14px;
 
@@ -566,7 +550,7 @@ button:disabled {
 }
 
 
-.product-info > div {
+.product-info>div {
 
     display: flex;
 
@@ -627,9 +611,7 @@ button:disabled {
     display: flex;
 
     height:
-        calc(
-            100vh - 70px
-        );
+        calc(100vh - 70px);
 
     flex-direction:
         column;
@@ -638,8 +620,7 @@ button:disabled {
         var(--white);
 
     border-left:
-        1px solid
-        var(--border);
+        1px solid var(--border);
 
 }
 
@@ -670,8 +651,7 @@ button:disabled {
     padding: 18px;
 
     border-bottom:
-        1px solid
-        var(--border);
+        1px solid var(--border);
 
 }
 
@@ -759,8 +739,7 @@ button:disabled {
     display: grid;
 
     grid-template-columns:
-        minmax(0, 1fr)
-        auto;
+        minmax(0, 1fr) auto;
 
     gap: 10px;
 
@@ -768,8 +747,7 @@ button:disabled {
         13px 0;
 
     border-bottom:
-        1px solid
-        var(--border);
+        1px solid var(--border);
 
 }
 
@@ -806,8 +784,7 @@ button:disabled {
     height: 32px;
 
     border:
-        1px solid
-        var(--border);
+        1px solid var(--border);
 
     border-radius: 8px;
 
@@ -844,8 +821,7 @@ button:disabled {
         16px 18px;
 
     border-top:
-        1px solid
-        var(--border);
+        1px solid var(--border);
 
     background:
         var(--white);
@@ -853,7 +829,7 @@ button:disabled {
 }
 
 
-.summary > div,
+.summary>div,
 .summary label {
 
     display: flex;
@@ -877,8 +853,7 @@ button:disabled {
     padding: 8px;
 
     border:
-        1px solid
-        var(--border);
+        1px solid var(--border);
 
     border-radius: 9px;
 
@@ -892,8 +867,7 @@ button:disabled {
     padding-top: 13px;
 
     border-top:
-        1px dashed
-        var(--border);
+        1px dashed var(--border);
 
     font-size: 20px;
 
@@ -915,8 +889,7 @@ button:disabled {
         10px 16px;
 
     border:
-        1px solid
-        var(--primary);
+        1px solid var(--primary);
 
     border-radius: 12px;
 
@@ -987,12 +960,10 @@ button:disabled {
     padding: 20px;
 
     background:
-        rgba(
+        rgba(0,
             0,
             0,
-            0,
-            .50
-        );
+            .50);
 
 }
 
@@ -1000,15 +971,11 @@ button:disabled {
 .modal-card {
 
     width:
-        min(
-            500px,
-            100%
-        );
+        min(500px,
+            100%);
 
     max-height:
-        calc(
-            100vh - 40px
-        );
+        calc(100vh - 40px);
 
     overflow-y: auto;
 
@@ -1101,8 +1068,7 @@ button:disabled {
     min-height: 65px;
 
     border:
-        1px solid
-        var(--border);
+        1px solid var(--border);
 
     border-radius: 12px;
 
@@ -1150,8 +1116,7 @@ textarea {
     padding: 11px;
 
     border:
-        1px solid
-        var(--border);
+        1px solid var(--border);
 
     border-radius: 10px;
 
@@ -1177,10 +1142,8 @@ textarea {
     display: grid;
 
     grid-template-columns:
-        repeat(
-            4,
-            1fr
-        );
+        repeat(4,
+            1fr);
 
     gap: 7px;
 
@@ -1194,8 +1157,7 @@ textarea {
     min-height: 39px;
 
     border:
-        1px solid
-        var(--border);
+        1px solid var(--border);
 
     border-radius: 8px;
 
@@ -1339,7 +1301,7 @@ textarea {
 }
 
 
-.actions > * {
+.actions>* {
 
     flex: 1;
 
@@ -1384,7 +1346,7 @@ textarea {
 }
 
 
-.success > p {
+.success>p {
 
     margin-top: 10px;
 
@@ -1457,19 +1419,12 @@ textarea {
    TABLET
 ======================================== */
 
-@media (
-    max-width: 1000px
-)
-and
-(
-    min-width: 761px
-) {
+@media (max-width: 1000px) and (min-width: 761px) {
 
     .layout {
 
         grid-template-columns:
-            minmax(0, 1fr)
-            330px;
+            minmax(0, 1fr) 330px;
 
     }
 
@@ -1477,13 +1432,9 @@ and
     .product-grid {
 
         grid-template-columns:
-            repeat(
-                auto-fill,
-                minmax(
-                    140px,
-                    1fr
-                )
-            );
+            repeat(auto-fill,
+                minmax(140px,
+                    1fr));
 
     }
 
@@ -1495,20 +1446,12 @@ and
    MOBILE
 ======================================== */
 
-@media (
-    max-width: 760px
-) {
+@media (max-width: 760px) {
 
     body {
 
         padding-bottom:
-            calc(
-                82px
-                +
-                env(
-                    safe-area-inset-bottom
-                )
-            );
+            calc(82px + env(safe-area-inset-bottom));
 
     }
 
@@ -1647,8 +1590,7 @@ and
         z-index: 25;
 
         grid-template-columns:
-            minmax(0, 1fr)
-            46px;
+            minmax(0, 1fr) 46px;
 
         gap: 7px;
 
@@ -1745,13 +1687,9 @@ and
     .product-grid {
 
         grid-template-columns:
-            repeat(
-                2,
-                minmax(
-                    0,
-                    1fr
-                )
-            );
+            repeat(2,
+                minmax(0,
+                    1fr));
 
         gap: 9px;
 
@@ -1834,10 +1772,8 @@ and
         display: flex;
 
         height:
-            min(
-                78vh,
-                650px
-            );
+            min(78vh,
+                650px);
 
         flex-direction:
             column;
@@ -1845,36 +1781,25 @@ and
         border: 0;
 
         border-radius:
-            22px
-            22px
-            0
-            0;
+            22px 22px 0 0;
 
         background:
             var(--white);
 
         box-shadow:
-            0 -10px 40px
-            rgba(
+            0 -10px 40px rgba(0,
                 0,
                 0,
-                0,
-                .18
-            );
+                .18);
 
         transform:
-            translateY(
-                110%
-            );
+            translateY(110%);
 
         transition:
-            transform
-            .25s ease;
+            transform .25s ease;
 
         padding-bottom:
-            env(
-                safe-area-inset-bottom
-            );
+            env(safe-area-inset-bottom);
 
     }
 
@@ -1951,8 +1876,7 @@ and
         place-items: center;
 
         border:
-            1px solid
-            var(--border);
+            1px solid var(--border);
 
         border-radius:
             50%;
@@ -2002,19 +1926,12 @@ and
             0 0 auto;
 
         padding:
-            12px 16px
-            calc(
-                12px
-                +
-                env(
-                    safe-area-inset-bottom
-                )
-            );
+            12px 16px calc(12px + env(safe-area-inset-bottom));
 
     }
 
 
-    .summary > div,
+    .summary>div,
     .summary label {
 
         margin-bottom: 9px;
@@ -2052,12 +1969,10 @@ and
         z-index: 70;
 
         background:
-            rgba(
+            rgba(0,
                 0,
                 0,
-                0,
-                .40
-            );
+                .40);
 
     }
 
@@ -2081,13 +1996,7 @@ and
         right: 10px;
 
         bottom:
-            calc(
-                8px
-                +
-                env(
-                    safe-area-inset-bottom
-                )
-            );
+            calc(8px + env(safe-area-inset-bottom));
 
         left: 10px;
 
@@ -2108,8 +2017,7 @@ and
             8px 14px;
 
         border:
-            1px solid
-            #d99e00;
+            1px solid #d99e00;
 
         border-radius: 16px;
 
@@ -2120,13 +2028,10 @@ and
             var(--text);
 
         box-shadow:
-            0 7px 25px
-            rgba(
+            0 7px 25px rgba(0,
                 0,
                 0,
-                0,
-                .22
-            );
+                .22);
 
         text-align: left;
 
@@ -2229,20 +2134,10 @@ and
         max-height: 92vh;
 
         padding:
-            18px 16px
-            calc(
-                18px
-                +
-                env(
-                    safe-area-inset-bottom
-                )
-            );
+            18px 16px calc(18px + env(safe-area-inset-bottom));
 
         border-radius:
-            22px
-            22px
-            0
-            0;
+            22px 22px 0 0;
 
     }
 
@@ -2283,13 +2178,9 @@ and
     .quick-cash {
 
         grid-template-columns:
-            repeat(
-                4,
-                minmax(
-                    0,
-                    1fr
-                )
-            );
+            repeat(4,
+                minmax(0,
+                    1fr));
 
     }
 
@@ -2309,10 +2200,8 @@ and
     .promptpay-qr {
 
         width:
-            min(
-                220px,
-                100%
-            );
+            min(220px,
+                100%);
 
         min-height: 220px;
 
@@ -2340,9 +2229,7 @@ and
    SMALL MOBILE
 ======================================== */
 
-@media (
-    max-width: 390px
-) {
+@media (max-width: 390px) {
 
     .product-grid {
 
@@ -2492,8 +2379,7 @@ and
         border: 0;
 
         border-top:
-            1px dashed
-            #000000;
+            1px dashed #000000;
 
     }
 
@@ -2617,8 +2503,7 @@ and
             8px 10px 10px !important;
 
         box-shadow:
-            0 4px 8px
-            rgba(0, 0, 0, 0.04) !important;
+            0 4px 8px rgba(0, 0, 0, 0.04) !important;
     }
 
 
@@ -2648,18 +2533,11 @@ and
 
 
     /* รองรับ iPhone safe area */
-    @supports (
-        padding-bottom:
-        env(safe-area-inset-bottom)
-    ) {
+    @supports (padding-bottom: env(safe-area-inset-bottom)) {
 
         .mobile-cart-bar {
             bottom:
-                calc(
-                    8px
-                    +
-                    env(safe-area-inset-bottom)
-                ) !important;
+                calc(8px + env(safe-area-inset-bottom)) !important;
         }
     }
 
@@ -2728,8 +2606,7 @@ and
        ซ่อนแถบล่าง
     ================================= */
 
-    body:has(.cart.mobile-open)
-    .mobile-cart-bar {
+    body:has(.cart.mobile-open) .mobile-cart-bar {
         display: none !important;
     }
 }
@@ -2788,11 +2665,9 @@ and
        ซ่อน Search / Category
     ----------------------------------------- */
 
-    body:has(#paymentModal:not(.hidden))
-    .toolbar,
+    body:has(#paymentModal:not(.hidden)) .toolbar,
 
-    body:has(#paymentModal:not(.hidden))
-    .tabs {
+    body:has(#paymentModal:not(.hidden)) .tabs {
 
         visibility: hidden !important;
     }
@@ -2803,8 +2678,7 @@ and
        ซ่อนแถบตะกร้าสีเหลือง
     ----------------------------------------- */
 
-    body:has(#paymentModal:not(.hidden))
-    .mobile-cart-bar {
+    body:has(#paymentModal:not(.hidden)) .mobile-cart-bar {
 
         display: none !important;
     }
@@ -2815,8 +2689,7 @@ and
        ก็ซ่อนแถบตะกร้าล่างเช่นกัน
     ----------------------------------------- */
 
-    body:has(.cart.mobile-open)
-    .mobile-cart-bar {
+    body:has(.cart.mobile-open) .mobile-cart-bar {
 
         display: none !important;
     }
@@ -2836,9 +2709,7 @@ and
 
         top: auto !important;
 
-        bottom: calc(
-            8px + env(safe-area-inset-bottom)
-        ) !important;
+        bottom: calc(8px + env(safe-area-inset-bottom)) !important;
 
         margin: 0 !important;
 
@@ -2856,8 +2727,7 @@ and
 
     /* เมื่อหน้าบันทึกการขายสำเร็จเปิดอยู่
        ซ่อนแถบตะกร้าด้านล่าง */
-    body:has(#successModal:not(.hidden))
-    .mobile-cart-bar {
+    body:has(#successModal:not(.hidden)) .mobile-cart-bar {
         display: none !important;
     }
 
@@ -2897,10 +2767,7 @@ and
         overflow-y: auto !important;
 
         padding:
-            22px 18px
-            calc(
-                22px + env(safe-area-inset-bottom)
-            ) !important;
+            22px 18px calc(22px + env(safe-area-inset-bottom)) !important;
 
         border-radius:
             24px 24px 0 0 !important;
@@ -2948,11 +2815,8 @@ and
         margin-top: 16px !important;
 
         padding:
-            10px 0
-            max(
-                4px,
-                env(safe-area-inset-bottom)
-            ) !important;
+            10px 0 max(4px,
+                env(safe-area-inset-bottom)) !important;
 
         background: #fff !important;
 
@@ -2967,6 +2831,7 @@ and
     }
 
 }
+
 /* ========================================
    START ORDER
 ======================================== */
@@ -3249,6 +3114,7 @@ and
 .back-dashboard-btn:active {
     transform: scale(0.99);
 }
+
 .hold-table-btn {
     width: 100%;
     margin-bottom: 10px;
@@ -3462,125 +3328,204 @@ and
 
 
 /* ========================================
-   MODIFIER MANAGER
+   PAYMENT DISCOUNT / PROMOTION
 ======================================== */
-.modifier-manager-open-btn{white-space:nowrap}
-.modifier-manage-current-btn{width:100%;margin-top:9px}
-#modifierManagerModal{z-index:32000}
-.modifier-manager-card{width:min(720px,100%)}
-.modifier-manager-head small{display:block;margin-top:3px;color:var(--muted)}
-.modifier-manager-label{display:block;margin:16px 0 7px;font-weight:800}
-.modifier-manager-select{width:100%;min-height:46px;padding:9px 12px;border:1px solid var(--border);border-radius:10px;background:#fff}
-.modifier-template-row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
-.modifier-template-row button,.modifier-add-option-btn{min-height:44px;padding:8px 10px;border:1px solid #f0ad00;border-radius:10px;background:#fff7d6;color:#7b5200;font-weight:800}
-.modifier-manager-groups{display:grid;gap:12px;margin-top:12px}
-.modifier-manager-empty{display:grid;gap:5px;padding:18px;border:1px dashed var(--border);border-radius:12px;color:var(--muted);text-align:center}
-.modifier-manager-empty.small{padding:10px}
-.modifier-manager-empty strong{color:var(--text)}
-.modifier-manager-group{padding:14px;border:1px solid var(--border);border-radius:14px;background:#fff}
-.modifier-manager-group-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding-bottom:10px;border-bottom:1px solid #eef0f2}
-.modifier-manager-group-head>div:first-child{display:grid;gap:3px}
-.modifier-manager-group-head small{color:var(--muted)}
-.modifier-manager-actions{display:flex;align-items:center;gap:7px}
-.modifier-manager-actions .outline-btn{min-height:34px;padding:5px 9px;font-size:12px}
-.modifier-manager-options{display:grid;gap:8px;padding:10px 0}
-.modifier-manager-option{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 11px;border:1px solid #e5e7eb;border-radius:10px;background:#fafafa}
-.modifier-manager-option>div:first-child{display:grid;gap:3px}
-.modifier-manager-option small{color:#137333;font-weight:800}
-.modifier-add-option-btn{width:100%}
-.modifier-option-price{color:#137333}
 
-@media(max-width:760px){
-  .toolbar{grid-template-columns:minmax(0,1fr) auto auto}
-  .modifier-manager-open-btn{min-width:44px;padding:8px 10px;font-size:0}
-  .modifier-manager-open-btn::before{content:"⚙";font-size:20px}
-  #modifierManagerModal{align-items:flex-end!important;padding:0!important}
-  #modifierManagerModal .modifier-manager-card{width:100%!important;max-width:none!important;max-height:94dvh!important;overflow-y:auto!important;padding:18px 16px calc(22px + env(safe-area-inset-bottom))!important;border-radius:24px 24px 0 0!important;-webkit-overflow-scrolling:touch}
-  #modifierManagerModal .modifier-manager-head{position:sticky!important;top:-18px!important;z-index:8!important;margin:-18px -16px 12px!important;padding:18px 16px 14px!important;background:#fff!important;border-bottom:1px solid var(--border)}
-  .modifier-template-row{grid-template-columns:1fr 1fr}
-  .modifier-template-row button:last-child{grid-column:1/-1}
-  .modifier-manager-group-head{display:grid}
-  .modifier-manager-actions{justify-content:flex-start}
-  .modifier-manager-option{align-items:flex-start}
-  .modifier-manager-option .modifier-manager-actions{flex-direction:column;align-items:stretch}
-  body:has(#modifierManagerModal:not(.hidden)) .mobile-cart-bar{display:none!important}
+.payment-discount-card {
+    margin: 14px 0 18px;
+    padding: 14px;
+    border: 1px solid var(--border, #e2e5e9);
+    border-radius: 14px;
+    background: #fafafa;
 }
-/* ========================================
-   MOBILE CART - PAYMENT BUTTON FIX
-   ให้ Admin / Manager เห็นปุ่มชำระเงินแน่นอน
-======================================== */
+
+.payment-discount-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.payment-discount-head>div {
+    display: grid;
+    gap: 3px;
+}
+
+.payment-discount-head strong {
+    font-size: 16px;
+}
+
+.payment-discount-head small {
+    color: var(--muted, #70757a);
+    font-size: 12px;
+}
+
+.promotion-select-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+}
+
+.promotion-select-row select {
+    min-width: 0;
+    min-height: 44px;
+    padding: 8px 10px;
+    border: 1px solid var(--border, #dfe3e8);
+    border-radius: 10px;
+    background: #fff;
+}
+
+.manual-discount-btn {
+    width: 100%;
+    min-height: 44px;
+    margin-top: 9px;
+    border: 1px solid #d99b00;
+    border-radius: 10px;
+    background: #fff7d6;
+    color: #805700;
+    font-weight: 800;
+}
+
+.manual-discount-btn:disabled {
+    opacity: .5;
+}
+
+.payment-discount-summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 10px;
+    padding: 10px 12px;
+    border: 1px solid #b7dfc4;
+    border-radius: 10px;
+    background: #eaf7ee;
+    color: #137333;
+}
+
+.payment-discount-summary strong {
+    font-size: 17px;
+    font-weight: 900;
+}
+
+.discount-clear-btn {
+    flex: 0 0 auto;
+    padding: 5px 8px;
+    border: 0;
+    background: transparent;
+    color: #b3261e;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.manual-discount-modal-card label {
+    display: block;
+    margin-top: 12px;
+    margin-bottom: 6px;
+    font-weight: 800;
+}
+
+.manual-discount-modal-card input,
+.manual-discount-modal-card textarea {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 11px 12px;
+    border: 1px solid var(--border, #dfe3e8);
+    border-radius: 10px;
+    background: #fff;
+    font: inherit;
+}
 
 @media (max-width: 760px) {
-
-    /* ขยายตะกร้าให้สูงขึ้น */
-    .cart {
-        height: 94dvh !important;
-        max-height: 94dvh !important;
-
-        display: flex !important;
-        flex-direction: column !important;
-
-        overflow: hidden !important;
+    .payment-discount-card {
+        padding: 12px;
+        margin: 10px 0 14px;
     }
 
+    .promotion-select-row {
+        grid-template-columns: 1fr;
+    }
 
-    /* รายการสินค้าเลื่อนแยก */
-    .cart-items {
-        flex: 1 1 auto !important;
+    .promotion-select-row .outline-btn {
+        width: 100%;
+        min-height: 46px;
+    }
 
-        min-height: 180px !important;
-        max-height: none !important;
+    .manual-discount-btn {
+        min-height: 48px;
+    }
 
+    #paymentModal .modal-card,
+    #manualDiscountModal .modal-card {
+        max-height: 94dvh !important;
         overflow-y: auto !important;
-
         -webkit-overflow-scrolling: touch;
     }
 
+    /* ให้ Admin / Manager เห็นปุ่มชำระเงินในมือถือแน่นอน */
+    .cart {
+        height: 94dvh !important;
+        max-height: 94dvh !important;
+        display: flex !important;
+        flex-direction: column !important;
+        overflow: hidden !important;
+    }
 
-    /* ส่วนยอดรวม + ปุ่ม */
+    .cart-items {
+        flex: 1 1 auto !important;
+        min-height: 180px !important;
+        max-height: none !important;
+        overflow-y: auto !important;
+        -webkit-overflow-scrolling: touch;
+    }
+
     .summary {
         flex: 0 0 auto !important;
-
         max-height: 46dvh !important;
-
         overflow-y: auto !important;
-
-        padding-bottom:
-            calc(
-                18px
-                +
-                env(safe-area-inset-bottom)
-            ) !important;
-
+        padding-bottom: calc(18px + env(safe-area-inset-bottom)) !important;
         background: #fff !important;
     }
 
-
-    /* ปุ่มชำระเงิน */
     #checkoutBtn {
         display: block !important;
         visibility: visible !important;
-
         width: 100% !important;
         min-height: 56px !important;
-
         margin-top: 10px !important;
-
         font-size: 18px !important;
         font-weight: 900 !important;
     }
+}
 
 
-    /* ถ้า Admin / Manager ใช้ได้
-       ปุ่มจะเห็นชัด */
-    #checkoutBtn:not(:disabled) {
-        opacity: 1 !important;
-        pointer-events: auto !important;
+.coupon-redeem-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px;
+    margin-top: 9px;
+}
+
+.coupon-redeem-row input {
+    min-width: 0;
+    min-height: 44px;
+    padding: 9px 11px;
+    border: 1px solid var(--border, #dfe3e8);
+    border-radius: 10px;
+    background: #fff;
+    text-transform: uppercase;
+    font-weight: 800;
+    letter-spacing: .04em;
+}
+
+@media (max-width: 760px) {
+    .coupon-redeem-row {
+        grid-template-columns: 1fr;
     }
 
-
-    /* Staff ยัง disabled ตาม JS เดิม */
-    #checkoutBtn:disabled {
-        opacity: .55 !important;
+    .coupon-redeem-row button {
+        width: 100%;
+        min-height: 46px;
     }
 }
