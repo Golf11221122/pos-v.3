@@ -1,0 +1,391 @@
+:root {
+    --p: #f5b400;
+    --pd: #d99b00;
+    --t: #202124;
+    --m: #6b7280;
+    --b: #dfe3e8;
+    --bg: #f5f6f8;
+    --danger: #b3261e;
+    --success: #137333
+}
+
+* {
+    box-sizing: border-box
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--t);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif
+}
+
+button,
+input,
+select {
+    font: inherit
+}
+
+.hidden {
+    display: none !important
+}
+
+.topbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--b);
+    background: #fff
+}
+
+.topbar h1 {
+    margin: 0;
+    font-size: 21px
+}
+
+.topbar p {
+    margin: 2px 0 0;
+    color: var(--m);
+    font-size: 12px
+}
+
+.topbar-user {
+    display: flex;
+    align-items: center;
+    gap: 8px
+}
+
+.role-badge {
+    padding: 4px 8px;
+    border-radius: 999px;
+    background: #f1f3f4;
+    font-size: 12px;
+    font-weight: 800
+}
+
+.page {
+    width: min(1100px, calc(100% - 28px));
+    margin: 18px auto 50px
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 16px
+}
+
+.summary-card,
+.panel {
+    border: 1px solid var(--b);
+    border-radius: 16px;
+    background: #fff
+}
+
+.summary-card {
+    display: grid;
+    gap: 5px;
+    padding: 16px
+}
+
+.summary-card span,
+.summary-card small,
+.panel-head p,
+.field small,
+.meta {
+    color: var(--m)
+}
+
+.summary-card strong {
+    font-size: 22px
+}
+
+.panel {
+    margin-bottom: 16px;
+    padding: 18px
+}
+
+.panel-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px
+}
+
+.panel-head h2 {
+    margin: 0;
+    font-size: 20px
+}
+
+.panel-head p {
+    margin: 4px 0 0;
+    font-size: 13px
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px
+}
+
+.field {
+    display: grid;
+    gap: 6px
+}
+
+.field-wide {
+    grid-column: 1/-1
+}
+
+.field>span,
+.switch-field span {
+    font-size: 13px;
+    font-weight: 800
+}
+
+.field input,
+.field select {
+    width: 100%;
+    min-height: 44px;
+    padding: 9px 11px;
+    border: 1px solid var(--b);
+    border-radius: 10px;
+    background: #fff
+}
+
+.switch-field {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 44px
+}
+
+.switch-field input {
+    width: 20px;
+    height: 20px
+}
+
+.code-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 8px
+}
+
+.code-row input {
+    text-transform: uppercase;
+    font-weight: 900;
+    letter-spacing: .04em
+}
+
+.actions-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px
+}
+
+.primary-btn,
+.outline-btn,
+.icon-btn {
+    min-height: 42px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-weight: 800
+}
+
+.primary-btn {
+    border: 1px solid var(--pd);
+    background: var(--p);
+    color: #332400
+}
+
+.outline-btn,
+.icon-btn {
+    border: 1px solid var(--b);
+    background: #fff;
+    color: var(--t)
+}
+
+.icon-btn {
+    width: 42px;
+    padding: 0;
+    font-size: 20px
+}
+
+.message {
+    min-height: 18px;
+    margin: 10px 0 0;
+    color: var(--danger);
+    font-size: 13px;
+    font-weight: 700
+}
+
+.item-list {
+    display: grid;
+    gap: 10px;
+    margin-top: 14px
+}
+
+.item-card {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 12px;
+    padding: 14px;
+    border: 1px solid var(--b);
+    border-radius: 12px
+}
+
+.item-card h3 {
+    margin: 0;
+    font-size: 17px
+}
+
+.meta {
+    display: grid;
+    gap: 4px;
+    margin-top: 8px;
+    font-size: 13px
+}
+
+.card-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 7px
+}
+
+.status-pill {
+    display: inline-flex;
+    width: fit-content;
+    margin-top: 7px;
+    padding: 4px 8px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 900
+}
+
+.status-pill.active {
+    background: #e7f5eb;
+    color: var(--success)
+}
+
+.status-pill.upcoming {
+    background: #e8f0fe;
+    color: #174ea6
+}
+
+.status-pill.expired,
+.status-pill.disabled {
+    background: #f1f3f4;
+    color: #5f6368
+}
+
+.code-badge {
+    display: inline-flex;
+    width: fit-content;
+    margin-top: 7px;
+    padding: 5px 8px;
+    border: 1px dashed var(--pd);
+    border-radius: 7px;
+    background: #fff6d7;
+    color: #805700;
+    font-family: monospace;
+    font-weight: 900
+}
+
+.budget-bar {
+    height: 10px;
+    margin-top: 9px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #eef0f2
+}
+
+.budget-bar span {
+    display: block;
+    height: 100%;
+    background: var(--p)
+}
+
+.empty-state {
+    padding: 26px;
+    text-align: center;
+    color: var(--m)
+}
+
+.manager-note {
+    margin-bottom: 14px;
+    padding: 12px 14px;
+    border: 1px solid #c8d8f8;
+    border-radius: 12px;
+    background: #eef4ff;
+    color: #174ea6;
+    font-weight: 700
+}
+
+@media(max-width:900px) {
+    .summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr))
+    }
+}
+
+@media(max-width:760px) {
+    .topbar {
+        grid-template-columns: auto minmax(0, 1fr);
+        padding: 10px 12px
+    }
+
+    .topbar-user {
+        grid-column: 1/-1;
+        justify-content: space-between
+    }
+
+    .page {
+        width: min(100% - 20px, 1100px);
+        margin-top: 10px
+    }
+
+    .summary-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px
+    }
+
+    .summary-card {
+        padding: 12px
+    }
+
+    .summary-card strong {
+        font-size: 18px
+    }
+
+    .panel {
+        padding: 14px
+    }
+
+    .form-grid {
+        grid-template-columns: 1fr
+    }
+
+    .field-wide {
+        grid-column: auto
+    }
+
+    .item-card {
+        grid-template-columns: 1fr
+    }
+
+    .card-actions {
+        flex-direction: row
+    }
+
+    .card-actions button {
+        flex: 1
+    }
+
+    .code-row {
+        grid-template-columns: 1fr
+    }
+}

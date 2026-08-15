@@ -1,0 +1,260 @@
+:root {
+    --p: #f5b400;
+    --pd: #d99b00;
+    --t: #202124;
+    --m: #6b7280;
+    --b: #dfe3e8;
+    --bg: #f5f6f8;
+    --danger: #b3261e
+}
+
+* {
+    box-sizing: border-box
+}
+
+body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--t);
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif
+}
+
+button,
+input {
+    font: inherit
+}
+
+.topbar {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--b);
+    background: #fff
+}
+
+.topbar h1 {
+    margin: 0;
+    font-size: 21px
+}
+
+.topbar p {
+    margin: 2px 0 0;
+    color: var(--m);
+    font-size: 12px
+}
+
+.topbar-user {
+    display: flex;
+    align-items: center;
+    gap: 10px
+}
+
+.page {
+    width: min(1100px, calc(100% - 28px));
+    margin: 18px auto 50px
+}
+
+.panel {
+    margin-bottom: 16px;
+    padding: 18px;
+    border: 1px solid var(--b);
+    border-radius: 16px;
+    background: #fff
+}
+
+.filter-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 10px;
+    align-items: end
+}
+
+.filter-grid label {
+    display: grid;
+    gap: 6px
+}
+
+.filter-grid span {
+    font-size: 13px;
+    font-weight: 800
+}
+
+.filter-grid input {
+    min-height: 44px;
+    padding: 8px 10px;
+    border: 1px solid var(--b);
+    border-radius: 10px
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 16px
+}
+
+.summary-grid article,
+.breakdown-grid article {
+    display: grid;
+    gap: 5px;
+    padding: 16px;
+    border: 1px solid var(--b);
+    border-radius: 14px;
+    background: #fff
+}
+
+.summary-grid span,
+.breakdown-grid span,
+.summary-grid small,
+.breakdown-grid small,
+.panel-head p,
+.meta {
+    color: var(--m)
+}
+
+.summary-grid strong,
+.breakdown-grid strong {
+    font-size: 22px
+}
+
+.breakdown-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 10px
+}
+
+.panel-head h2 {
+    margin: 0;
+    font-size: 20px
+}
+
+.panel-head p {
+    margin: 4px 0 0;
+    font-size: 13px
+}
+
+.campaign-list {
+    display: grid;
+    gap: 10px;
+    margin-top: 14px
+}
+
+.campaign-card {
+    padding: 14px;
+    border: 1px solid var(--b);
+    border-radius: 12px
+}
+
+.campaign-card h3 {
+    margin: 0
+}
+
+.meta {
+    display: grid;
+    gap: 4px;
+    margin-top: 7px;
+    font-size: 13px
+}
+
+.budget-bar {
+    height: 10px;
+    margin-top: 9px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: #eef0f2
+}
+
+.budget-bar span {
+    display: block;
+    height: 100%;
+    background: var(--p)
+}
+
+.primary-btn,
+.outline-btn,
+.icon-btn {
+    min-height: 42px;
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-weight: 800
+}
+
+.primary-btn {
+    border: 1px solid var(--pd);
+    background: var(--p);
+    color: #332400
+}
+
+.outline-btn,
+.icon-btn {
+    border: 1px solid var(--b);
+    background: #fff;
+    color: var(--t)
+}
+
+.icon-btn {
+    width: 42px;
+    padding: 0
+}
+
+.empty-state {
+    padding: 25px;
+    text-align: center;
+    color: var(--m)
+}
+
+.message {
+    min-height: 18px;
+    color: var(--danger);
+    font-weight: 700
+}
+
+@media(max-width:900px) {
+
+    .summary-grid,
+    .breakdown-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr))
+    }
+}
+
+@media(max-width:760px) {
+    .topbar {
+        grid-template-columns: auto minmax(0, 1fr);
+        padding: 10px 12px
+    }
+
+    .topbar-user {
+        grid-column: 1/-1;
+        justify-content: space-between
+    }
+
+    .page {
+        width: min(100% - 20px, 1100px);
+        margin-top: 10px
+    }
+
+    .filter-grid {
+        grid-template-columns: 1fr
+    }
+
+    .summary-grid,
+    .breakdown-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 8px
+    }
+
+    .summary-grid article,
+    .breakdown-grid article {
+        padding: 12px
+    }
+
+    .summary-grid strong,
+    .breakdown-grid strong {
+        font-size: 18px
+    }
+}
