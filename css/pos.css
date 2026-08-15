@@ -3505,3 +3505,82 @@ and
   .modifier-manager-option .modifier-manager-actions{flex-direction:column;align-items:stretch}
   body:has(#modifierManagerModal:not(.hidden)) .mobile-cart-bar{display:none!important}
 }
+/* ========================================
+   MOBILE CART - PAYMENT BUTTON FIX
+   ให้ Admin / Manager เห็นปุ่มชำระเงินแน่นอน
+======================================== */
+
+@media (max-width: 760px) {
+
+    /* ขยายตะกร้าให้สูงขึ้น */
+    .cart {
+        height: 94dvh !important;
+        max-height: 94dvh !important;
+
+        display: flex !important;
+        flex-direction: column !important;
+
+        overflow: hidden !important;
+    }
+
+
+    /* รายการสินค้าเลื่อนแยก */
+    .cart-items {
+        flex: 1 1 auto !important;
+
+        min-height: 180px !important;
+        max-height: none !important;
+
+        overflow-y: auto !important;
+
+        -webkit-overflow-scrolling: touch;
+    }
+
+
+    /* ส่วนยอดรวม + ปุ่ม */
+    .summary {
+        flex: 0 0 auto !important;
+
+        max-height: 46dvh !important;
+
+        overflow-y: auto !important;
+
+        padding-bottom:
+            calc(
+                18px
+                +
+                env(safe-area-inset-bottom)
+            ) !important;
+
+        background: #fff !important;
+    }
+
+
+    /* ปุ่มชำระเงิน */
+    #checkoutBtn {
+        display: block !important;
+        visibility: visible !important;
+
+        width: 100% !important;
+        min-height: 56px !important;
+
+        margin-top: 10px !important;
+
+        font-size: 18px !important;
+        font-weight: 900 !important;
+    }
+
+
+    /* ถ้า Admin / Manager ใช้ได้
+       ปุ่มจะเห็นชัด */
+    #checkoutBtn:not(:disabled) {
+        opacity: 1 !important;
+        pointer-events: auto !important;
+    }
+
+
+    /* Staff ยัง disabled ตาม JS เดิม */
+    #checkoutBtn:disabled {
+        opacity: .55 !important;
+    }
+}
