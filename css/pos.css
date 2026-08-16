@@ -3528,4 +3528,4 @@ textarea {
         width: 100%;
         min-height: 46px;
     }
-}
+}\n\n/* ========================================\n   VAT READY\n======================================== */\n.vat-breakdown{margin:-6px 0 16px;padding:12px 14px;border:1px dashed var(--border);border-radius:11px;background:#fafafa}.vat-breakdown>div{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 0}.vat-breakdown small{display:block;margin-top:7px;color:var(--muted);font-size:11px;text-align:right}.receipt-vat-breakdown{margin:2px 0}.receipt-vat-note{margin:3px 0 5px;font-size:9px}\n
