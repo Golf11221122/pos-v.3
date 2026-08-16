@@ -442,6 +442,13 @@
 
             </div>
 
+            <!-- VAT READY: แสดงเฉพาะเมื่อสาขาเปิด VAT -->
+            <div id="paymentVatBreakdown" class="vat-breakdown hidden">
+                <div><span>มูลค่าก่อน VAT</span><strong id="paymentBeforeVat">฿0.00</strong></div>
+                <div><span id="paymentVatLabel">VAT 7%</span><strong id="paymentVatAmount">฿0.00</strong></div>
+                <small>ราคาสินค้ารวม VAT แล้ว</small>
+            </div>
+
 
             <!-- ========================================
                  DISCOUNT / PROMOTION
@@ -867,6 +874,19 @@
 
         </div>
 
+
+
+        <div id="receiptVatBreakdown" class="receipt-vat-breakdown hidden">
+            <div class="receipt-row">
+                <span>มูลค่าก่อน VAT</span>
+                <strong id="receiptBeforeVat">฿0.00</strong>
+            </div>
+            <div class="receipt-row">
+                <span id="receiptVatLabel">VAT 7%</span>
+                <strong id="receiptVatAmount">฿0.00</strong>
+            </div>
+            <div class="receipt-center receipt-vat-note">ราคาสินค้ารวม VAT แล้ว</div>
+        </div>
 
 
         <div class="receipt-row receipt-total">
