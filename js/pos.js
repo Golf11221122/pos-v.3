@@ -10,6 +10,9 @@ const state = {
     profile: null,
     branch: null,
 
+    // VAT Ready: ค่าเริ่มต้นปิดจนกว่าสาขาจะจด VAT
+    taxSettings: { vat_enabled: false, vat_rate: 7, vat_included: true },
+
     categories: [],
     products: [],
 
@@ -203,6 +206,11 @@ const el = {
     paymentTotalText:
         $('paymentTotalText'),
 
+    paymentVatBreakdown: $('paymentVatBreakdown'),
+    paymentBeforeVat: $('paymentBeforeVat'),
+    paymentVatLabel: $('paymentVatLabel'),
+    paymentVatAmount: $('paymentVatAmount'),
+
     cashSection:
         $('cashSection'),
 
@@ -353,6 +361,11 @@ const el = {
     receiptTotal:
         $('receiptTotal'),
 
+    receiptVatBreakdown: $('receiptVatBreakdown'),
+    receiptBeforeVat: $('receiptBeforeVat'),
+    receiptVatLabel: $('receiptVatLabel'),
+    receiptVatAmount: $('receiptVatAmount'),
+
     receiptReceived:
         $('receiptReceived'),
 
@@ -443,6 +456,63 @@ const total = () =>
         0
     )
 
+
+const vatSnapshot = (amount = total()) => {
+    const settings = state.taxSettings || {}
+    const enabled = settings.vat_enabled === true
+    const rate = Number(settings.vat_rate || 0)
+    const included = settings.vat_included !== false
+    const gross = Math.max(Number(amount || 0), 0)
+    if (!enabled || rate <= 0) return { vat_enabled:false, vat_rate:rate || 7, vat_included:included, amount_before_vat:gross, vat_amount:0 }
+    if (included) {
+        const vat = Math.round((gross * rate / (100 + rate)) * 100) / 100
+        return { vat_enabled:true, vat_rate:rate, vat_included:true, amount_before_vat:Math.round((gross-vat)*100)/100, vat_amount:vat }
+    }
+    const vat = Math.round((gross * rate / 100) * 100) / 100
+    return { vat_enabled:true, vat_rate:rate, vat_included:false, amount_before_vat:gross, vat_amount:vat }
+}
+
+function renderVatUi() {
+    const v = vatSnapshot(total())
+    el.paymentVatBreakdown?.classList.toggle('hidden', !v.vat_enabled)
+    if (el.paymentBeforeVat) el.paymentBeforeVat.textContent = money(v.amount_before_vat)
+    if (el.paymentVatLabel) el.paymentVatLabel.textContent = `VAT ${v.vat_rate}%`
+    if (el.paymentVatAmount) el.paymentVatAmount.textContent = money(v.vat_amount)
+}
+
+async function loadTaxSettings() {
+    try {
+        const { data, error } = await supabase.rpc('get_branch_tax_settings', { p_branch_id: state.profile.branch_id })
+        if (error) throw error
+        const row = Array.isArray(data) ? data[0] : data
+        if (row) state.taxSettings = {
+            vat_enabled: row.vat_enabled === true,
+            vat_rate: Number(row.vat_rate || 7),
+            vat_included: row.vat_included !== false
+        }
+    } catch (error) {
+        console.warn('Load VAT settings error; VAT remains disabled:', error)
+        state.taxSettings = { vat_enabled:false, vat_rate:7, vat_included:true }
+    }
+    renderVatUi()
+}
+
+async function saveSaleTaxSnapshot(invoiceNo, snapshot) {
+    if (!invoiceNo) return
+    try {
+        const { error } = await supabase.rpc('save_sale_tax_snapshot', {
+            p_invoice_no: invoiceNo,
+            p_vat_enabled: snapshot.vat_enabled,
+            p_vat_rate: snapshot.vat_rate,
+            p_vat_included: snapshot.vat_included,
+            p_amount_before_vat: snapshot.amount_before_vat,
+            p_vat_amount: snapshot.vat_amount
+        })
+        if (error) throw error
+    } catch (error) {
+        console.error('Save sale VAT snapshot error:', error)
+    }
+}
 
 function msg(
     target,
@@ -5081,6 +5151,8 @@ function renderPaymentDiscountSummary() {
     }
 
 
+    renderVatUi()
+
     renderQuickCash()
 
     updateChange()
@@ -6989,6 +7061,12 @@ function renderReceipt() {
     }
 
 
+    const saleVat = sale.tax || vatSnapshot(sale.total)
+    el.receiptVatBreakdown?.classList.toggle('hidden', !saleVat.vat_enabled)
+    if (el.receiptBeforeVat) el.receiptBeforeVat.textContent = money(saleVat.amount_before_vat)
+    if (el.receiptVatLabel) el.receiptVatLabel.textContent = `VAT ${saleVat.vat_rate}%`
+    if (el.receiptVatAmount) el.receiptVatAmount.textContent = money(saleVat.vat_amount)
+
     if (
         el.receiptTotal
     ) {
@@ -7193,6 +7271,9 @@ async function confirmPayment() {
         total:
             total(),
 
+        tax:
+            vatSnapshot(total()),
+
         received_amount:
             received,
 
@@ -7335,6 +7416,11 @@ async function confirmPayment() {
 
         await finalizeDiscountAuthorization(
             data.invoice_no
+        )
+
+        await saveSaleTaxSnapshot(
+            data.invoice_no,
+            saleSnapshot.tax
         )
 
 
@@ -7730,6 +7816,8 @@ async function init() {
          * โหลดสาขา
          */
         await loadBranch()
+
+        await loadTaxSettings()
 
 
         /*
