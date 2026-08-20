@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+
+    <title>
+        Kitchen | JOKJUNG POS
+    </title>
+
+    <link rel="stylesheet" href="./css/kitchen.css">
+</head>
+
+<body>
+
+    <header class="topbar">
+
+        <div>
+            <h1>🍳 ครัว</h1>
+
+            <small id="branchText">
+                กำลังโหลด...
+            </small>
+        </div>
+
+        <div class="top-actions">
+
+            <label class="station-picker">
+                <span>ครัว</span>
+                <select id="stationSelect">
+                    <option value="">ทุกครัว</option>
+                </select>
+            </label>
+
+            <button id="enableSoundBtn" class="sound-btn" type="button">
+                🔔 เปิดเสียงแจ้งเตือน
+            </button>
+
+            <button id="refreshBtn" class="outline-btn" type="button">
+                ↻ รีเฟรช
+            </button>
+
+            <button id="backBtn" class="outline-btn" type="button">
+                ← Dashboard
+            </button>
+
+        </div>
+
+    </header>
+
+
+    <main class="page">
+
+        <section class="summary">
+
+            <div class="summary-stat">
+                <span>รอรับ</span>
+                <strong id="pendingCount">0</strong>
+            </div>
+
+            <div class="summary-stat">
+                <span>กำลังทำ</span>
+                <strong id="preparingCount">0</strong>
+            </div>
+
+            <div class="summary-stat">
+                <span>พร้อมเสิร์ฟ</span>
+                <strong id="readyCount">0</strong>
+            </div>
+
+            <p id="statusText">
+                รอออเดอร์ใหม่...
+            </p>
+
+        </section>
+
+
+        <section class="station-context">
+            <span>กำลังดู:</span>
+            <strong id="selectedStationText">ทุกครัว</strong>
+        </section>
+
+
+        <section class="kitchen-board">
+
+            <section class="kitchen-column">
+                <div class="column-head pending-head">
+                    <div>
+                        <h2>🆕 รอรับออเดอร์</h2>
+                        <small>ออเดอร์ใหม่จากลูกค้า</small>
+                    </div>
+                    <strong id="pendingBadge">0</strong>
+                </div>
+
+                <div id="pendingGrid" class="ticket-grid"></div>
+                <div id="pendingEmpty" class="column-empty">
+                    ไม่มีออเดอร์ใหม่
+                </div>
+            </section>
+
+
+            <section class="kitchen-column">
+                <div class="column-head preparing-head">
+                    <div>
+                        <h2>🍳 กำลังทำ</h2>
+                        <small>รายการที่ครัวรับแล้ว</small>
+                    </div>
+                    <strong id="preparingBadge">0</strong>
+                </div>
+
+                <div id="preparingGrid" class="ticket-grid"></div>
+                <div id="preparingEmpty" class="column-empty">
+                    ยังไม่มีรายการกำลังทำ
+                </div>
+            </section>
+
+
+            <section class="kitchen-column">
+                <div class="column-head ready-head">
+                    <div>
+                        <h2>✅ พร้อมเสิร์ฟ</h2>
+                        <small>รอพนักงานนำไปเสิร์ฟ</small>
+                    </div>
+                    <strong id="readyBadge">0</strong>
+                </div>
+
+                <div id="readyGrid" class="ticket-grid"></div>
+                <div id="readyEmpty" class="column-empty">
+                    ยังไม่มีรายการพร้อมเสิร์ฟ
+                </div>
+            </section>
+
+        </section>
+
+
+        <p id="pageMessage" class="message"></p>
+
+    </main>
+
+
+    <!-- พื้นที่พิมพ์ใบครัว -->
+    <section id="kitchenPrintArea" class="kitchen-print-area"></section>
+
+
+    <script type="module" src="./js/kitchen.js"></script>
+
+</body>
+
+</html>
