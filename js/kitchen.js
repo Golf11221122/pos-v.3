@@ -16,6 +16,14 @@ const state = {
 
 const $ = id => document.getElementById(id)
 
+// เวลามาตรฐานครัว (วินาที)
+// ปรับตัวเลขตรงนี้ได้ภายหลัง
+const KITCHEN_TIME_LIMITS = {
+    pending: 5 * 60,      // รอรับออเดอร์เกิน 5 นาที = แดง
+    preparing: 15 * 60,  // กำลังทำเกิน 15 นาที = แดง
+    ready: 5 * 60        // พร้อมเสิร์ฟเกิน 5 นาที = แดง
+}
+
 const el = {
     branchText: $('branchText'),
     stationSelect: $('stationSelect'),
@@ -323,7 +331,7 @@ function refreshLiveTimers() {
             ) {
 
                 limitSeconds =
-                    5 * 60
+                    KITCHEN_TIME_LIMITS.pending
             }
 
 
@@ -333,7 +341,7 @@ function refreshLiveTimers() {
             ) {
 
                 limitSeconds =
-                    15 * 60
+                    KITCHEN_TIME_LIMITS.preparing
             }
 
 
@@ -343,7 +351,7 @@ function refreshLiveTimers() {
             ) {
 
                 limitSeconds =
-                    5 * 60
+                    KITCHEN_TIME_LIMITS.ready
             }
 
 
@@ -1109,7 +1117,7 @@ function renderTicket(item) {
                     </div>
 
                     <div
-                        class="ticket-time"
+                        class="kitchen-live-timer"
                         data-kitchen-timer="${esc(item.item_id)}"
                     >
                         ${esc(
