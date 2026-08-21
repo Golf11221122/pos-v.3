@@ -1508,7 +1508,7 @@ function installKitchenTimerStyle() {
     style.textContent = `
         /* JOKJUNG_KITCHEN_TIMER_STYLE_V1 */
 
-        .kitchen-timer-box {
+        .kitchen-live-timer {
             display: inline-flex !important;
             align-items: center !important;
             justify-content: center !important;
@@ -1533,7 +1533,7 @@ function installKitchenTimerStyle() {
                 tabular-nums !important;
         }
 
-        .kitchen-timer-box.timer-overdue {
+        .kitchen-live-timer.timer-overdue {
             border-color: #d93025 !important;
             background: #ffffff !important;
             color: #d93025 !important;
@@ -1547,12 +1547,12 @@ function installKitchenTimerStyle() {
         }
 
         @media (max-width: 760px) {
-            .kitchen-timer-box {
+            .kitchen-live-timer {
                 min-width: 150px !important;
                 font-size: 20px !important;
             }
 
-            .kitchen-timer-box.timer-overdue {
+            .kitchen-live-timer.timer-overdue {
                 font-size: 23px !important;
             }
         }
