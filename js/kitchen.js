@@ -1487,7 +1487,85 @@ function subscribeRealtime() {
    INIT
 ======================================== */
 
+
+function installKitchenTimerStyle() {
+    if (
+        document.getElementById(
+            'jokjungKitchenTimerStyle'
+        )
+    ) {
+        return
+    }
+
+    const style =
+        document.createElement(
+            'style'
+        )
+
+    style.id =
+        'jokjungKitchenTimerStyle'
+
+    style.textContent = `
+        /* JOKJUNG_KITCHEN_TIMER_STYLE_V1 */
+
+        .kitchen-timer-box {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+
+            width: fit-content !important;
+            min-width: 165px !important;
+
+            margin-top: 10px !important;
+            padding: 8px 12px !important;
+
+            border: 2px solid #d7d9dd !important;
+            border-radius: 12px !important;
+
+            background: #ffffff !important;
+            color: #30343b !important;
+
+            font-size: 22px !important;
+            font-weight: 900 !important;
+            line-height: 1.15 !important;
+
+            font-variant-numeric:
+                tabular-nums !important;
+        }
+
+        .kitchen-timer-box.timer-overdue {
+            border-color: #d93025 !important;
+            background: #ffffff !important;
+            color: #d93025 !important;
+
+            font-size: 25px !important;
+            font-weight: 900 !important;
+
+            box-shadow:
+                0 0 0 2px
+                rgba(217, 48, 37, .08) !important;
+        }
+
+        @media (max-width: 760px) {
+            .kitchen-timer-box {
+                min-width: 150px !important;
+                font-size: 20px !important;
+            }
+
+            .kitchen-timer-box.timer-overdue {
+                font-size: 23px !important;
+            }
+        }
+    `
+
+    document.head.appendChild(
+        style
+    )
+}
+
 async function init() {
+    installKitchenTimerStyle()
+
     try {
         ensureKitchenModifierStyle()
 
