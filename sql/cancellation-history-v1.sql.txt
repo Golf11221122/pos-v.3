@@ -1,0 +1,146 @@
+-- JOKJUNG POS - Cancellation History V1
+-- Run this first in Supabase SQL Editor.
+
+create or replace function public.get_cancellation_history(
+    p_date_from date default current_date,
+    p_date_to date default current_date,
+    p_cancelled_by uuid default null,
+    p_reason text default null
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+    v_user_id uuid := auth.uid();
+    v_branch_id uuid;
+    v_role text;
+    v_result jsonb;
+begin
+    if v_user_id is null then
+        raise exception 'NOT_AUTHENTICATED';
+    end if;
+
+    select p.branch_id, lower(coalesce(p.role,''))
+    into v_branch_id, v_role
+    from public.profiles p
+    where p.id = v_user_id;
+
+    if v_branch_id is null then
+        raise exception 'BRANCH_REQUIRED';
+    end if;
+
+    if v_role not in ('admin','manager') then
+        raise exception 'PERMISSION_DENIED';
+    end if;
+
+    with filtered as (
+        select
+            roi.id,
+            roi.order_id,
+            roi.product_name,
+            roi.quantity,
+            coalesce(roi.unit_price, 0)::numeric as unit_price,
+            (coalesce(roi.unit_price,0) * coalesce(roi.quantity,0))::numeric as cancelled_amount,
+            roi.cancel_reason,
+            roi.cancelled_at,
+            roi.cancelled_by,
+            p.full_name as cancelled_by_name,
+            p.role as cancelled_by_role,
+            ro.order_type,
+            ro.queue_no,
+            rt.table_no,
+            rt.table_name
+        from public.restaurant_order_items roi
+        join public.restaurant_orders ro on ro.id = roi.order_id
+        left join public.restaurant_tables rt on rt.id = ro.table_id
+        left join public.profiles p on p.id = roi.cancelled_by
+        where ro.branch_id = v_branch_id
+          and roi.item_status = 'cancelled'
+          and roi.cancelled_at is not null
+          and roi.cancelled_at >= p_date_from::timestamptz
+          and roi.cancelled_at < (p_date_to + 1)::timestamptz
+          and (p_cancelled_by is null or roi.cancelled_by = p_cancelled_by)
+          and (p_reason is null or p_reason = '' or roi.cancel_reason = p_reason)
+    )
+    select jsonb_build_object(
+        'summary', jsonb_build_object(
+            'cancelled_items', coalesce(sum(quantity),0),
+            'cancelled_lines', count(*),
+            'cancelled_amount', coalesce(sum(cancelled_amount),0)
+        ),
+        'items', coalesce(
+            jsonb_agg(
+                jsonb_build_object(
+                    'id', id,
+                    'order_id', order_id,
+                    'product_name', product_name,
+                    'quantity', quantity,
+                    'unit_price', unit_price,
+                    'cancelled_amount', cancelled_amount,
+                    'cancel_reason', cancel_reason,
+                    'cancelled_at', cancelled_at,
+                    'cancelled_by', cancelled_by,
+                    'cancelled_by_name', cancelled_by_name,
+                    'cancelled_by_role', cancelled_by_role,
+                    'order_type', order_type,
+                    'queue_no', queue_no,
+                    'table_no', table_no,
+                    'table_name', table_name
+                )
+                order by cancelled_at desc
+            ),
+            '[]'::jsonb
+        )
+    )
+    into v_result
+    from filtered;
+
+    return coalesce(v_result, jsonb_build_object(
+        'summary', jsonb_build_object('cancelled_items',0,'cancelled_lines',0,'cancelled_amount',0),
+        'items','[]'::jsonb
+    ));
+end;
+$$;
+
+revoke all on function public.get_cancellation_history(date,date,uuid,text) from public;
+grant execute on function public.get_cancellation_history(date,date,uuid,text) to authenticated;
+
+-- รายชื่อผู้ยกเลิกสำหรับตัวกรอง (เฉพาะสาขาตัวเอง)
+create or replace function public.get_cancellation_staff()
+returns jsonb
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+    v_user_id uuid := auth.uid();
+    v_branch_id uuid;
+    v_role text;
+    v_result jsonb;
+begin
+    if v_user_id is null then raise exception 'NOT_AUTHENTICATED'; end if;
+
+    select branch_id, lower(coalesce(role,''))
+    into v_branch_id, v_role
+    from public.profiles
+    where id = v_user_id;
+
+    if v_branch_id is null then raise exception 'BRANCH_REQUIRED'; end if;
+    if v_role not in ('admin','manager') then raise exception 'PERMISSION_DENIED'; end if;
+
+    select coalesce(
+        jsonb_agg(jsonb_build_object('id',id,'full_name',full_name,'role',role) order by full_name),
+        '[]'::jsonb
+    )
+    into v_result
+    from public.profiles
+    where branch_id = v_branch_id;
+
+    return v_result;
+end;
+$$;
+
+revoke all on function public.get_cancellation_staff() from public;
+grant execute on function public.get_cancellation_staff() to authenticated;
