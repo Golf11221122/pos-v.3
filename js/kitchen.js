@@ -1,7 +1,5 @@
 import { supabase } from './supabase.js'
 
-/* PRINT QUEUE V2 READY - DB queue, no automatic browser print */
-
 const state = {
     session: null,
     profile: null,
@@ -1410,20 +1408,14 @@ async function loadKitchenItems({
     if (notifyNew && newPending.length > 0) {
         playAlertSound()
 
-        /*
-         * PRINT QUEUE V2
-         * -----------------------------
-         * ไม่สั่ง window.print() อัตโนมัติจากหน้าครัวแล้ว
-         *
-         * restaurant_order_items INSERT
-         * จะถูก Trigger ใน Supabase สร้าง kitchen_print_jobs ให้อัตโนมัติ
-         *
-         * - มี Printer Mapping แล้ว  -> status = pending
-         * - ยังไม่มี Printer          -> status = waiting_printer
-         *
-         * ปุ่ม "พิมพ์" บนการ์ดยังใช้ Browser Print แบบ manual
-         * สำหรับดูตัวอย่าง/ทดสอบใบครัวได้ตามเดิม
-         */
+        const toPrint =
+            newPending.filter(
+                item => !item.kitchen_printed_at
+            )
+
+        // รวมรายการใหม่ช่วงเดียวกันก่อนพิมพ์
+        // แล้วแยกใบตาม โต๊ะ/คิว + ครัว เพื่อไม่พิมพ์ทีละเมนู
+        queueAutoKitchenPrint(toPrint)
     }
 }
 
@@ -1796,14 +1788,16 @@ function queueAutoKitchenPrint(items) {
 
 async function callStatusRpc(
     rpcName,
-    itemId
+    itemId,
+    extraParams = {}
 ) {
     const {
         error
     } = await supabase.rpc(
         rpcName,
         {
-            p_item_id: itemId
+            p_item_id: itemId,
+            ...extraParams
         }
     )
 
@@ -1836,16 +1830,97 @@ async function markServed(itemId) {
 }
 
 async function cancelItem(itemId) {
+
+    const reasonChoices = [
+        'ลูกค้าเปลี่ยนใจ',
+        'พนักงานกดผิด',
+        'สินค้าหมด',
+        'ครัวทำผิด',
+        'อื่นๆ'
+    ]
+
+    const choiceText =
+        reasonChoices
+            .map(
+                (reason, index) =>
+                    `${index + 1}. ${reason}`
+            )
+            .join('\n')
+
+    const selected =
+        prompt(
+            `เหตุผลที่ยกเลิกรายการ\n\n${choiceText}\n\nพิมพ์เลข 1-5`,
+            '1'
+        )
+
+    if (selected === null) {
+        return
+    }
+
+    const choice =
+        Number(
+            String(selected).trim()
+        )
+
+    if (
+        !Number.isInteger(choice)
+        ||
+        choice < 1
+        ||
+        choice > reasonChoices.length
+    ) {
+        alert(
+            'กรุณาเลือกเหตุผลเป็นเลข 1-5'
+        )
+        return
+    }
+
+    let cancelReason =
+        reasonChoices[
+            choice - 1
+        ]
+
+    if (
+        cancelReason ===
+        'อื่นๆ'
+    ) {
+
+        const customReason =
+            prompt(
+                'ระบุเหตุผลที่ยกเลิก'
+            )
+
+        if (customReason === null) {
+            return
+        }
+
+        cancelReason =
+            String(
+                customReason
+            ).trim()
+
+        if (!cancelReason) {
+            alert(
+                'กรุณาระบุเหตุผลที่ยกเลิก'
+            )
+            return
+        }
+    }
+
     const confirmed =
         confirm(
-            'ยกเลิกรายการอาหารนี้หรือไม่?'
+            `ยืนยันยกเลิกรายการนี้หรือไม่?\n\nเหตุผล: ${cancelReason}`
         )
 
     if (!confirmed) return
 
     await callStatusRpc(
         'kitchen_cancel_item',
-        itemId
+        itemId,
+        {
+            p_cancel_reason:
+                cancelReason
+        }
     )
 }
 
