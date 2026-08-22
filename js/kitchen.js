@@ -866,6 +866,15 @@ async function enrichKitchenContext(
 function kitchenGroupKey(item) {
     if (!item) return ''
 
+    // ใช้ order_id เป็นตัวหลักเสมอ
+    // ทำให้โต๊ะเดิมแต่คนละบิลไม่ถูกนำมารวมกัน
+    // และรายการสั่งเพิ่มในบิลเดิมยังผูกกับออเดอร์เดิมได้แม่นยำ
+    const orderId = String(item.order_id || '').trim()
+    if (orderId) {
+        return `order:${orderId}`
+    }
+
+    // fallback สำหรับข้อมูลเก่าที่ไม่มี order_id
     if (item.order_type === 'takeaway') {
         const queue = String(item.queue_no ?? '').trim()
         return queue
@@ -929,6 +938,13 @@ function groupKitchenItems(list) {
 }
 
 function isLikelyAddOn(item, groupItems) {
+    // ตัวหลัก: flag ที่คำนวณจาก history ของ order เดิม
+    // รองรับแม้รายการก่อนหน้าจะ served และหายจากบอร์ดแล้ว
+    if (item?.is_add_on === true) {
+        return true
+    }
+
+    // fallback สำหรับ realtime ระหว่างรอโหลด history
     if (state.addOnItemIds.has(item.item_id)) {
         return true
     }
@@ -949,8 +965,7 @@ function isLikelyAddOn(item, groupItems) {
 
     const firstTime = Math.min(...times)
 
-    // ถ้าเข้าหลังชุดแรกเกิน 90 วินาที ให้ถือว่าเป็นรายการสั่งเพิ่ม
-    return itemTime - firstTime > 90 * 1000
+    return itemTime - firstTime > 15 * 1000
 }
 
 function renderItemActions(item) {
@@ -1272,6 +1287,127 @@ function ensureKitchenGroupStyle() {
     document.head.appendChild(style)
 }
 
+async function enrichOrderAddOnFlags(list) {
+    if (!Array.isArray(list) || !list.length) {
+        return list || []
+    }
+
+    const orderIds = [
+        ...new Set(
+            list
+                .map(item => item.order_id)
+                .filter(Boolean)
+        )
+    ]
+
+    if (!orderIds.length) {
+        return list
+    }
+
+    try {
+        // อ่าน history ของ order เดิม รวมรายการที่ served แล้วด้วย
+        // RLS ของ restaurant_order_items จำกัดให้อ่านได้เฉพาะสาขาของผู้ใช้
+        const { data, error } = await supabase
+            .from('restaurant_order_items')
+            .select(`
+                id,
+                order_id,
+                item_status,
+                created_at,
+                kitchen_printed_at,
+                kitchen_started_at,
+                kitchen_ready_at,
+                kitchen_served_at
+            `)
+            .in('order_id', orderIds)
+            .order('created_at', { ascending: true })
+
+        if (error) throw error
+
+        const historyByOrder = new Map()
+
+        for (const row of data || []) {
+            if (!row?.order_id) continue
+
+            if (!historyByOrder.has(row.order_id)) {
+                historyByOrder.set(row.order_id, [])
+            }
+
+            historyByOrder.get(row.order_id).push(row)
+        }
+
+        return list.map(item => {
+            const history = historyByOrder.get(item.order_id) || []
+            const itemTime = new Date(item.created_at).getTime()
+
+            if (!Number.isFinite(itemTime) || history.length <= 1) {
+                return {
+                    ...item,
+                    is_add_on: false
+                }
+            }
+
+            const earlierRows = history.filter(row => {
+                if (row.id === item.item_id) return false
+
+                const rowTime = new Date(row.created_at).getTime()
+                return Number.isFinite(rowTime) && rowTime < itemTime
+            })
+
+            if (!earlierRows.length) {
+                return {
+                    ...item,
+                    is_add_on: false
+                }
+            }
+
+            // ถ้ารายการก่อนหน้าเคยเดินงานครัวแล้ว ไม่ว่าจะ preparing / ready / served
+            // รายการใหม่ของ order เดิมถือเป็น "สั่งเพิ่ม" แน่นอน
+            const hasProgressedEarlierItem = earlierRows.some(row =>
+                row.item_status === 'preparing'
+                || row.item_status === 'ready'
+                || row.item_status === 'served'
+                || Boolean(row.kitchen_started_at)
+                || Boolean(row.kitchen_ready_at)
+                || Boolean(row.kitchen_served_at)
+            )
+
+            // รองรับกรณีลูกค้าสั่งเพิ่มตอนของเดิมยัง pending:
+            // ชุดแรกจาก POS จะถูก insert ต่อเนื่องกันเร็วมาก
+            // ถ้ามีช่วงห่างจากรายการก่อนหน้ามากกว่า 15 วินาที ให้ถือเป็นรอบสั่งใหม่
+            const earlierTimes = earlierRows
+                .map(row => new Date(row.created_at).getTime())
+                .filter(Number.isFinite)
+
+            const latestEarlierTime = earlierTimes.length
+                ? Math.max(...earlierTimes)
+                : itemTime
+
+            const separatedRound =
+                itemTime - latestEarlierTime > 15 * 1000
+
+            const isAddOn =
+                hasProgressedEarlierItem
+                || separatedRound
+
+            return {
+                ...item,
+                is_add_on: isAddOn
+            }
+        })
+
+    } catch (error) {
+        // ถ้า history โหลดไม่ได้ หน้าครัวยังต้องทำงานต่อได้
+        console.warn(
+            'Load kitchen order history for add-on flag error:',
+            error
+        )
+
+        return list
+    }
+}
+
+
 async function loadKitchenItems({
     notifyNew = false
 } = {}) {
@@ -1293,9 +1429,16 @@ async function loadKitchenItems({
             : []
 
 
-    const list =
+    const contextList =
         await enrichKitchenContext(
             rawList
+        )
+
+    // เติม flag สั่งเพิ่มจากประวัติของ order เดิม
+    // จึงยังรู้ว่าเป็นสั่งเพิ่ม แม้รายการเก่าจะ served และหายจาก active board แล้ว
+    const list =
+        await enrichOrderAddOnFlags(
+            contextList
         )
 
 
@@ -1305,13 +1448,23 @@ async function loadKitchenItems({
             && !state.knownItemIds.has(item.item_id)
         )
 
-    // ถ้าโต๊ะ/คิวนี้มีรายการค้างอยู่แล้ว รายการใหม่ถือเป็น "สั่งเพิ่ม"
+    // เก็บ add-on flag ของรายการ active ไว้สำหรับ render/realtime fallback
     const existingGroupKeys = new Set(
         state.items.map(kitchenGroupKey)
     )
 
     for (const item of newPending) {
-        if (existingGroupKeys.has(kitchenGroupKey(item))) {
+        if (
+            item.is_add_on === true
+            || existingGroupKeys.has(kitchenGroupKey(item))
+        ) {
+            state.addOnItemIds.add(item.item_id)
+        }
+    }
+
+    // รายการที่โหลดมาพร้อม flag จาก history ให้ลง set ด้วย
+    for (const item of list) {
+        if (item.is_add_on === true) {
             state.addOnItemIds.add(item.item_id)
         }
     }
