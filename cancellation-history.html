@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ประวัติการยกเลิก | JOKJUNG POS</title>
+  <link rel="stylesheet" href="./css/cancellation-history.css">
+</head>
+<body>
+  <main class="page">
+    <header class="topbar">
+      <div>
+        <h1>ประวัติการยกเลิก</h1>
+        <p id="branchText">กำลังโหลด...</p>
+      </div>
+      <button id="backBtn" class="secondary">ย้อนกลับ</button>
+    </header>
+
+    <section class="filters card">
+      <label>จากวันที่ <input id="dateFrom" type="date"></label>
+      <label>ถึงวันที่ <input id="dateTo" type="date"></label>
+      <label>ผู้ยกเลิก
+        <select id="staffFilter"><option value="">ทั้งหมด</option></select>
+      </label>
+      <label>เหตุผล
+        <select id="reasonFilter">
+          <option value="">ทั้งหมด</option>
+          <option>ลูกค้าเปลี่ยนใจ</option>
+          <option>พนักงานกดผิด</option>
+          <option>สินค้าหมด</option>
+          <option>ครัวทำผิด</option>
+          <option>อื่นๆ</option>
+        </select>
+      </label>
+      <button id="searchBtn">ค้นหา</button>
+    </section>
+
+    <section class="summary">
+      <article class="card stat"><span>รายการที่ยกเลิก</span><strong id="itemCount">0</strong></article>
+      <article class="card stat"><span>จำนวนบรรทัด</span><strong id="lineCount">0</strong></article>
+      <article class="card stat"><span>มูลค่าที่ยกเลิก</span><strong id="amountTotal">฿0.00</strong></article>
+    </section>
+
+    <p id="pageMessage" class="message"></p>
+
+    <section class="card table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>เวลา</th><th>โต๊ะ/คิว</th><th>เมนู</th><th>จำนวน</th>
+            <th>ราคา</th><th>มูลค่า</th><th>เหตุผล</th><th>ผู้ยกเลิก</th>
+          </tr>
+        </thead>
+        <tbody id="historyBody"></tbody>
+      </table>
+      <div id="emptyState" class="empty">ไม่พบรายการยกเลิก</div>
+    </section>
+  </main>
+  <script type="module" src="./js/cancellation-history.js"></script>
+</body>
+</html>
