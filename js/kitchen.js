@@ -857,9 +857,10 @@ async function enrichKitchenContext(
 
 
 /* ========================================
-   GROUP ORDER BY TABLE / QUEUE
-   1 โต๊ะ/คิว = 1 การ์ดบนหน้าครัว
-   การพิมพ์ยังแยกตาม item_id เหมือนเดิม
+   GROUP ORDER BY TABLE / QUEUE + STATUS
+   โต๊ะ/คิวเดียวกันรวมกันเฉพาะรายการที่มีสถานะเดียวกัน
+   จึงสามารถแสดงโต๊ะเดียวกันคนละคอลัมน์พร้อมกันได้
+   การพิมพ์ยังใช้ระบบรวมตามโต๊ะ/คิว + ครัว
 ======================================== */
 
 function kitchenGroupKey(item) {
@@ -887,11 +888,18 @@ function groupKitchenItems(list) {
     const map = new Map()
 
     for (const item of list) {
-        const key = kitchenGroupKey(item)
+        // สำคัญ: รวมตามโต๊ะ/คิว "และสถานะ"
+        // โต๊ะเดียวกันจึงสามารถมีรายการอยู่คนละคอลัมน์พร้อมกันได้
+        // เช่น บะหมี่กำลังทำ แต่ข้าวที่สั่งเพิ่มยังอยู่ออเดอร์ใหม่
+        const baseKey = kitchenGroupKey(item)
+        const status = item.item_status || 'pending'
+        const key = `${baseKey}|status:${status}`
 
         if (!map.has(key)) {
             map.set(key, {
                 key,
+                baseKey,
+                status,
                 items: []
             })
         }
@@ -909,16 +917,9 @@ function groupKitchenItems(list) {
 
         group.firstItem = group.items[0]
 
-        // สถานะของการ์ดโต๊ะ/คิว:
-        // ถ้ามีอย่างน้อย 1 รายการเริ่มทำแล้ว ให้การ์ดอยู่ช่องกำลังทำทันที
-        // รายการ pending ที่สั่งเพิ่มยังคงแสดงสถานะของตัวเองภายในการ์ด
-        if (group.items.some(item => item.item_status === 'preparing')) {
-            group.status = 'preparing'
-        } else if (group.items.some(item => item.item_status === 'pending')) {
-            group.status = 'pending'
-        } else {
-            group.status = 'ready'
-        }
+        // สถานะการ์ดมาจากรายการในกลุ่มนี้โดยตรง
+        // ไม่ดึงสถานะของเมนูอื่นในโต๊ะเดียวกันมาบังคับทั้งบิล
+        group.status = group.firstItem?.item_status || group.status || 'pending'
     }
 
     return groups.sort((a, b) =>
