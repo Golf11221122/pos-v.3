@@ -9,20 +9,13 @@ const state = {
     items: [],
     soundEnabled: false,
     knownItemIds: new Set(),
+    addOnItemIds: new Set(),
     realtimeChannel: null,
     timerInterval: null,
     realtimePollTimer: null
 }
 
 const $ = id => document.getElementById(id)
-
-// เวลามาตรฐานครัว (วินาที)
-// ปรับตัวเลขตรงนี้ได้ภายหลัง
-const KITCHEN_TIME_LIMITS = {
-    pending: 5 * 60,      // รอรับออเดอร์เกิน 5 นาที = แดง
-    preparing: 15 * 60,  // กำลังทำเกิน 15 นาที = แดง
-    ready: 5 * 60        // พร้อมเสิร์ฟเกิน 5 นาที = แดง
-}
 
 const el = {
     branchText: $('branchText'),
@@ -331,7 +324,7 @@ function refreshLiveTimers() {
             ) {
 
                 limitSeconds =
-                    KITCHEN_TIME_LIMITS.pending
+                    5 * 60
             }
 
 
@@ -341,7 +334,7 @@ function refreshLiveTimers() {
             ) {
 
                 limitSeconds =
-                    KITCHEN_TIME_LIMITS.preparing
+                    15 * 60
             }
 
 
@@ -351,7 +344,7 @@ function refreshLiveTimers() {
             ) {
 
                 limitSeconds =
-                    KITCHEN_TIME_LIMITS.ready
+                    5 * 60
             }
 
 
@@ -860,6 +853,419 @@ async function enrichKitchenContext(
 }
 
 
+
+/* ========================================
+   GROUP ORDER BY TABLE / QUEUE
+   1 โต๊ะ/คิว = 1 การ์ดบนหน้าครัว
+   การพิมพ์ยังแยกตาม item_id เหมือนเดิม
+======================================== */
+
+function kitchenGroupKey(item) {
+    if (!item) return ''
+
+    if (item.order_type === 'takeaway') {
+        const queue = String(item.queue_no ?? '').trim()
+        return queue
+            ? `takeaway:${queue}`
+            : `takeaway:item:${item.item_id}`
+    }
+
+    const table = String(
+        item.table_name
+        || item.table_no
+        || ''
+    ).trim()
+
+    return table
+        ? `dinein:${table}`
+        : `dinein:item:${item.item_id}`
+}
+
+function groupKitchenItems(list) {
+    const map = new Map()
+
+    for (const item of list) {
+        const key = kitchenGroupKey(item)
+
+        if (!map.has(key)) {
+            map.set(key, {
+                key,
+                items: []
+            })
+        }
+
+        map.get(key).items.push(item)
+    }
+
+    const groups = [...map.values()]
+
+    for (const group of groups) {
+        group.items.sort((a, b) =>
+            new Date(a.created_at).getTime()
+            - new Date(b.created_at).getTime()
+        )
+
+        group.firstItem = group.items[0]
+
+        if (group.items.some(item => item.item_status === 'pending')) {
+            group.status = 'pending'
+        } else if (group.items.some(item => item.item_status === 'preparing')) {
+            group.status = 'preparing'
+        } else {
+            group.status = 'ready'
+        }
+    }
+
+    return groups.sort((a, b) =>
+        new Date(a.firstItem?.created_at).getTime()
+        - new Date(b.firstItem?.created_at).getTime()
+    )
+}
+
+function isLikelyAddOn(item, groupItems) {
+    if (state.addOnItemIds.has(item.item_id)) {
+        return true
+    }
+
+    if (!Array.isArray(groupItems) || groupItems.length <= 1) {
+        return false
+    }
+
+    const times = groupItems
+        .map(row => new Date(row.created_at).getTime())
+        .filter(Number.isFinite)
+
+    const itemTime = new Date(item.created_at).getTime()
+
+    if (!Number.isFinite(itemTime) || !times.length) {
+        return false
+    }
+
+    const firstTime = Math.min(...times)
+
+    // ถ้าเข้าหลังชุดแรกเกิน 90 วินาที ให้ถือว่าเป็นรายการสั่งเพิ่ม
+    return itemTime - firstTime > 90 * 1000
+}
+
+function renderItemActions(item) {
+    if (item.item_status === 'pending') {
+        return `
+            <div class="ticket-actions three-actions">
+                <button
+                    type="button"
+                    class="print-btn"
+                    data-act="print"
+                    data-id="${esc(item.item_id)}"
+                >
+                    🖨️ พิมพ์
+                </button>
+
+                <button
+                    type="button"
+                    class="ack-btn"
+                    data-act="start"
+                    data-id="${esc(item.item_id)}"
+                >
+                    🍳 เริ่มทำ
+                </button>
+
+                <button
+                    type="button"
+                    class="cancel-btn"
+                    data-act="cancel"
+                    data-id="${esc(item.item_id)}"
+                >
+                    ยกเลิกรายการ
+                </button>
+            </div>
+        `
+    }
+
+    if (item.item_status === 'preparing') {
+        return `
+            <div class="ticket-actions three-actions">
+                <button
+                    type="button"
+                    class="print-btn"
+                    data-act="print"
+                    data-id="${esc(item.item_id)}"
+                >
+                    🖨️ พิมพ์ซ้ำ
+                </button>
+
+                <button
+                    type="button"
+                    class="ready-btn"
+                    data-act="ready"
+                    data-id="${esc(item.item_id)}"
+                >
+                    ${item.order_type === 'takeaway'
+                        ? '✅ พร้อมรับ'
+                        : '✅ พร้อมเสิร์ฟ'}
+                </button>
+
+                <button
+                    type="button"
+                    class="cancel-btn"
+                    data-act="cancel"
+                    data-id="${esc(item.item_id)}"
+                >
+                    ยกเลิกรายการ
+                </button>
+            </div>
+        `
+    }
+
+    if (item.item_status === 'ready') {
+        return `
+            <div class="ticket-actions single-action">
+                <button
+                    type="button"
+                    class="served-btn"
+                    data-act="served"
+                    data-id="${esc(item.item_id)}"
+                >
+                    ${item.order_type === 'takeaway'
+                        ? '🛍️ รับแล้ว'
+                        : '🍽️ เสิร์ฟแล้ว'}
+                </button>
+            </div>
+        `
+    }
+
+    return ''
+}
+
+function renderGroupedItem(item, groupItems) {
+    const modifiers =
+        Array.isArray(item.modifiers)
+            ? item.modifiers
+            : []
+
+    const modifierHtml = renderModifierBadges(modifiers)
+    const timer = timerInfo(item)
+    const addOn = isLikelyAddOn(item, groupItems)
+
+    return `
+        <section class="group-ticket-item status-${esc(item.item_status)}">
+            <div class="group-item-head">
+                <div class="group-item-title-row">
+                    <div class="product-name">
+                        ${esc(item.product_name)}
+                    </div>
+
+                    <div class="quantity">
+                        × ${Number(item.quantity || 0).toLocaleString('th-TH')}
+                    </div>
+                </div>
+
+                <div class="group-item-badges">
+                    ${addOn
+                        ? '<span class="addon-badge">🆕 สั่งเพิ่ม</span>'
+                        : ''}
+
+                    <span class="status-badge ${esc(item.item_status)}">
+                        ${esc(statusText(item.item_status, item))}
+                    </span>
+                </div>
+            </div>
+
+            <div class="group-item-meta">
+                <span>${formatTime(item.created_at)}</span>
+                <span
+                    class="ticket-time"
+                    data-kitchen-timer="${esc(item.item_id)}"
+                >
+                    ${esc(`${timer.label} ${elapsedText(timer.startedAt)}`)}
+                </span>
+            </div>
+
+            ${modifierHtml}
+
+            ${item.item_note
+                ? `
+                    <div class="note">
+                        ⚠️ ${esc(item.item_note)}
+                    </div>
+                `
+                : ''}
+
+            ${renderItemActions(item)}
+        </section>
+    `
+}
+
+function renderGroupTicket(group) {
+    const firstItem = group.firstItem || group.items[0]
+    const stationNames = [
+        ...new Set(
+            group.items
+                .map(item => item.kitchen_station_name)
+                .filter(Boolean)
+        )
+    ]
+
+    return `
+        <article class="ticket-card grouped-ticket status-${esc(group.status)}">
+            <div class="ticket-head grouped-ticket-head">
+                <div>
+                    <h2>${esc(orderName(firstItem))}</h2>
+
+                    <div class="ticket-time">
+                        เริ่ม ${formatTime(firstItem.created_at)}
+                    </div>
+
+                    ${stationNames.length
+                        ? `<div class="ticket-time">🍳 ${esc(stationNames.join(' • '))}</div>`
+                        : ''}
+                </div>
+
+                <div class="group-summary">
+                    <span class="group-count">
+                        ${group.items.length.toLocaleString('th-TH')} รายการ
+                    </span>
+
+                    <span class="status-badge ${esc(group.status)}">
+                        ${esc(statusText(group.status, firstItem))}
+                    </span>
+                </div>
+            </div>
+
+            <div class="ticket-body grouped-ticket-body">
+                ${group.items
+                    .map(item => renderGroupedItem(item, group.items))
+                    .join('')}
+            </div>
+        </article>
+    `
+}
+
+function ensureKitchenGroupStyle() {
+    if (document.getElementById('kitchenGroupStyle')) return
+
+    const style = document.createElement('style')
+    style.id = 'kitchenGroupStyle'
+    style.textContent = `
+        .grouped-ticket-head {
+            align-items: flex-start;
+        }
+
+        .group-summary {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 6px;
+        }
+
+        .group-count {
+            padding: 5px 9px;
+            border-radius: 999px;
+            background: #f1f3f4;
+            color: #5f6368;
+            font-size: 11px;
+            font-weight: 900;
+        }
+
+        .grouped-ticket-body {
+            padding: 0;
+        }
+
+        .group-ticket-item {
+            padding: 14px 13px;
+            border-bottom: 2px dashed #e1e4e8;
+        }
+
+        .group-ticket-item:last-child {
+            border-bottom: 0;
+        }
+
+        .group-ticket-item.status-pending {
+            background: #fffdf7;
+        }
+
+        .group-ticket-item.status-preparing {
+            background: #f8fbff;
+        }
+
+        .group-ticket-item.status-ready {
+            background: #f8fff9;
+        }
+
+        .group-item-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .group-item-title-row {
+            min-width: 0;
+            flex: 1 1 auto;
+        }
+
+        .group-item-title-row .quantity {
+            margin-top: 7px;
+        }
+
+        .group-item-badges {
+            display: flex;
+            flex: 0 0 auto;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 6px;
+        }
+
+        .addon-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 10px;
+            border: 2px solid #f5b400;
+            border-radius: 999px;
+            background: #fff4c7;
+            color: #7a5600;
+            font-size: 12px;
+            font-weight: 900;
+            white-space: nowrap;
+        }
+
+        .group-item-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 9px;
+            color: #70757a;
+            font-size: 11px;
+        }
+
+        .group-ticket-item .ticket-time {
+            display: inline-flex;
+            width: fit-content;
+        }
+
+        .group-ticket-item .ticket-actions {
+            padding: 12px 0 0;
+        }
+
+        @media (max-width: 720px) {
+            .group-item-head {
+                gap: 8px;
+            }
+
+            .group-item-badges {
+                gap: 5px;
+            }
+
+            .addon-badge {
+                font-size: 11px;
+                padding: 5px 8px;
+            }
+        }
+    `
+
+    document.head.appendChild(style)
+}
+
 async function loadKitchenItems({
     notifyNew = false
 } = {}) {
@@ -892,6 +1298,23 @@ async function loadKitchenItems({
             item.item_status === 'pending'
             && !state.knownItemIds.has(item.item_id)
         )
+
+    // ถ้าโต๊ะ/คิวนี้มีรายการค้างอยู่แล้ว รายการใหม่ถือเป็น "สั่งเพิ่ม"
+    const existingGroupKeys = new Set(
+        state.items.map(kitchenGroupKey)
+    )
+
+    for (const item of newPending) {
+        if (existingGroupKeys.has(kitchenGroupKey(item))) {
+            state.addOnItemIds.add(item.item_id)
+        }
+    }
+
+    // ล้าง id ที่ไม่อยู่บนบอร์ดแล้ว ป้องกัน set โตขึ้นเรื่อย ๆ
+    const activeIds = new Set(list.map(item => item.item_id))
+    state.addOnItemIds = new Set(
+        [...state.addOnItemIds].filter(id => activeIds.has(id))
+    )
 
     state.items = list
 
@@ -930,28 +1353,35 @@ function setCount(target, value) {
 }
 
 function renderBoard() {
-    const pending =
+    const pendingItems =
         state.items.filter(
             item => item.item_status === 'pending'
         )
 
-    const preparing =
+    const preparingItems =
         state.items.filter(
             item => item.item_status === 'preparing'
         )
 
-    const ready =
+    const readyItems =
         state.items.filter(
             item => item.item_status === 'ready'
         )
 
-    setCount(el.pendingCount, pending.length)
-    setCount(el.preparingCount, preparing.length)
-    setCount(el.readyCount, ready.length)
+    // ตัวเลขสรุปยังนับเป็น "จำนวนรายการอาหาร" ไม่ใช่จำนวนโต๊ะ
+    setCount(el.pendingCount, pendingItems.length)
+    setCount(el.preparingCount, preparingItems.length)
+    setCount(el.readyCount, readyItems.length)
 
-    setCount(el.pendingBadge, pending.length)
-    setCount(el.preparingBadge, preparing.length)
-    setCount(el.readyBadge, ready.length)
+    setCount(el.pendingBadge, pendingItems.length)
+    setCount(el.preparingBadge, preparingItems.length)
+    setCount(el.readyBadge, readyItems.length)
+
+    const groups = groupKitchenItems(state.items)
+
+    const pendingGroups = groups.filter(group => group.status === 'pending')
+    const preparingGroups = groups.filter(group => group.status === 'preparing')
+    const readyGroups = groups.filter(group => group.status === 'ready')
 
     const selectedStation = state.stations.find(
         station => station.id === state.selectedStation
@@ -960,208 +1390,45 @@ function renderBoard() {
 
     el.statusText.textContent =
         state.items.length
-            ? `${stationName} • ${state.items.length.toLocaleString('th-TH')} รายการ`
+            ? `${stationName} • ${groups.length.toLocaleString('th-TH')} โต๊ะ/คิว • ${state.items.length.toLocaleString('th-TH')} รายการ`
             : `${stationName} • รอออเดอร์ใหม่...`
 
     renderColumn(
         el.pendingGrid,
         el.pendingEmpty,
-        pending
+        pendingGroups
     )
 
     renderColumn(
         el.preparingGrid,
         el.preparingEmpty,
-        preparing
+        preparingGroups
     )
 
     renderColumn(
         el.readyGrid,
         el.readyEmpty,
-        ready
+        readyGroups
     )
-
 
     refreshLiveTimers()
 }
 
-function renderColumn(grid, empty, list) {
+function renderColumn(grid, empty, groups) {
     if (!grid || !empty) return
 
     empty.classList.toggle(
         'hidden',
-        list.length > 0
+        groups.length > 0
     )
 
     grid.classList.toggle(
         'hidden',
-        list.length === 0
+        groups.length === 0
     )
 
     grid.innerHTML =
-        list.map(renderTicket).join('')
-}
-
-function renderTicket(item) {
-    const modifiers =
-        Array.isArray(item.modifiers)
-            ? item.modifiers
-            : []
-
-    const modifierHtml =
-        renderModifierBadges(
-            modifiers
-        )
-
-    let actions = ''
-
-    if (item.item_status === 'pending') {
-        actions = `
-            <div class="ticket-actions three-actions">
-                <button
-                    type="button"
-                    class="print-btn"
-                    data-act="print"
-                    data-id="${esc(item.item_id)}"
-                >
-                    🖨️ พิมพ์
-                </button>
-
-                <button
-                    type="button"
-                    class="ack-btn"
-                    data-act="start"
-                    data-id="${esc(item.item_id)}"
-                >
-                    🍳 เริ่มทำ
-                </button>
-
-                <button
-                    type="button"
-                    class="cancel-btn"
-                    data-act="cancel"
-                    data-id="${esc(item.item_id)}"
-                >
-                    ยกเลิกรายการ
-                </button>
-            </div>
-        `
-    }
-
-    if (item.item_status === 'preparing') {
-        actions = `
-            <div class="ticket-actions three-actions">
-                <button
-                    type="button"
-                    class="print-btn"
-                    data-act="print"
-                    data-id="${esc(item.item_id)}"
-                >
-                    🖨️ พิมพ์ซ้ำ
-                </button>
-
-                <button
-                    type="button"
-                    class="ready-btn"
-                    data-act="ready"
-                    data-id="${esc(item.item_id)}"
-                >
-                    ${item.order_type === 'takeaway'
-                ? '✅ พร้อมรับ'
-                : '✅ พร้อมเสิร์ฟ'
-            }
-                </button>
-
-                <button
-                    type="button"
-                    class="cancel-btn"
-                    data-act="cancel"
-                    data-id="${esc(item.item_id)}"
-                >
-                    ยกเลิกรายการ
-                </button>
-            </div>
-        `
-    }
-
-    if (item.item_status === 'ready') {
-        actions = `
-            <div class="ticket-actions single-action">
-                <button
-                    type="button"
-                    class="served-btn"
-                    data-act="served"
-                    data-id="${esc(item.item_id)}"
-                >
-                    ${item.order_type === 'takeaway'
-                ? '🛍️ รับแล้ว'
-                : '🍽️ เสิร์ฟแล้ว'
-            }
-                </button>
-            </div>
-        `
-    }
-
-    const timer = timerInfo(item)
-
-    return `
-        <article
-            class="ticket-card status-${esc(item.item_status)}"
-        >
-            <div class="ticket-head">
-                <div>
-                    <h2>${esc(orderName(item))}</h2>
-
-                    <div class="ticket-time">
-                        ${formatTime(item.created_at)}
-                    </div>
-
-                    <div
-                        class="kitchen-live-timer"
-                        data-kitchen-timer="${esc(item.item_id)}"
-                    >
-                        ${esc(
-        `${timer.label} ${elapsedText(timer.startedAt)}`
-    )}
-                    </div>
-
-                    ${item.kitchen_station_name
-            ? `<div class="ticket-time">🍳 ${esc(item.kitchen_station_name)}</div>`
-            : ''
-        }
-                </div>
-
-                <span
-                    class="status-badge ${esc(item.item_status)}"
-                >
-                    ${esc(statusText(item.item_status, item))}
-                </span>
-            </div>
-
-            <div class="ticket-body">
-                <div class="product-name">
-                    ${esc(item.product_name)}
-                </div>
-
-                <div class="quantity">
-                    × ${Number(item.quantity || 0).toLocaleString('th-TH')}
-                </div>
-
-                ${modifierHtml}
-
-                ${item.item_note
-            ? `
-                            <div class="note">
-                                ⚠️ ${esc(item.item_note)}
-                            </div>
-                        `
-            : ''
-        }
-            </div>
-
-            ${actions}
-        </article>
-    `
+        groups.map(renderGroupTicket).join('')
 }
 
 
@@ -1487,87 +1754,10 @@ function subscribeRealtime() {
    INIT
 ======================================== */
 
-
-function installKitchenTimerStyle() {
-    if (
-        document.getElementById(
-            'jokjungKitchenTimerStyle'
-        )
-    ) {
-        return
-    }
-
-    const style =
-        document.createElement(
-            'style'
-        )
-
-    style.id =
-        'jokjungKitchenTimerStyle'
-
-    style.textContent = `
-        /* JOKJUNG_KITCHEN_TIMER_STYLE_V1 */
-
-        .kitchen-live-timer {
-            display: inline-flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-
-            width: fit-content !important;
-            min-width: 165px !important;
-
-            margin-top: 10px !important;
-            padding: 8px 12px !important;
-
-            border: 2px solid #d7d9dd !important;
-            border-radius: 12px !important;
-
-            background: #ffffff !important;
-            color: #30343b !important;
-
-            font-size: 22px !important;
-            font-weight: 900 !important;
-            line-height: 1.15 !important;
-
-            font-variant-numeric:
-                tabular-nums !important;
-        }
-
-        .kitchen-live-timer.timer-overdue {
-            border-color: #d93025 !important;
-            background: #ffffff !important;
-            color: #d93025 !important;
-
-            font-size: 25px !important;
-            font-weight: 900 !important;
-
-            box-shadow:
-                0 0 0 2px
-                rgba(217, 48, 37, .08) !important;
-        }
-
-        @media (max-width: 760px) {
-            .kitchen-live-timer {
-                min-width: 150px !important;
-                font-size: 20px !important;
-            }
-
-            .kitchen-live-timer.timer-overdue {
-                font-size: 23px !important;
-            }
-        }
-    `
-
-    document.head.appendChild(
-        style
-    )
-}
-
 async function init() {
-    installKitchenTimerStyle()
-
     try {
         ensureKitchenModifierStyle()
+        ensureKitchenGroupStyle()
 
         const session =
             await requireSession()
