@@ -877,3 +877,66 @@ button:disabled {
         font-weight: 700 !important;
     }
 }
+
+/* ========================================
+   LIVE TIMER / OVERDUE HIGHLIGHT
+   ใช้ร่วมกับ JS class: timer-overdue
+======================================== */
+
+.ticket-time[data-kitchen-timer] {
+    display: inline-flex;
+    align-items: center;
+    width: fit-content;
+    margin-top: 6px;
+    padding: 5px 8px;
+
+    border: 1px solid #dfe3e7;
+    border-radius: 8px;
+
+    background: #f8f9fa;
+    color: var(--muted);
+
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1.2;
+
+    transition:
+        background-color .18s ease,
+        border-color .18s ease,
+        color .18s ease,
+        box-shadow .18s ease,
+        transform .18s ease;
+}
+
+.ticket-time[data-kitchen-timer].timer-overdue {
+    border: 2px solid var(--danger);
+    background: var(--danger);
+    color: #fff;
+
+    font-size: 17px;
+    font-weight: 900;
+
+    box-shadow: 0 0 0 4px rgba(217, 48, 37, .12);
+    transform: scale(1.02);
+}
+
+.ticket-card.status-pending .ticket-time[data-kitchen-timer].timer-overdue,
+.ticket-card.status-preparing .ticket-time[data-kitchen-timer].timer-overdue,
+.ticket-card.status-ready .ticket-time[data-kitchen-timer].timer-overdue {
+    background: var(--danger);
+    border-color: var(--danger);
+    color: #fff;
+}
+
+@media (max-width: 720px) {
+    .ticket-time[data-kitchen-timer] {
+        font-size: 14px;
+        padding: 6px 9px;
+    }
+
+    .ticket-time[data-kitchen-timer].timer-overdue {
+        font-size: 18px;
+        padding: 7px 10px;
+    }
+}
+
