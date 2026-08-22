@@ -463,6 +463,50 @@ function applySidebarPermissions(
     role
 ) {
 
+    /*
+     * ระบบจัดการทั้งก้อน
+     * Staff ไม่เห็นเลย
+     * Admin / Manager เห็นตามสิทธิ์เมนูย่อยเดิม
+     */
+    const managementToggle =
+        document.querySelector(
+            '#managementToggle'
+        )
+
+    const managementMenu =
+        document.querySelector(
+            '#managementMenu'
+        )
+
+    if (
+        role ===
+        'staff'
+    ) {
+
+        if (managementToggle) {
+            managementToggle.style.display =
+                'none'
+        }
+
+        if (managementMenu) {
+            managementMenu.style.display =
+                'none'
+        }
+
+    } else {
+
+        if (managementToggle) {
+            managementToggle.style.display =
+                ''
+        }
+
+        if (managementMenu) {
+            managementMenu.style.display =
+                ''
+        }
+    }
+
+
     setMenuVisibility(
         'a[href="./dashboard.html"]',
         role,
