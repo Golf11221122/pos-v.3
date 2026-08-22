@@ -10,7 +10,7 @@ function statusText(status){return({available:'ว่าง',occupied:'มีล
 function statusClass(status){const v=normalizeStatus(status);return ['available','occupied','reserved','disabled'].includes(v)?`status-${v}`:'status-disabled'}
 
 async function requireSession(){const{data:{session},error}=await supabase.auth.getSession();if(error)throw error;if(!session){location.replace('./index.html');return null}state.session=session;return session}
-async function loadProfile(userId){const{data,error}=await supabase.from('profiles').select('id,full_name,role,branch_id').eq('id',userId).maybeSingle();if(error)throw error;if(!data?.branch_id)throw new Error('บัญชียังไม่ได้กำหนดสาขา');const role=String(data.role||'').trim().toLowerCase();if(!['admin','manager'].includes(role))throw new Error('บัญชีนี้ไม่มีสิทธิ์จัดการโต๊ะ');state.profile=data}
+async function loadProfile(userId){const{data,error}=await supabase.from('profiles').select('id,full_name,role,branch_id').eq('id',userId).maybeSingle();if(error)throw error;if(!data?.branch_id)throw new Error('บัญชียังไม่ได้กำหนดสาขา');const role=String(data.role||'').trim().toLowerCase();if(!['admin','manager','staff'].includes(role))throw new Error('บัญชีนี้ไม่มีสิทธิ์จัดการโต๊ะ');state.profile=data}
 async function loadBranch(){const{data,error}=await supabase.from('branches').select('id,name').eq('id',state.profile.branch_id).maybeSingle();if(error)throw error;if(!data)throw new Error('ไม่พบสาขา');state.branch=data}
 function renderUser(){el.userName.textContent=state.profile.full_name||state.session.user.email.split('@')[0];el.branchText.textContent=`สาขา: ${state.branch.name}`}
 
