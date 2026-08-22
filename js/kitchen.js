@@ -1292,119 +1292,20 @@ async function enrichOrderAddOnFlags(list) {
         return list || []
     }
 
-    const orderIds = [
-        ...new Set(
-            list
-                .map(item => item.order_id)
-                .filter(Boolean)
-        )
-    ]
-
-    if (!orderIds.length) {
-        return list
-    }
-
-    try {
-        // อ่าน history ของ order เดิม รวมรายการที่ served แล้วด้วย
-        // RLS ของ restaurant_order_items จำกัดให้อ่านได้เฉพาะสาขาของผู้ใช้
-        const { data, error } = await supabase
-            .from('restaurant_order_items')
-            .select(`
-                id,
-                order_id,
-                item_status,
-                created_at,
-                kitchen_printed_at,
-                kitchen_started_at,
-                kitchen_ready_at,
-                kitchen_served_at
-            `)
-            .in('order_id', orderIds)
-            .order('created_at', { ascending: true })
-
-        if (error) throw error
-
-        const historyByOrder = new Map()
-
-        for (const row of data || []) {
-            if (!row?.order_id) continue
-
-            if (!historyByOrder.has(row.order_id)) {
-                historyByOrder.set(row.order_id, [])
-            }
-
-            historyByOrder.get(row.order_id).push(row)
-        }
-
-        return list.map(item => {
-            const history = historyByOrder.get(item.order_id) || []
-            const itemTime = new Date(item.created_at).getTime()
-
-            if (!Number.isFinite(itemTime) || history.length <= 1) {
-                return {
-                    ...item,
-                    is_add_on: false
-                }
-            }
-
-            const earlierRows = history.filter(row => {
-                if (row.id === item.item_id) return false
-
-                const rowTime = new Date(row.created_at).getTime()
-                return Number.isFinite(rowTime) && rowTime < itemTime
-            })
-
-            if (!earlierRows.length) {
-                return {
-                    ...item,
-                    is_add_on: false
-                }
-            }
-
-            // ถ้ารายการก่อนหน้าเคยเดินงานครัวแล้ว ไม่ว่าจะ preparing / ready / served
-            // รายการใหม่ของ order เดิมถือเป็น "สั่งเพิ่ม" แน่นอน
-            const hasProgressedEarlierItem = earlierRows.some(row =>
-                row.item_status === 'preparing'
-                || row.item_status === 'ready'
-                || row.item_status === 'served'
-                || Boolean(row.kitchen_started_at)
-                || Boolean(row.kitchen_ready_at)
-                || Boolean(row.kitchen_served_at)
-            )
-
-            // รองรับกรณีลูกค้าสั่งเพิ่มตอนของเดิมยัง pending:
-            // ชุดแรกจาก POS จะถูก insert ต่อเนื่องกันเร็วมาก
-            // ถ้ามีช่วงห่างจากรายการก่อนหน้ามากกว่า 15 วินาที ให้ถือเป็นรอบสั่งใหม่
-            const earlierTimes = earlierRows
-                .map(row => new Date(row.created_at).getTime())
-                .filter(Number.isFinite)
-
-            const latestEarlierTime = earlierTimes.length
-                ? Math.max(...earlierTimes)
-                : itemTime
-
-            const separatedRound =
-                itemTime - latestEarlierTime > 15 * 1000
-
-            const isAddOn =
-                hasProgressedEarlierItem
-                || separatedRound
-
-            return {
-                ...item,
-                is_add_on: isAddOn
-            }
-        })
-
-    } catch (error) {
-        // ถ้า history โหลดไม่ได้ หน้าครัวยังต้องทำงานต่อได้
-        console.warn(
-            'Load kitchen order history for add-on flag error:',
-            error
-        )
-
-        return list
-    }
+    /*
+     * FIX:
+     * is_add_on มาจาก get_kitchen_display_context() ที่คำนวณจาก
+     * history ของ order_id ทั้งหมดในฐานข้อมูล รวม served แล้ว
+     *
+     * จึงไม่ query restaurant_order_items ซ้ำจาก Browser อีก
+     * และไม่เสีย flag เมื่อรายการเก่าหายออกจาก active board
+     */
+    return list.map(item => ({
+        ...item,
+        is_add_on:
+            item.is_add_on === true
+            || item.is_add_on === 'true'
+    }))
 }
 
 
