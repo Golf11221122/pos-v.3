@@ -1,6 +1,8 @@
 import { supabase } from './supabase.js'
 import { PROMPTPAY_PHONE } from './config.js'
 
+/* CANCELLED BILLING SYNC V1 */
+
 /* ========================================
    STATE
 ======================================== */
@@ -1922,6 +1924,253 @@ function isLiveRestaurantOrder() {
 }
 
 
+
+/* ========================================
+   CANCELLED ITEM SYNC
+======================================== */
+
+/*
+ * Kitchen สามารถยกเลิกรายการหลังจาก POS เปิดโต๊ะไว้แล้วได้
+ * ดังนั้นห้ามเชื่อ state.cart อย่างเดียวก่อนคิดเงิน
+ *
+ * ฟังก์ชันนี้อ่าน item_status ล่าสุดจาก restaurant_order_items
+ * แล้วเอารายการ cancelled ออกจากตะกร้า POS
+ *
+ * return:
+ * {
+ *   removedCount,
+ *   removedItemIds
+ * }
+ */
+async function syncCancelledRestaurantItems({
+    rerender = true
+} = {}) {
+
+    const orderId =
+        state.currentOrder?.id
+
+    if (!orderId) {
+        return {
+            removedCount: 0,
+            removedItemIds: []
+        }
+    }
+
+
+    const confirmedCartItems =
+        items().filter(
+            item =>
+                Boolean(
+                    item.restaurant_item_id
+                )
+        )
+
+
+    if (!confirmedCartItems.length) {
+        return {
+            removedCount: 0,
+            removedItemIds: []
+        }
+    }
+
+
+    const itemIds =
+        confirmedCartItems
+            .map(
+                item =>
+                    item.restaurant_item_id
+            )
+            .filter(Boolean)
+
+
+    const {
+        data,
+        error
+    } =
+        await supabase
+            .from(
+                'restaurant_order_items'
+            )
+            .select(
+                'id,item_status'
+            )
+            .eq(
+                'order_id',
+                orderId
+            )
+            .in(
+                'id',
+                itemIds
+            )
+
+
+    if (error) {
+        throw error
+    }
+
+
+    const cancelledIds =
+        new Set(
+            (data || [])
+                .filter(
+                    row =>
+                        String(
+                            row.item_status || ''
+                        )
+                            .trim()
+                            .toLowerCase()
+                        ===
+                        'cancelled'
+                )
+                .map(
+                    row =>
+                        row.id
+                )
+        )
+
+
+    if (!cancelledIds.size) {
+        return {
+            removedCount: 0,
+            removedItemIds: []
+        }
+    }
+
+
+    const removedItemIds = []
+
+
+    for (
+        const [
+            cartKey,
+            item
+        ]
+        of
+        [...state.cart.entries()]
+    ) {
+
+        if (
+            item.restaurant_item_id
+            &&
+            cancelledIds.has(
+                item.restaurant_item_id
+            )
+        ) {
+
+            removedItemIds.push(
+                item.restaurant_item_id
+            )
+
+            state.cart.delete(
+                cartKey
+            )
+        }
+    }
+
+
+    if (rerender) {
+
+        /*
+         * ถ้ารายการถูกยกเลิกจนยอดลดลง
+         * ส่วนลดเก่าต้องไม่มากกว่ายอดสินค้าใหม่
+         */
+        if (
+            discount() >
+            subtotal()
+        ) {
+            resetPaymentDiscount()
+        }
+
+
+        renderCart()
+        updateShiftSaleState()
+        renderVatUi()
+    }
+
+
+    return {
+        removedCount:
+            removedItemIds.length,
+
+        removedItemIds
+    }
+}
+
+
+/*
+ * ใช้ตอน load โต๊ะเดิม:
+ * RPC get_restaurant_order รุ่นปัจจุบันอาจยังไม่ส่ง item_status กลับมา
+ * จึงอ่านสถานะจริงจากตารางโดยใช้ id ของ order.items
+ */
+async function getCancelledItemIdSetForOrder(
+    orderId,
+    orderRows = []
+) {
+
+    const ids =
+        (orderRows || [])
+            .map(
+                row =>
+                    row?.id
+            )
+            .filter(Boolean)
+
+
+    if (
+        !orderId
+        ||
+        !ids.length
+    ) {
+        return new Set()
+    }
+
+
+    const {
+        data,
+        error
+    } =
+        await supabase
+            .from(
+                'restaurant_order_items'
+            )
+            .select(
+                'id,item_status'
+            )
+            .eq(
+                'order_id',
+                orderId
+            )
+            .in(
+                'id',
+                ids
+            )
+
+
+    if (error) {
+        throw error
+    }
+
+
+    return new Set(
+        (data || [])
+            .filter(
+                row =>
+                    String(
+                        row.item_status || ''
+                    )
+                        .trim()
+                        .toLowerCase()
+                    ===
+                    'cancelled'
+            )
+            .map(
+                row =>
+                    row.id
+            )
+    )
+}
+
+
 function heldItemToCartItem(row) {
 
     const modifiers =
@@ -1981,6 +2230,11 @@ function heldItemToCartItem(row) {
 
         is_confirmed:
             true,
+
+        item_status:
+            row.item_status
+            ||
+            null,
 
         base_price:
             Number(
@@ -2104,11 +2358,33 @@ async function loadHeldRestaurantOrder(
 
     state.cart.clear()
 
+
+    /*
+     * สำคัญ:
+     * รายการที่ Kitchen ยกเลิกแล้วต้องไม่กลับเข้าตะกร้า
+     * และต้องไม่ถูกรวมในยอดชำระ
+     */
+    const cancelledItemIds =
+        await getCancelledItemIdSetForOrder(
+            order.order_id,
+            order.items || []
+        )
+
+
     for (
         const row
         of
         order.items || []
     ) {
+
+        if (
+            cancelledItemIds.has(
+                row.id
+            )
+        ) {
+            continue
+        }
+
 
         const cartItem =
             heldItemToCartItem(row)
@@ -6030,6 +6306,63 @@ async function finalizeDiscountAuthorization(
 async function openPayment() {
 
     /*
+     * ก่อนเปิดหน้าชำระเงินต้อง sync สถานะจาก Kitchen
+     * เพื่อไม่คิดเงินรายการที่ถูกยกเลิกหลัง POS เปิดโต๊ะไว้
+     */
+    try {
+
+        const syncResult =
+            await syncCancelledRestaurantItems()
+
+
+        if (
+            syncResult.removedCount >
+            0
+        ) {
+
+            msg(
+                el.pageMessage,
+                `ตัดรายการที่ครัวยกเลิกออกจากบิลแล้ว ${syncResult.removedCount.toLocaleString('th-TH')} รายการ`
+            )
+
+
+            setTimeout(
+                () => {
+
+                    if (
+                        el.pageMessage
+                            ?.textContent
+                            ?.includes(
+                                'ตัดรายการที่ครัวยกเลิก'
+                            )
+                    ) {
+                        msg(
+                            el.pageMessage,
+                            ''
+                        )
+                    }
+                },
+                2200
+            )
+        }
+
+    } catch (error) {
+
+        console.error(
+            'Sync cancelled items before payment error:',
+            error
+        )
+
+        msg(
+            el.pageMessage,
+            'ตรวจสอบรายการยกเลิกจากครัวไม่สำเร็จ กรุณาลองใหม่ก่อนชำระเงิน'
+        )
+
+        return
+    }
+
+
+    /*
      * ป้องกัน Staff เปิดหน้าชำระเงิน
      * แม้พยายามเรียกฟังก์ชันจาก Console
      */
@@ -7154,6 +7487,87 @@ async function confirmPayment() {
 
         showPaymentDeniedMessage(
             el.paymentMessage
+        )
+
+        return
+    }
+
+
+    /*
+     * ตรวจซ้ำอีกครั้งตอนกด "ยืนยันชำระ"
+     *
+     * เหตุผล:
+     * ระหว่างที่ Payment Modal เปิดอยู่
+     * Kitchen อาจยกเลิกรายการเพิ่มได้
+     */
+    try {
+
+        const syncResult =
+            await syncCancelledRestaurantItems()
+
+
+        if (
+            syncResult.removedCount >
+            0
+        ) {
+
+            /*
+             * ยอดเปลี่ยนหลังเปิดหน้าชำระ
+             * ห้ามยิง sale ต่อทันที ให้ผู้ใช้เห็นยอดใหม่ก่อน
+             */
+            el.paymentTotalText.textContent =
+                money(
+                    total()
+                )
+
+
+            renderQuickCash()
+            updateChange()
+            renderVatUi()
+
+
+            if (
+                state.paymentMethod ===
+                'qr'
+            ) {
+                renderPromptPayQr()
+            }
+
+
+            msg(
+                el.paymentMessage,
+                `มี ${syncResult.removedCount.toLocaleString('th-TH')} รายการถูกยกเลิกจากครัว ยอดชำระถูกปรับแล้ว กรุณาตรวจสอบยอดใหม่และกดยืนยันอีกครั้ง`
+            )
+
+
+            return
+        }
+
+    } catch (error) {
+
+        console.error(
+            'Sync cancelled items before confirm payment error:',
+            error
+        )
+
+
+        msg(
+            el.paymentMessage,
+            'ตรวจสอบรายการยกเลิกจากครัวไม่สำเร็จ กรุณาลองใหม่ก่อนบันทึกการขาย'
+        )
+
+
+        return
+    }
+
+
+    if (
+        !items().length
+    ) {
+
+        msg(
+            el.paymentMessage,
+            'ไม่มีรายการที่ต้องชำระเงิน'
         )
 
         return
