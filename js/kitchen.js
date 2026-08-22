@@ -12,7 +12,9 @@ const state = {
     addOnItemIds: new Set(),
     realtimeChannel: null,
     timerInterval: null,
-    realtimePollTimer: null
+    realtimePollTimer: null,
+    autoPrintIds: new Set(),
+    autoPrintTimer: null
 }
 
 const $ = id => document.getElementById(id)
@@ -907,10 +909,13 @@ function groupKitchenItems(list) {
 
         group.firstItem = group.items[0]
 
-        if (group.items.some(item => item.item_status === 'pending')) {
-            group.status = 'pending'
-        } else if (group.items.some(item => item.item_status === 'preparing')) {
+        // สถานะของการ์ดโต๊ะ/คิว:
+        // ถ้ามีอย่างน้อย 1 รายการเริ่มทำแล้ว ให้การ์ดอยู่ช่องกำลังทำทันที
+        // รายการ pending ที่สั่งเพิ่มยังคงแสดงสถานะของตัวเองภายในการ์ด
+        if (group.items.some(item => item.item_status === 'preparing')) {
             group.status = 'preparing'
+        } else if (group.items.some(item => item.item_status === 'pending')) {
+            group.status = 'pending'
         } else {
             group.status = 'ready'
         }
@@ -1332,16 +1337,9 @@ async function loadKitchenItems({
                 item => !item.kitchen_printed_at
             )
 
-        for (const item of toPrint) {
-            await printKitchenItem(
-                item,
-                { auto: true }
-            )
-
-            await new Promise(resolve =>
-                setTimeout(resolve, 400)
-            )
-        }
+        // รวมรายการใหม่ช่วงเดียวกันก่อนพิมพ์
+        // แล้วแยกใบตาม โต๊ะ/คิว + ครัว เพื่อไม่พิมพ์ทีละเมนู
+        queueAutoKitchenPrint(toPrint)
     }
 }
 
@@ -1436,143 +1434,209 @@ function renderColumn(grid, empty, groups) {
    PRINT
 ======================================== */
 
-function renderPrintTicket(item) {
+function printStationKey(item) {
+    const stationId = String(
+        item?.kitchen_station_id
+        || item?.station_id
+        || ''
+    ).trim()
+
+    if (stationId) return `id:${stationId}`
+
+    const stationName = String(
+        item?.kitchen_station_name
+        || 'ไม่ระบุครัว'
+    ).trim()
+
+    return `name:${stationName}`
+}
+
+function printGroupKey(item) {
+    // 1 ใบ = 1 โต๊ะ/คิว + 1 ครัว
+    // รายการที่เข้ามาในรอบใหม่จะถูก queue แยกจากของเดิมอยู่แล้ว
+    return `${kitchenGroupKey(item)}|${printStationKey(item)}`
+}
+
+function groupItemsForKitchenPrint(items) {
+    const map = new Map()
+
+    for (const item of items || []) {
+        if (!item) continue
+
+        const key = printGroupKey(item)
+
+        if (!map.has(key)) {
+            map.set(key, [])
+        }
+
+        map.get(key).push(item)
+    }
+
+    return [...map.values()]
+        .map(group => group.sort((a, b) =>
+            new Date(a.created_at).getTime()
+            - new Date(b.created_at).getTime()
+        ))
+        .sort((a, b) =>
+            new Date(a[0]?.created_at).getTime()
+            - new Date(b[0]?.created_at).getTime()
+        )
+}
+
+function renderPrintModifierRows(item) {
     const modifiers =
         Array.isArray(item.modifiers)
             ? item.modifiers
             : []
 
-    const modifierHtml =
-        modifiers
-            .map(modifier => {
-                const group =
-                    String(
-                        modifier.group_name
-                        ||
-                        ''
-                    ).trim()
+    return modifiers
+        .map(modifier => {
+            const group = String(
+                modifier.group_name || ''
+            ).trim()
 
-                const option =
-                    String(
-                        modifier.option_name
-                        ||
-                        ''
-                    ).trim()
+            const option = String(
+                modifier.option_name || ''
+            ).trim()
 
-                if (!option) {
-                    return ''
-                }
+            if (!option) return ''
 
-                return `
-                    <div
-                        style="
-                            font-size:17px;
-                            font-weight:800;
-                            margin:5px 0;
-                        "
-                    >
-                        ${modifierIcon(modifier)}
-                        ${group ? `${esc(group)}: ` : ''}
-                        <strong>
-                            ${esc(option)}
-                        </strong>
+            return `
+                <div class="print-modifier-row">
+                    <span>${group ? esc(group) : 'ตัวเลือก'}</span>
+                    <strong class="print-modifier-value">
+                        ${modifierIcon(modifier)} ${esc(option)}
+                    </strong>
+                </div>
+            `
+        })
+        .join('')
+}
+
+function renderPrintGroupTicket(items, index, total) {
+    const firstItem = items[0]
+    if (!firstItem) return ''
+
+    const stationName =
+        firstItem.kitchen_station_name
+        || 'ไม่ระบุครัว'
+
+    const isAddOnRound = items.some(item =>
+        state.addOnItemIds.has(item.item_id)
+    )
+
+    const itemHtml = items
+        .map(item => {
+            const modifierHtml = renderPrintModifierRows(item)
+
+            return `
+                <div class="print-divider"></div>
+
+                <div class="print-item-row">
+                    <div class="print-product">
+                        ${esc(item.product_name)}
                     </div>
-                `
-            })
-            .join('')
+                    <div class="print-qty-big">
+                        ×${Number(item.quantity || 0).toLocaleString('th-TH')}
+                    </div>
+                </div>
 
-    const timer =
-        timerInfo(item)
+                ${modifierHtml
+                    ? `<div class="print-options">${modifierHtml}</div>`
+                    : ''}
 
-    el.kitchenPrintArea.innerHTML = `
-        <div class="print-ticket">
-            <div class="print-center">
-                <strong>JOKJUNG - ใบครัว</strong>
-            </div>
-
-            ${item.kitchen_station_name
-            ? `<div class="print-center">${esc(item.kitchen_station_name)}</div>`
-            : ''
-        }
-
-            <div class="print-table">
-                ${esc(orderName(item))}
-            </div>
-
-            <div class="print-center">
-                ${formatTime(item.created_at)}
-            </div>
-
-            <div class="print-center">
-                ${esc(
-            `${timer.label} ${elapsedText(timer.startedAt)}`
-        )}
-            </div>
-
-            <div class="print-line"></div>
-
-            <div class="print-product">
-                ${esc(item.product_name)}
-            </div>
-
-            <div class="print-qty">
-                จำนวน:
-                ${Number(item.quantity || 0).toLocaleString('th-TH')}
-            </div>
-
-            ${modifierHtml
-            ? `
-                        <div class="print-detail">
-                            ${modifierHtml}
+                ${item.item_note
+                    ? `
+                        <div class="print-note">
+                            ⚠️ หมายเหตุ: ${esc(item.item_note)}
                         </div>
                     `
-            : ''
-        }
+                    : ''}
+            `
+        })
+        .join('')
 
-            ${item.item_note
-            ? `
-                        <div
-                            class="print-note"
-                            style="
-                                font-size:18px;
-                                font-weight:900;
-                            "
-                        >
-                            ⚠️ หมายเหตุ:
-                            ${esc(item.item_note)}
-                        </div>
-                    `
-            : ''
-        }
+    return `
+        <div
+            class="print-ticket"
+            style="${index < total - 1
+                ? 'page-break-after:always;break-after:page;margin-bottom:3mm!important;'
+                : ''}"
+        >
+            <div class="print-brand">JOKJUNG</div>
+            <div class="print-kitchen-title">ใบครัว</div>
+            <div class="print-station">🍳 ${esc(stationName)}</div>
 
-            <div class="print-line"></div>
+            <div class="print-order-box">
+                <div class="print-order-name">
+                    ${esc(orderName(firstItem))}
+                </div>
+                <div class="print-order-time">
+                    ${formatTime(firstItem.created_at)}
+                </div>
+                ${isAddOnRound
+                    ? '<div class="print-wait-time">🆕 รายการสั่งเพิ่ม</div>'
+                    : ''}
+            </div>
 
-            <div class="print-center">
-                ${item.order_source === 'qr'
-            ? 'QR ORDER'
-            : 'POS ORDER'
-        }
+            ${itemHtml}
+
+            <div class="print-divider"></div>
+            <div class="print-footer">
+                ${firstItem.order_source === 'qr'
+                    ? 'QR ORDER'
+                    : 'POS ORDER'}
+                • ${items.length.toLocaleString('th-TH')} รายการ
             </div>
         </div>
     `
 }
 
+function renderPrintGroups(groups) {
+    const safeGroups = (groups || []).filter(group => group?.length)
+
+    el.kitchenPrintArea.innerHTML = safeGroups
+        .map((group, index) =>
+            renderPrintGroupTicket(
+                group,
+                index,
+                safeGroups.length
+            )
+        )
+        .join('')
+}
+
 async function markPrinted(itemId) {
-    const {
-        error
-    } = await supabase.rpc(
+    const { error } = await supabase.rpc(
         'mark_kitchen_item_printed',
-        {
-            p_item_id: itemId
-        }
+        { p_item_id: itemId }
     )
 
     if (error) {
-        console.error(
-            'Mark printed error:',
-            error
-        )
+        console.error('Mark printed error:', error)
     }
+}
+
+async function printKitchenGroups(
+    groups,
+    { auto = false } = {}
+) {
+    const safeGroups = (groups || []).filter(group => group?.length)
+    if (!safeGroups.length) return
+
+    renderPrintGroups(safeGroups)
+
+    const printedItems = safeGroups.flat()
+
+    for (const item of printedItems) {
+        await markPrinted(item.item_id)
+        item.kitchen_printed_at = new Date().toISOString()
+    }
+
+    setTimeout(
+        () => window.print(),
+        auto ? 150 : 50
+    )
 }
 
 async function printKitchenItem(
@@ -1581,18 +1645,63 @@ async function printKitchenItem(
 ) {
     if (!item) return
 
-    renderPrintTicket(item)
-
-    await markPrinted(
-        item.item_id
+    await printKitchenGroups(
+        [[item]],
+        { auto }
     )
+}
 
-    item.kitchen_printed_at =
-        new Date().toISOString()
+function queueAutoKitchenPrint(items) {
+    for (const item of items || []) {
+        if (item?.item_id && !item.kitchen_printed_at) {
+            state.autoPrintIds.add(item.item_id)
+        }
+    }
 
-    setTimeout(
-        () => window.print(),
-        auto ? 150 : 50
+    if (!state.autoPrintIds.size) return
+
+    if (state.autoPrintTimer) {
+        clearTimeout(state.autoPrintTimer)
+    }
+
+    // หน่วงสั้น ๆ เพื่อรวมหลาย INSERT ในบิลเดียวกัน
+    // ไม่ให้ Realtime สั่งพิมพ์ทีละเมนู
+    state.autoPrintTimer = setTimeout(
+        async () => {
+            state.autoPrintTimer = null
+
+            const ids = new Set(state.autoPrintIds)
+            state.autoPrintIds.clear()
+
+            const candidates = state.items.filter(item =>
+                ids.has(item.item_id)
+                && !item.kitchen_printed_at
+            )
+
+            if (!candidates.length) return
+
+            const groups = groupItemsForKitchenPrint(candidates)
+
+            try {
+                await printKitchenGroups(
+                    groups,
+                    { auto: true }
+                )
+            } catch (error) {
+                // ถ้าพิมพ์ไม่สำเร็จ คืนรายการเข้าคิวเพื่อไม่ให้หาย
+                for (const item of candidates) {
+                    if (!item.kitchen_printed_at) {
+                        state.autoPrintIds.add(item.item_id)
+                    }
+                }
+
+                console.error(
+                    'Grouped kitchen auto print error:',
+                    error
+                )
+            }
+        },
+        900
     )
 }
 
@@ -1959,6 +2068,12 @@ window.addEventListener(
         if (state.realtimePollTimer) {
             clearInterval(
                 state.realtimePollTimer
+            )
+        }
+
+        if (state.autoPrintTimer) {
+            clearTimeout(
+                state.autoPrintTimer
             )
         }
     }
