@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>ประวัติออเดอร์ | JOKJUNG POS</title>
+  <link rel="stylesheet" href="./css/order-history.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="top-left">
+      <button id="backBtn" class="outline-btn" type="button">←</button>
+      <div><h1>ประวัติออเดอร์</h1><small id="branchText">กำลังโหลด...</small></div>
+    </div>
+    <button id="refreshBtn" class="outline-btn" type="button">↻ รีเฟรช</button>
+  </header>
+
+  <main class="page">
+    <section class="filters card">
+      <label>จากวันที่<input id="dateFrom" type="date"></label>
+      <label>ถึงวันที่<input id="dateTo" type="date"></label>
+      <label class="grow">ค้นหา<input id="searchInput" type="search" placeholder="โต๊ะ / คิว / Order ID"></label>
+      <label>สถานะ
+        <select id="statusFilter">
+          <option value="">ทั้งหมด</option>
+          <option value="open">เปิดอยู่</option>
+          <option value="paid">ชำระแล้ว</option>
+          <option value="closed">ปิดแล้ว</option>
+          <option value="cancelled">ยกเลิก</option>
+        </select>
+      </label>
+      <button id="searchBtn" class="primary-btn" type="button">ค้นหา</button>
+    </section>
+
+    <section class="summary">
+      <article class="card stat"><span>จำนวนออเดอร์</span><strong id="orderCount">0</strong></article>
+      <article class="card stat"><span>ยอดที่คิดเงินจริง</span><strong id="payableTotal">฿0.00</strong></article>
+      <article class="card stat"><span>มูลค่าที่ยกเลิก</span><strong id="cancelledTotal">฿0.00</strong></article>
+    </section>
+
+    <p id="pageMessage" class="message"></p>
+    <section id="orderList" class="order-list"></section>
+    <div id="emptyState" class="card empty hidden">ไม่พบประวัติออเดอร์</div>
+  </main>
+
+  <script type="module" src="./js/order-history.js"></script>
+</body>
+</html>
