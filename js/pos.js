@@ -1,7 +1,7 @@
 import { supabase } from './supabase.js'
 import { PROMPTPAY_PHONE } from './config.js'
 
-/* CANCELLED BILLING SYNC V1 */
+/* CANCELLED BILLING SYNC V2 - REALTIME + FALLBACK POLLING */
 
 /* ========================================
    STATE
@@ -53,6 +53,10 @@ const state = {
     // Modifier / ตัวเลือกสินค้า
     modifierCache: new Map(),
     modifierProduct: null,
+
+    // Sync รายการที่ครัวยกเลิกกลับมาที่ POS
+    orderItemRealtimeChannel: null,
+    cancelledItemPollTimer: null,
 
 }
 
@@ -2168,6 +2172,358 @@ async function getCancelledItemIdSetForOrder(
                     row.id
             )
     )
+}
+
+
+
+/* ========================================
+   CANCELLED ITEM REALTIME SYNC
+======================================== */
+
+function removeCancelledItemFromCurrentBill(
+    itemId,
+    {
+        showMessage = true
+    } = {}
+) {
+
+    if (!itemId) {
+        return false
+    }
+
+
+    let removed = false
+
+
+    for (
+        const [
+            cartKey,
+            item
+        ]
+        of
+        [...state.cart.entries()]
+    ) {
+
+        if (
+            item.restaurant_item_id ===
+            itemId
+        ) {
+
+            state.cart.delete(
+                cartKey
+            )
+
+            removed = true
+        }
+    }
+
+
+    if (!removed) {
+        return false
+    }
+
+
+    /*
+     * ถ้าส่วนลดเดิมสูงกว่ายอดใหม่
+     * ให้ล้างส่วนลดเพื่อไม่ให้ยอดติดลบ/ผิด
+     */
+    if (
+        discount() >
+        subtotal()
+    ) {
+        resetPaymentDiscount()
+    }
+
+
+    renderCart()
+    updateShiftSaleState()
+    renderVatUi()
+
+
+    /*
+     * ถ้า Payment Modal เปิดอยู่
+     * ต้องเปลี่ยนยอดทันทีด้วย
+     */
+    if (
+        el.paymentModal
+        &&
+        !el.paymentModal
+            .classList
+            .contains(
+                'hidden'
+            )
+    ) {
+
+        if (
+            el.paymentTotalText
+        ) {
+            el.paymentTotalText.textContent =
+                money(
+                    total()
+                )
+        }
+
+
+        renderQuickCash()
+        updateChange()
+
+
+        if (
+            state.paymentMethod ===
+            'qr'
+        ) {
+            renderPromptPayQr()
+        }
+
+
+        if (showMessage) {
+            msg(
+                el.paymentMessage,
+                'ครัวยกเลิกรายการแล้ว ระบบตัดออกจากยอดชำระให้อัตโนมัติ'
+            )
+        }
+    }
+
+
+    if (showMessage) {
+
+        msg(
+            el.pageMessage,
+            'ครัวยกเลิกรายการแล้ว ระบบตัดออกจากบิลให้อัตโนมัติ'
+        )
+
+
+        setTimeout(
+            () => {
+
+                if (
+                    el.pageMessage
+                        ?.textContent
+                        ?.includes(
+                            'ครัวยกเลิกรายการแล้ว'
+                        )
+                ) {
+                    msg(
+                        el.pageMessage,
+                        ''
+                    )
+                }
+            },
+            2200
+        )
+    }
+
+
+    return true
+}
+
+
+async function refreshCancelledItemsForCurrentOrder({
+    showMessage = false
+} = {}) {
+
+    if (
+        !state.currentOrder?.id
+    ) {
+        return 0
+    }
+
+
+    const confirmed =
+        items().filter(
+            item =>
+                Boolean(
+                    item.restaurant_item_id
+                )
+        )
+
+
+    if (!confirmed.length) {
+        return 0
+    }
+
+
+    const {
+        data,
+        error
+    } =
+        await supabase
+            .from(
+                'restaurant_order_items'
+            )
+            .select(
+                'id,item_status'
+            )
+            .eq(
+                'order_id',
+                state.currentOrder.id
+            )
+            .in(
+                'id',
+                confirmed.map(
+                    item =>
+                        item.restaurant_item_id
+                )
+            )
+
+
+    if (error) {
+        throw error
+    }
+
+
+    let removedCount = 0
+
+
+    for (
+        const row
+        of
+        data || []
+    ) {
+
+        if (
+            String(
+                row.item_status || ''
+            )
+                .trim()
+                .toLowerCase()
+            !==
+            'cancelled'
+        ) {
+            continue
+        }
+
+
+        const removed =
+            removeCancelledItemFromCurrentBill(
+                row.id,
+                {
+                    showMessage
+                }
+            )
+
+
+        if (removed) {
+            removedCount += 1
+        }
+    }
+
+
+    return removedCount
+}
+
+
+function subscribePosOrderItemRealtime() {
+
+    if (
+        state.orderItemRealtimeChannel
+    ) {
+
+        supabase.removeChannel(
+            state.orderItemRealtimeChannel
+        )
+    }
+
+
+    state.orderItemRealtimeChannel =
+        supabase
+            .channel(
+                `pos-order-items-${state.profile.branch_id}`
+            )
+            .on(
+                'postgres_changes',
+                {
+                    event: 'UPDATE',
+                    schema: 'public',
+                    table: 'restaurant_order_items'
+                },
+                payload => {
+
+                    const row =
+                        payload.new
+                        ||
+                        null
+
+
+                    if (
+                        !row
+                        ||
+                        !state.currentOrder?.id
+                        ||
+                        row.order_id !==
+                            state.currentOrder.id
+                    ) {
+                        return
+                    }
+
+
+                    if (
+                        String(
+                            row.item_status || ''
+                        )
+                            .trim()
+                            .toLowerCase()
+                        ===
+                        'cancelled'
+                    ) {
+
+                        removeCancelledItemFromCurrentBill(
+                            row.id,
+                            {
+                                showMessage: true
+                            }
+                        )
+                    }
+                }
+            )
+            .subscribe()
+}
+
+
+function startCancelledItemFallbackPolling() {
+
+    if (
+        state.cancelledItemPollTimer
+    ) {
+        clearInterval(
+            state.cancelledItemPollTimer
+        )
+    }
+
+
+    /*
+     * เผื่อ Realtime หลุด/Browser sleep:
+     * ตรวจซ้ำทุก 3 วินาทีเฉพาะตอนมี order เปิดอยู่
+     */
+    state.cancelledItemPollTimer =
+        setInterval(
+            async () => {
+
+                if (
+                    document.hidden
+                    ||
+                    !state.currentOrder?.id
+                ) {
+                    return
+                }
+
+
+                try {
+
+                    await refreshCancelledItemsForCurrentOrder({
+                        showMessage: true
+                    })
+
+                } catch (error) {
+
+                    console.warn(
+                        'Cancelled item fallback polling error:',
+                        error
+                    )
+                }
+            },
+            3000
+        )
 }
 
 
@@ -8263,6 +8619,13 @@ async function init() {
         resetOrderDraft()
 
         await loadRestaurantTables()
+
+        /*
+         * รับสถานะยกเลิกจาก Kitchen แบบทันที
+         * + polling สำรองกรณี Realtime หลุด
+         */
+        subscribePosOrderItemRealtime()
+        startCancelledItemFallbackPolling()
 
         await openOrderStartModal()
 
