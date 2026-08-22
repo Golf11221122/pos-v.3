@@ -1,5 +1,7 @@
 import { supabase } from './supabase.js'
 
+/* PRINT QUEUE V2 READY - DB queue, no automatic browser print */
+
 const state = {
     session: null,
     profile: null,
@@ -1408,14 +1410,20 @@ async function loadKitchenItems({
     if (notifyNew && newPending.length > 0) {
         playAlertSound()
 
-        const toPrint =
-            newPending.filter(
-                item => !item.kitchen_printed_at
-            )
-
-        // รวมรายการใหม่ช่วงเดียวกันก่อนพิมพ์
-        // แล้วแยกใบตาม โต๊ะ/คิว + ครัว เพื่อไม่พิมพ์ทีละเมนู
-        queueAutoKitchenPrint(toPrint)
+        /*
+         * PRINT QUEUE V2
+         * -----------------------------
+         * ไม่สั่ง window.print() อัตโนมัติจากหน้าครัวแล้ว
+         *
+         * restaurant_order_items INSERT
+         * จะถูก Trigger ใน Supabase สร้าง kitchen_print_jobs ให้อัตโนมัติ
+         *
+         * - มี Printer Mapping แล้ว  -> status = pending
+         * - ยังไม่มี Printer          -> status = waiting_printer
+         *
+         * ปุ่ม "พิมพ์" บนการ์ดยังใช้ Browser Print แบบ manual
+         * สำหรับดูตัวอย่าง/ทดสอบใบครัวได้ตามเดิม
+         */
     }
 }
 
