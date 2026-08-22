@@ -1,7 +1,7 @@
 import { supabase } from './supabase.js'
 import { PROMPTPAY_PHONE } from './config.js'
 
-/* CANCELLED BILLING SYNC V2 - REALTIME + FALLBACK POLLING */
+/* CANCELLED BILLING SYNC V3 - RPC AUTHORITATIVE STATUS */
 
 /* ========================================
    STATE
@@ -1946,6 +1946,74 @@ function isLiveRestaurantOrder() {
  *   removedItemIds
  * }
  */
+
+async function fetchPosOrderItemStatuses(
+    orderId
+) {
+
+    if (!orderId) {
+        return []
+    }
+
+
+    const {
+        data,
+        error
+    } =
+        await supabase.rpc(
+            'pos_get_order_item_statuses',
+            {
+                p_order_id:
+                    orderId
+            }
+        )
+
+
+    if (error) {
+        throw error
+    }
+
+
+    /*
+     * RPC คืนค่าเป็น:
+     * {
+     *   order_id,
+     *   items: [...]
+     * }
+     *
+     * รองรับกรณี Supabase client คืน array ด้วย
+     * เพื่อให้โค้ดทนต่อรูปแบบ response
+     */
+    const payload =
+        Array.isArray(data)
+            ? (
+                data.length === 1
+                    ? data[0]
+                    : data
+            )
+            : data
+
+
+    if (
+        Array.isArray(payload)
+    ) {
+        return payload
+    }
+
+
+    if (
+        Array.isArray(
+            payload?.items
+        )
+    ) {
+        return payload.items
+    }
+
+
+    return []
+}
+
+
 async function syncCancelledRestaurantItems({
     rerender = true
 } = {}) {
@@ -1987,35 +2055,27 @@ async function syncCancelledRestaurantItems({
             .filter(Boolean)
 
 
-    const {
-        data,
-        error
-    } =
-        await supabase
-            .from(
-                'restaurant_order_items'
-            )
-            .select(
-                'id,item_status'
-            )
-            .eq(
-                'order_id',
-                orderId
-            )
-            .in(
-                'id',
-                itemIds
-            )
+    const statusRows =
+        await fetchPosOrderItemStatuses(
+            orderId
+        )
 
 
-    if (error) {
-        throw error
-    }
+    const requestedIds =
+        new Set(
+            itemIds
+        )
 
 
     const cancelledIds =
         new Set(
-            (data || [])
+            (statusRows || [])
+                .filter(
+                    row =>
+                        requestedIds.has(
+                            row.id
+                        )
+                )
                 .filter(
                     row =>
                         String(
@@ -2129,34 +2189,26 @@ async function getCancelledItemIdSetForOrder(
     }
 
 
-    const {
-        data,
-        error
-    } =
-        await supabase
-            .from(
-                'restaurant_order_items'
-            )
-            .select(
-                'id,item_status'
-            )
-            .eq(
-                'order_id',
-                orderId
-            )
-            .in(
-                'id',
-                ids
-            )
+    const statusRows =
+        await fetchPosOrderItemStatuses(
+            orderId
+        )
 
 
-    if (error) {
-        throw error
-    }
+    const requestedIds =
+        new Set(
+            ids
+        )
 
 
     return new Set(
-        (data || [])
+        (statusRows || [])
+            .filter(
+                row =>
+                    requestedIds.has(
+                        row.id
+                    )
+            )
             .filter(
                 row =>
                     String(
@@ -2343,33 +2395,19 @@ async function refreshCancelledItemsForCurrentOrder({
     }
 
 
-    const {
-        data,
-        error
-    } =
-        await supabase
-            .from(
-                'restaurant_order_items'
-            )
-            .select(
-                'id,item_status'
-            )
-            .eq(
-                'order_id',
-                state.currentOrder.id
-            )
-            .in(
-                'id',
-                confirmed.map(
-                    item =>
-                        item.restaurant_item_id
-                )
-            )
+    const statusRows =
+        await fetchPosOrderItemStatuses(
+            state.currentOrder.id
+        )
 
 
-    if (error) {
-        throw error
-    }
+    const confirmedIds =
+        new Set(
+            confirmed.map(
+                item =>
+                    item.restaurant_item_id
+            )
+        )
 
 
     let removedCount = 0
@@ -2378,8 +2416,16 @@ async function refreshCancelledItemsForCurrentOrder({
     for (
         const row
         of
-        data || []
+        statusRows || []
     ) {
+
+        if (
+            !confirmedIds.has(
+                row.id
+            )
+        ) {
+            continue
+        }
 
         if (
             String(
