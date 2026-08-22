@@ -113,6 +113,24 @@ function orderName(item) {
 }
 
 
+function itemIsAddOn(item) {
+    if (!item) return false
+
+    // ค่าหลักจาก RPC: ตรวจ history ของ order_id เดิม
+    if (item.is_add_on === true) return true
+
+    // รองรับกรณี Supabase/JSON คืนค่าเป็น string
+    if (String(item.is_add_on).toLowerCase() === 'true') return true
+
+    // fallback: ถ้ามีรายการก่อนหน้าของ order เดิมแล้ว
+    if (Number(item.previous_item_count || 0) > 0) return true
+
+    // fallback ฝั่ง browser สำหรับรายการที่เพิ่งเข้า realtime
+    if (state?.addOnItemIds?.has?.(item.item_id)) return true
+
+    return false
+}
+
 function statusText(
     status,
     item = null
@@ -121,6 +139,12 @@ function statusText(
     const takeaway =
         item?.order_type ===
         'takeaway'
+
+    // รายการ pending ของ order เดิมที่เคยมีรายการมาก่อน
+    // ให้แสดงเป็น "สั่งเพิ่ม" แทน "ออเดอร์ใหม่"
+    if (status === 'pending' && itemIsAddOn(item)) {
+        return '🆕 สั่งเพิ่ม'
+    }
 
     return {
         pending:
@@ -938,14 +962,8 @@ function groupKitchenItems(list) {
 }
 
 function isLikelyAddOn(item, groupItems) {
-    // ตัวหลัก: flag ที่คำนวณจาก history ของ order เดิม
-    // รองรับแม้รายการก่อนหน้าจะ served และหายจากบอร์ดแล้ว
-    if (item?.is_add_on === true) {
-        return true
-    }
-
-    // fallback สำหรับ realtime ระหว่างรอโหลด history
-    if (state.addOnItemIds.has(item.item_id)) {
+    // ใช้ helper เดียวกับข้อความสถานะ เพื่อให้ป้ายและสถานะตรงกันเสมอ
+    if (itemIsAddOn(item)) {
         return true
     }
 
@@ -1081,11 +1099,7 @@ function renderGroupedItem(item, groupItems) {
                 </div>
 
                 <div class="group-item-badges">
-                    ${addOn
-                        ? '<span class="addon-badge">🆕 สั่งเพิ่ม</span>'
-                        : ''}
-
-                    <span class="status-badge ${esc(item.item_status)}">
+                    <span class="status-badge ${esc(item.item_status)} ${addOn ? 'addon-status-badge' : ''}">
                         ${esc(statusText(item.item_status, item))}
                     </span>
                 </div>
@@ -1234,6 +1248,13 @@ function ensureKitchenGroupStyle() {
             flex-direction: column;
             align-items: flex-end;
             gap: 6px;
+        }
+
+        .status-badge.addon-status-badge {
+            border: 2px solid #f5b400;
+            background: #fff4c7;
+            color: #7a5600;
+            font-weight: 900;
         }
 
         .addon-badge {
