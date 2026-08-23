@@ -1089,53 +1089,59 @@ async function loadBranch() {
 
 async function loadCurrentShift() {
 
-    const {
-        data,
-        error
-    } =
-        await supabase.rpc(
-            'get_current_shift'
-        )
+    let shift = null
+    let rpcError = null
 
+    /*
+     * 1) ใช้ RPC หลักก่อน
+     */
+    try {
 
-    if (error) {
+        const {
+            data,
+            error
+        } =
+            await supabase.rpc(
+                'get_current_shift'
+            )
 
-        console.error(
-            'Load current shift error:',
+        if (error) {
+            rpcError = error
+            console.warn(
+                'get_current_shift failed; trying POS01 fallback:',
+                error
+            )
+        } else {
+
+            shift =
+                Array.isArray(data)
+
+                    ? (
+                        data[0]
+                        ||
+                        null
+                    )
+
+                    : (
+                        data
+                        ||
+                        null
+                    )
+        }
+
+    } catch (error) {
+
+        rpcError = error
+
+        console.warn(
+            'get_current_shift exception; trying POS01 fallback:',
             error
         )
-
-
-        state.currentShift =
-            null
-
-
-        updateShiftSaleState()
-
-
-        throw error
     }
 
 
-    const shift =
-        Array.isArray(data)
-
-            ? (
-                data[0]
-                ||
-                null
-            )
-
-            : (
-                data
-                ||
-                null
-            )
-
-
     /*
-     * ป้องกันกรณี RPC
-     * ส่งกะของสาขาอื่นกลับมา
+     * ป้องกัน RPC ส่งกะของสาขาอื่นกลับมา
      */
     if (
         shift?.branch_id
@@ -1152,15 +1158,106 @@ async function loadCurrentShift() {
             shift
         )
 
-
-        state.currentShift =
-            null
-
-    } else {
-
-        state.currentShift =
-            shift
+        shift = null
     }
+
+
+    /*
+     * 2) ถ้า RPC หาไม่เจอ ให้ fallback อ่านกะเปิดของ
+     *    สาขาปัจจุบัน + POS01 โดยตรง
+     *
+     * สำคัญ:
+     * - ไม่สร้างกะใหม่
+     * - ใช้เฉพาะกะที่ closed_at IS NULL
+     * - เลือกกะล่าสุด
+     */
+    if (
+        !shift
+        &&
+        state.profile?.branch_id
+    ) {
+
+        try {
+
+            const {
+                data: fallbackShift,
+                error: fallbackError
+            } =
+                await supabase
+                    .from('shifts')
+                    .select('*')
+                    .eq(
+                        'branch_id',
+                        state.profile.branch_id
+                    )
+                    .eq(
+                        'terminal_code',
+                        'POS01'
+                    )
+                    .is(
+                        'closed_at',
+                        null
+                    )
+                    .order(
+                        'opened_at',
+                        {
+                            ascending: false
+                        }
+                    )
+                    .limit(1)
+                    .maybeSingle()
+
+
+            if (fallbackError) {
+                throw fallbackError
+            }
+
+
+            if (fallbackShift) {
+
+                console.info(
+                    'Current shift loaded by POS01 fallback:',
+                    fallbackShift.id
+                )
+
+                shift =
+                    fallbackShift
+            }
+
+        } catch (fallbackError) {
+
+            console.error(
+                'Load current shift fallback error:',
+                fallbackError
+            )
+
+
+            state.currentShift =
+                null
+
+
+            updateShiftSaleState()
+
+
+            /*
+             * ถ้า RPC เดิมมี error ให้เก็บ error เดิมไว้ใน console
+             * แต่ไม่ปล่อย exception ไปทำให้หน้า POS พัง
+             */
+            if (rpcError) {
+                console.error(
+                    'Original get_current_shift error:',
+                    rpcError
+                )
+            }
+
+
+            return null
+        }
+    }
+
+
+    state.currentShift =
+        shift
 
 
     updateShiftSaleState()
@@ -1168,6 +1265,7 @@ async function loadCurrentShift() {
 
     return state.currentShift
 }
+
 
 
 /* ========================================
