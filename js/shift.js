@@ -16,6 +16,9 @@ const state = {
     branch:
         null,
 
+    businessDate:
+        null,
+
     shift:
         null,
 
@@ -78,6 +81,9 @@ const el = {
     pageMessage:
         $('pageMessage'),
 
+    currentBusinessDate:
+        $('currentBusinessDate'),
+
     loadingState:
         $('loadingState'),
 
@@ -113,6 +119,12 @@ const el = {
 
     shiftOpeningCash:
         $('shiftOpeningCash'),
+
+    shiftBusinessDate:
+        $('shiftBusinessDate'),
+
+    shiftTerminal:
+        $('shiftTerminal'),
 
     shiftDuration:
         $('shiftDuration'),
@@ -274,13 +286,13 @@ function formatRole(
     const map = {
 
         admin:
-            'à¸à¸¹à¹à¸à¸¹à¹à¸¥à¸£à¸°à¸à¸',
+            '\u0E1C\u0E39\u0E49\u0E14\u0E39\u0E41\u0E25\u0E23\u0E30\u0E1A\u0E1A',
 
         manager:
-            'à¸à¸¹à¹à¸à¸±à¸à¸à¸²à¸£',
+            '\u0E1C\u0E39\u0E49\u0E08\u0E31\u0E14\u0E01\u0E32\u0E23',
 
         staff:
-            'à¸à¸à¸±à¸à¸à¸²à¸'
+            '\u0E1E\u0E19\u0E31\u0E01\u0E07\u0E32\u0E19'
     }
 
 
@@ -384,14 +396,115 @@ function formatDuration(
     ) {
 
         return (
-            `${hours} à¸à¸¡. ${minutes} à¸à¸²à¸à¸µ`
+            `${hours} \u0E0A\u0E21. ${minutes} \u0E19\u0E32\u0E17\u0E35`
         )
     }
 
 
     return (
-        `${minutes} à¸à¸²à¸à¸µ`
+        `${minutes} \u0E19\u0E32\u0E17\u0E35`
     )
+}
+
+
+
+function formatBusinessDate(
+    value
+) {
+    if (!value) {
+        return '-'
+    }
+
+    const parts =
+        String(value)
+            .split('-')
+            .map(Number)
+
+    if (
+        parts.length !== 3
+        ||
+        !parts[0]
+        ||
+        !parts[1]
+        ||
+        !parts[2]
+    ) {
+        return String(value)
+    }
+
+    const date =
+        new Date(
+            parts[0],
+            parts[1] - 1,
+            parts[2]
+        )
+
+    return new Intl.DateTimeFormat(
+        'th-TH',
+        {
+            dateStyle:
+                'long'
+        }
+    ).format(
+        date
+    )
+}
+
+
+async function loadBusinessDate() {
+
+    const {
+        data,
+        error
+    } =
+        await supabase.rpc(
+            'jokjung_get_business_date_v22',
+            {
+                p_branch_id:
+                    state.profile.branch_id
+            }
+        )
+
+
+    if (error) {
+
+        console.error(
+            'Load business date error:',
+            error
+        )
+
+        /*
+         * \u0E44\u0E21\u0E48\u0E43\u0E2B\u0E49\u0E2B\u0E19\u0E49\u0E32 Shift \u0E25\u0E48\u0E21\u0E40\u0E1E\u0E23\u0E32\u0E30\u0E41\u0E04\u0E48\u0E1B\u0E49\u0E32\u0E22 Business Date
+         * \u0E16\u0E49\u0E32\u0E21\u0E35\u0E01\u0E30\u0E2D\u0E22\u0E39\u0E48 \u0E08\u0E30\u0E43\u0E0A\u0E49 business_date \u0E08\u0E32\u0E01\u0E01\u0E30\u0E41\u0E17\u0E19
+         */
+        state.businessDate =
+            state.shift
+                ?.business_date
+            ||
+            null
+
+        return state.businessDate
+    }
+
+
+    state.businessDate =
+        data
+        ||
+        null
+
+
+    if (
+        el.currentBusinessDate
+    ) {
+
+        el.currentBusinessDate.textContent =
+            formatBusinessDate(
+                state.businessDate
+            )
+    }
+
+
+    return state.businessDate
 }
 
 
@@ -496,7 +609,7 @@ async function loadProfile(
     if (!data) {
 
         throw new Error(
-            'à¹à¸¡à¹à¸à¸à¸à¹à¸­à¸¡à¸¹à¸¥à¸à¸¹à¹à¹à¸à¹à¸à¸²à¸'
+            '\u0E44\u0E21\u0E48\u0E1E\u0E1A\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E1C\u0E39\u0E49\u0E43\u0E0A\u0E49\u0E07\u0E32\u0E19'
         )
     }
 
@@ -507,7 +620,7 @@ async function loadProfile(
     ) {
 
         throw new Error(
-            'à¸à¸±à¸à¸à¸µà¸à¸µà¹à¸à¸¹à¸à¸à¸´à¸à¹à¸à¹à¸à¸²à¸'
+            '\u0E1A\u0E31\u0E0D\u0E0A\u0E35\u0E19\u0E35\u0E49\u0E16\u0E39\u0E01\u0E1B\u0E34\u0E14\u0E43\u0E0A\u0E49\u0E07\u0E32\u0E19'
         )
     }
 
@@ -517,7 +630,7 @@ async function loadProfile(
     ) {
 
         throw new Error(
-            'à¸à¸±à¸à¸à¸µà¸¢à¸±à¸à¹à¸¡à¹à¹à¸à¹à¸à¸³à¸«à¸à¸à¸ªà¸²à¸à¸²'
+            '\u0E1A\u0E31\u0E0D\u0E0A\u0E35\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49\u0E01\u0E33\u0E2B\u0E19\u0E14\u0E2A\u0E32\u0E02\u0E32'
         )
     }
 
@@ -560,7 +673,7 @@ async function loadBranch() {
     if (!data) {
 
         throw new Error(
-            'à¹à¸¡à¹à¸à¸à¸à¹à¸­à¸¡à¸¹à¸¥à¸ªà¸²à¸à¸²'
+            '\u0E44\u0E21\u0E48\u0E1E\u0E1A\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E2A\u0E32\u0E02\u0E32'
         )
     }
 
@@ -584,7 +697,7 @@ function renderUser() {
             .email
             ?.split('@')[0]
         ||
-        'à¸à¸¹à¹à¹à¸à¹à¸à¸²à¸'
+        '\u0E1C\u0E39\u0E49\u0E43\u0E0A\u0E49\u0E07\u0E32\u0E19'
 
 
     el.userName.textContent =
@@ -598,7 +711,7 @@ function renderUser() {
 
 
     el.branchText.textContent =
-        `à¸ªà¸²à¸à¸²: ${state.branch.name}`
+        `\u0E2A\u0E32\u0E02\u0E32: ${state.branch.name}`
 }
 
 
@@ -608,6 +721,9 @@ function renderUser() {
 
 async function loadCurrentShift() {
 
+    /*
+     * \u0E02\u0E31\u0E49\u0E19\u0E41\u0E23\u0E01\u0E43\u0E0A\u0E49 RPC \u0E40\u0E14\u0E34\u0E21\u0E01\u0E48\u0E2D\u0E19
+     */
     const {
         data,
         error
@@ -617,50 +733,134 @@ async function loadCurrentShift() {
         )
 
 
+    if (
+        !error
+        &&
+        data
+        &&
+        data.id
+        &&
+        data.branch_id
+        &&
+        data.opened_at
+    ) {
+
+        state.shift =
+            data
+
+        if (
+            data.business_date
+        ) {
+
+            state.businessDate =
+                data.business_date
+        }
+
+        return state.shift
+    }
+
+
     if (error) {
 
-        console.error(
-            'Get current shift error:',
+        console.warn(
+            'get_current_shift fallback:',
             error
         )
-
-        throw error
     }
 
 
     /*
-     * à¸ªà¸³à¸à¸±à¸
+     * V2:
+     * \u0E16\u0E49\u0E32 RPC \u0E40\u0E14\u0E34\u0E21\u0E2B\u0E32\u0E44\u0E21\u0E48\u0E40\u0E08\u0E2D \u0E41\u0E15\u0E48 POS01 \u0E22\u0E31\u0E07\u0E21\u0E35\u0E01\u0E30\u0E40\u0E1B\u0E34\u0E14\u0E43\u0E19\u0E10\u0E32\u0E19\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25
+     * \u0E43\u0E2B\u0E49\u0E42\u0E2B\u0E25\u0E14\u0E01\u0E30\u0E02\u0E2D\u0E07 Terminal \u0E42\u0E14\u0E22\u0E15\u0E23\u0E07
      *
-     * PostgreSQL function à¸à¸µà¹ RETURNS public.shifts
-     * à¸à¸­à¸ return null à¸­à¸²à¸à¸ªà¹à¸à¸à¸¥à¸±à¸à¸¡à¸²à¹à¸à¹à¸ object
-     * à¸à¸µà¹à¸à¸¸à¸ column à¹à¸à¹à¸ null
-     *
-     * à¹à¸£à¸²à¸à¸¶à¸à¸à¹à¸­à¸à¸à¸£à¸§à¸ id à¸à¸£à¸´à¸
+     * \u0E1B\u0E49\u0E2D\u0E07\u0E01\u0E31\u0E19\u0E2D\u0E32\u0E01\u0E32\u0E23:
+     * \u0E2B\u0E19\u0E49\u0E32\u0E40\u0E27\u0E47\u0E1A\u0E1A\u0E2D\u0E01 "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49\u0E40\u0E1B\u0E34\u0E14\u0E01\u0E30"
+     * \u0E41\u0E15\u0E48\u0E01\u0E14\u0E40\u0E1B\u0E34\u0E14\u0E41\u0E25\u0E49\u0E27\u0E44\u0E14\u0E49 TERMINAL_ALREADY_HAS_OPEN_SHIFT
      */
+    const {
+        data:
+            terminalShift,
+        error:
+            terminalError
+    } =
+        await supabase
+            .from(
+                'shifts'
+            )
+            .select(
+                '*'
+            )
+            .eq(
+                'branch_id',
+                state.profile.branch_id
+            )
+            .eq(
+                'terminal_code',
+                'POS01'
+            )
+            .is(
+                'closed_at',
+                null
+            )
+            .order(
+                'opened_at',
+                {
+                    ascending:
+                        false
+                }
+            )
+            .limit(
+                1
+            )
+            .maybeSingle()
+
+
+    if (terminalError) {
+
+        console.error(
+            'Load POS01 open shift error:',
+            terminalError
+        )
+
+        /*
+         * \u0E16\u0E49\u0E32 RLS \u0E44\u0E21\u0E48\u0E2D\u0E19\u0E38\u0E0D\u0E32\u0E15 query \u0E15\u0E23\u0E07
+         * \u0E43\u0E2B\u0E49\u0E41\u0E2A\u0E14\u0E07 error \u0E08\u0E23\u0E34\u0E07\u0E41\u0E17\u0E19\u0E01\u0E32\u0E23\u0E2B\u0E25\u0E2D\u0E01\u0E27\u0E48\u0E32\u0E44\u0E21\u0E48\u0E21\u0E35\u0E01\u0E30
+         */
+        throw terminalError
+    }
+
+
     if (
-        !data
-        ||
-        !data.id
-        ||
-        !data.branch_id
-        ||
-        !data.opened_at
+        terminalShift
+        &&
+        terminalShift.id
+        &&
+        terminalShift.branch_id
+        &&
+        terminalShift.opened_at
     ) {
 
         state.shift =
-            null
+            terminalShift
 
-        return null
+        if (
+            terminalShift.business_date
+        ) {
+
+            state.businessDate =
+                terminalShift.business_date
+        }
+
+        return state.shift
     }
 
 
     state.shift =
-        data
+        null
 
-
-    return state.shift
+    return null
 }
-
 
 /* ========================================
    LOAD LIVE SALES
@@ -673,8 +873,8 @@ async function loadLiveSummary() {
 
 
     /*
-     * à¹à¸¡à¹à¸¡à¸µà¸à¸° à¸«à¸£à¸·à¸­à¸à¹à¸­à¸¡à¸¹à¸¥à¸à¸°à¹à¸¡à¹à¸ªà¸¡à¸à¸¹à¸£à¸à¹
-     * à¸«à¹à¸²à¸¡ query sales à¸à¹à¸§à¸¢ UUID null
+     * \u0E44\u0E21\u0E48\u0E21\u0E35\u0E01\u0E30 \u0E2B\u0E23\u0E37\u0E2D\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E01\u0E30\u0E44\u0E21\u0E48\u0E2A\u0E21\u0E1A\u0E39\u0E23\u0E13\u0E4C
+     * \u0E2B\u0E49\u0E32\u0E21 query sales \u0E14\u0E49\u0E27\u0E22 UUID null
      */
     if (
         !shift
@@ -712,9 +912,9 @@ async function loadLiveSummary() {
                 'branch_id',
                 shift.branch_id
             )
-            .gte(
-                'created_at',
-                shift.opened_at
+            .eq(
+                'shift_id',
+                shift.id
             )
 
 
@@ -1000,12 +1200,14 @@ function renderShift() {
 
 
     el.shiftOpenedText.textContent =
-        `à¹à¸à¸´à¸à¸à¸°à¹à¸¡à¸·à¹à¸­ ${formatDateTime(
+        `\u0E40\u0E1B\u0E34\u0E14\u0E01\u0E30\u0E40\u0E21\u0E37\u0E48\u0E2D ${formatDateTime(
             state.shift.opened_at
         )}`
 
 
     el.shiftOpenedBy.textContent =
+        state.shift.cashier_name
+        ||
         state.profile.full_name
         ||
         '-'
@@ -1021,6 +1223,43 @@ function renderShift() {
         money(
             state.shift.opening_cash
         )
+
+
+    if (
+        el.shiftBusinessDate
+    ) {
+
+        el.shiftBusinessDate.textContent =
+            formatBusinessDate(
+                state.shift.business_date
+                ||
+                state.businessDate
+            )
+    }
+
+
+    if (
+        el.shiftTerminal
+    ) {
+
+        el.shiftTerminal.textContent =
+            state.shift.terminal_code
+            ||
+            'POS01'
+    }
+
+
+    if (
+        el.currentBusinessDate
+    ) {
+
+        el.currentBusinessDate.textContent =
+            formatBusinessDate(
+                state.shift.business_date
+                ||
+                state.businessDate
+            )
+    }
 
 
     el.shiftDuration.textContent =
@@ -1080,7 +1319,7 @@ async function openShift() {
     ) {
 
         message(
-            'à¹à¸à¸´à¸à¸ªà¸à¸à¸±à¹à¸à¸à¹à¸à¸à¹à¸­à¸à¹à¸¡à¹à¸à¸´à¸à¸¥à¸'
+            '\u0E40\u0E07\u0E34\u0E19\u0E2A\u0E14\u0E15\u0E31\u0E49\u0E07\u0E15\u0E49\u0E19\u0E15\u0E49\u0E2D\u0E07\u0E44\u0E21\u0E48\u0E15\u0E34\u0E14\u0E25\u0E1A'
         )
 
 
@@ -1090,9 +1329,9 @@ async function openShift() {
 
     const confirmed =
         confirm(
-            `à¸¢à¸·à¸à¸¢à¸±à¸à¹à¸à¸´à¸à¸à¸°à¸à¹à¸§à¸¢à¹à¸à¸´à¸à¸ªà¸à¸à¸±à¹à¸à¸à¹à¸ ${money(
+            `\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E40\u0E1B\u0E34\u0E14\u0E01\u0E30\u0E14\u0E49\u0E27\u0E22\u0E40\u0E07\u0E34\u0E19\u0E2A\u0E14\u0E15\u0E31\u0E49\u0E07\u0E15\u0E49\u0E19 ${money(
                 openingCash
-            )} à¸«à¸£à¸·à¸­à¹à¸¡à¹?`
+            )} \u0E2B\u0E23\u0E37\u0E2D\u0E44\u0E21\u0E48?`
         )
 
 
@@ -1107,7 +1346,7 @@ async function openShift() {
 
 
     el.openShiftBtn.textContent =
-        'à¸à¸³à¸¥à¸±à¸à¹à¸à¸´à¸à¸à¸°...'
+        '\u0E01\u0E33\u0E25\u0E31\u0E07\u0E40\u0E1B\u0E34\u0E14\u0E01\u0E30...'
 
 
     message('')
@@ -1167,7 +1406,7 @@ async function openShift() {
 
 
         message(
-            'à¹à¸à¸´à¸à¸à¸°à¸ªà¸³à¹à¸£à¹à¸',
+            '\u0E40\u0E1B\u0E34\u0E14\u0E01\u0E30\u0E2A\u0E33\u0E40\u0E23\u0E47\u0E08',
             'success'
         )
 
@@ -1183,7 +1422,7 @@ async function openShift() {
         let text =
             error.message
             ||
-            'à¹à¸à¸´à¸à¸à¸°à¹à¸¡à¹à¸ªà¸³à¹à¸£à¹à¸'
+            '\u0E40\u0E1B\u0E34\u0E14\u0E01\u0E30\u0E44\u0E21\u0E48\u0E2A\u0E33\u0E40\u0E23\u0E47\u0E08'
 
 
         if (
@@ -1193,7 +1432,40 @@ async function openShift() {
         ) {
 
             text =
-                'à¸à¸±à¸à¸à¸µà¸à¸µà¹à¸¡à¸µà¸à¸°à¸à¸µà¹à¹à¸à¸´à¸à¸­à¸¢à¸¹à¹à¹à¸¥à¹à¸§'
+                '\u0E1A\u0E31\u0E0D\u0E0A\u0E35\u0E19\u0E35\u0E49\u0E21\u0E35\u0E01\u0E30\u0E17\u0E35\u0E48\u0E40\u0E1B\u0E34\u0E14\u0E2D\u0E22\u0E39\u0E48\u0E41\u0E25\u0E49\u0E27'
+        }
+
+
+        if (
+            text.includes(
+                'TERMINAL_ALREADY_HAS_OPEN_SHIFT'
+            )
+        ) {
+
+            text =
+                'POS01 \u0E21\u0E35\u0E01\u0E30\u0E40\u0E1B\u0E34\u0E14\u0E2D\u0E22\u0E39\u0E48\u0E41\u0E25\u0E49\u0E27 \u0E01\u0E33\u0E25\u0E31\u0E07\u0E42\u0E2B\u0E25\u0E14\u0E01\u0E30\u0E1B\u0E31\u0E08\u0E08\u0E38\u0E1A\u0E31\u0E19...'
+
+            message(
+                text
+            )
+
+            await loadCurrentShift()
+
+            renderShift()
+
+            if (
+                state.shift
+            ) {
+
+                await loadLiveSummary()
+
+                message(
+                    '\u0E42\u0E2B\u0E25\u0E14\u0E01\u0E30\u0E1B\u0E31\u0E08\u0E08\u0E38\u0E1A\u0E31\u0E19\u0E02\u0E2D\u0E07 POS01 \u0E41\u0E25\u0E49\u0E27',
+                    'success'
+                )
+
+                return
+            }
         }
 
 
@@ -1204,7 +1476,7 @@ async function openShift() {
         ) {
 
             text =
-                'à¸à¸³à¸à¸§à¸à¹à¸à¸´à¸à¸ªà¸à¸à¸±à¹à¸à¸à¹à¸à¹à¸¡à¹à¸à¸¹à¸à¸à¹à¸­à¸'
+                '\u0E08\u0E33\u0E19\u0E27\u0E19\u0E40\u0E07\u0E34\u0E19\u0E2A\u0E14\u0E15\u0E31\u0E49\u0E07\u0E15\u0E49\u0E19\u0E44\u0E21\u0E48\u0E16\u0E39\u0E01\u0E15\u0E49\u0E2D\u0E07'
         }
 
 
@@ -1220,7 +1492,7 @@ async function openShift() {
 
 
         el.openShiftBtn.textContent =
-            'à¹à¸à¸´à¸à¸à¸°'
+            '\u0E40\u0E1B\u0E34\u0E14\u0E01\u0E30'
     }
 }
 
@@ -1335,7 +1607,7 @@ async function refreshShift() {
 
 
         message(
-            'à¸­à¸±à¸à¹à¸à¸à¸¢à¸­à¸à¹à¸¥à¹à¸§',
+            '\u0E2D\u0E31\u0E1B\u0E40\u0E14\u0E15\u0E22\u0E2D\u0E14\u0E41\u0E25\u0E49\u0E27',
             'success'
         )
 
@@ -1351,7 +1623,7 @@ async function refreshShift() {
         message(
             error.message
             ||
-            'à¸£à¸µà¹à¸à¸£à¸à¸¢à¸­à¸à¹à¸¡à¹à¸ªà¸³à¹à¸£à¹à¸'
+            '\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E22\u0E2D\u0E14\u0E44\u0E21\u0E48\u0E2A\u0E33\u0E40\u0E23\u0E47\u0E08'
         )
 
 
@@ -1383,7 +1655,7 @@ async function closeShift() {
     ) {
 
         message(
-            'à¸à¸£à¸¸à¸à¸²à¸à¸£à¸­à¸à¹à¸à¸´à¸à¸ªà¸à¸à¸µà¹à¸à¸±à¸à¹à¸à¹à¸à¸£à¸´à¸'
+            '\u0E01\u0E23\u0E38\u0E13\u0E32\u0E01\u0E23\u0E2D\u0E01\u0E40\u0E07\u0E34\u0E19\u0E2A\u0E14\u0E17\u0E35\u0E48\u0E19\u0E31\u0E1A\u0E44\u0E14\u0E49\u0E08\u0E23\u0E34\u0E07'
         )
 
 
@@ -1406,7 +1678,7 @@ async function closeShift() {
     ) {
 
         message(
-            'à¹à¸à¸´à¸à¸ªà¸à¸à¸µà¹à¸à¸±à¸à¹à¸à¹à¸à¹à¸­à¸à¹à¸¡à¹à¸à¸´à¸à¸¥à¸'
+            '\u0E40\u0E07\u0E34\u0E19\u0E2A\u0E14\u0E17\u0E35\u0E48\u0E19\u0E31\u0E1A\u0E44\u0E14\u0E49\u0E15\u0E49\u0E2D\u0E07\u0E44\u0E21\u0E48\u0E15\u0E34\u0E14\u0E25\u0E1A'
         )
 
 
@@ -1427,15 +1699,15 @@ async function closeShift() {
     const confirmed =
         confirm(
             [
-                'à¸¢à¸·à¸à¸¢à¸±à¸à¸à¸´à¸à¸à¸°à¸«à¸£à¸·à¸­à¹à¸¡à¹?',
+                '\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E1B\u0E34\u0E14\u0E01\u0E30\u0E2B\u0E23\u0E37\u0E2D\u0E44\u0E21\u0E48?',
                 '',
-                `à¹à¸à¸´à¸à¸ªà¸à¸à¸µà¹à¸à¸§à¸£à¸¡à¸µ: ${money(
+                `\u0E40\u0E07\u0E34\u0E19\u0E2A\u0E14\u0E17\u0E35\u0E48\u0E04\u0E27\u0E23\u0E21\u0E35: ${money(
                     expected
                 )}`,
-                `à¹à¸à¸´à¸à¸ªà¸à¸à¸µà¹à¸à¸±à¸à¸à¸£à¸´à¸: ${money(
+                `\u0E40\u0E07\u0E34\u0E19\u0E2A\u0E14\u0E17\u0E35\u0E48\u0E19\u0E31\u0E1A\u0E08\u0E23\u0E34\u0E07: ${money(
                     countedCash
                 )}`,
-                `à¸à¸¥à¸à¹à¸²à¸: ${money(
+                `\u0E1C\u0E25\u0E15\u0E48\u0E32\u0E07: ${money(
                     difference
                 )}`
             ]
@@ -1456,7 +1728,7 @@ async function closeShift() {
 
 
     el.closeShiftBtn.textContent =
-        'à¸à¸³à¸¥à¸±à¸à¸à¸´à¸à¸à¸°...'
+        '\u0E01\u0E33\u0E25\u0E31\u0E07\u0E1B\u0E34\u0E14\u0E01\u0E30...'
 
 
     message('')
@@ -1465,7 +1737,7 @@ async function closeShift() {
     try {
 
         /*
-         * à¸£à¸µà¹à¸à¸£à¸à¸¢à¸­à¸à¸¥à¹à¸²à¸ªà¸¸à¸à¸à¹à¸­à¸à¸à¸´à¸
+         * \u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E22\u0E2D\u0E14\u0E25\u0E48\u0E32\u0E2A\u0E38\u0E14\u0E01\u0E48\u0E2D\u0E19\u0E1B\u0E34\u0E14
          */
         await loadLiveSummary()
 
@@ -1506,7 +1778,7 @@ async function closeShift() {
 
 
         message(
-            'à¸à¸´à¸à¸à¸°à¸ªà¸³à¹à¸£à¹à¸',
+            '\u0E1B\u0E34\u0E14\u0E01\u0E30\u0E2A\u0E33\u0E40\u0E23\u0E47\u0E08',
             'success'
         )
 
@@ -1522,7 +1794,7 @@ async function closeShift() {
         let text =
             error.message
             ||
-            'à¸à¸´à¸à¸à¸°à¹à¸¡à¹à¸ªà¸³à¹à¸£à¹à¸'
+            '\u0E1B\u0E34\u0E14\u0E01\u0E30\u0E44\u0E21\u0E48\u0E2A\u0E33\u0E40\u0E23\u0E47\u0E08'
 
 
         if (
@@ -1532,7 +1804,7 @@ async function closeShift() {
         ) {
 
             text =
-                'à¹à¸¡à¹à¸à¸à¸à¸°à¸à¸µà¹à¸à¸³à¸¥à¸±à¸à¹à¸à¸´à¸à¸­à¸¢à¸¹à¹'
+                '\u0E44\u0E21\u0E48\u0E1E\u0E1A\u0E01\u0E30\u0E17\u0E35\u0E48\u0E01\u0E33\u0E25\u0E31\u0E07\u0E40\u0E1B\u0E34\u0E14\u0E2D\u0E22\u0E39\u0E48'
         }
 
 
@@ -1543,7 +1815,7 @@ async function closeShift() {
         ) {
 
             text =
-                'à¸à¸£à¸¸à¸à¸²à¸à¸£à¸­à¸à¹à¸à¸´à¸à¸ªà¸à¸à¸µà¹à¸à¸±à¸à¹à¸à¹à¸à¸£à¸´à¸'
+                '\u0E01\u0E23\u0E38\u0E13\u0E32\u0E01\u0E23\u0E2D\u0E01\u0E40\u0E07\u0E34\u0E19\u0E2A\u0E14\u0E17\u0E35\u0E48\u0E19\u0E31\u0E1A\u0E44\u0E14\u0E49\u0E08\u0E23\u0E34\u0E07'
         }
 
 
@@ -1554,7 +1826,7 @@ async function closeShift() {
         ) {
 
             text =
-                'à¸à¸³à¸à¸§à¸à¹à¸à¸´à¸à¸ªà¸à¸à¸µà¹à¸à¸±à¸à¹à¸à¹à¹à¸¡à¹à¸à¸¹à¸à¸à¹à¸­à¸'
+                '\u0E08\u0E33\u0E19\u0E27\u0E19\u0E40\u0E07\u0E34\u0E19\u0E2A\u0E14\u0E17\u0E35\u0E48\u0E19\u0E31\u0E1A\u0E44\u0E14\u0E49\u0E44\u0E21\u0E48\u0E16\u0E39\u0E01\u0E15\u0E49\u0E2D\u0E07'
         }
 
 
@@ -1570,7 +1842,7 @@ async function closeShift() {
 
 
         el.closeShiftBtn.textContent =
-            'à¸à¸´à¸à¸à¸°'
+            '\u0E1B\u0E34\u0E14\u0E01\u0E30'
     }
 }
 
@@ -1789,7 +2061,32 @@ async function init() {
         renderUser()
 
 
+        await loadBusinessDate()
+
+
         await loadCurrentShift()
+
+
+        if (
+            state.shift
+            &&
+            state.shift.business_date
+        ) {
+
+            state.businessDate =
+                state.shift.business_date
+        }
+
+
+        if (
+            el.currentBusinessDate
+        ) {
+
+            el.currentBusinessDate.textContent =
+                formatBusinessDate(
+                    state.businessDate
+                )
+        }
 
 
         renderShift()
@@ -1821,7 +2118,7 @@ async function init() {
         message(
             error.message
             ||
-            'à¹à¸«à¸¥à¸à¸£à¸°à¸à¸à¸à¸°à¹à¸¡à¹à¸ªà¸³à¹à¸£à¹à¸'
+            '\u0E42\u0E2B\u0E25\u0E14\u0E23\u0E30\u0E1A\u0E1A\u0E01\u0E30\u0E44\u0E21\u0E48\u0E2A\u0E33\u0E40\u0E23\u0E47\u0E08'
         )
     }
 }
