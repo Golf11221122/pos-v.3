@@ -721,145 +721,176 @@ function renderUser() {
 
 async function loadCurrentShift() {
 
+    let shift =
+        null
+
+
     /*
-     * \u0E02\u0E31\u0E49\u0E19\u0E41\u0E23\u0E01\u0E43\u0E0A\u0E49 RPC \u0E40\u0E14\u0E34\u0E21\u0E01\u0E48\u0E2D\u0E19
+     * 1) \u0E25\u0E2D\u0E07 RPC \u0E40\u0E14\u0E34\u0E21\u0E01\u0E48\u0E2D\u0E19
      */
-    const {
-        data,
-        error
-    } =
-        await supabase.rpc(
-            'get_current_shift'
-        )
+    try {
+
+        const {
+            data,
+            error
+        } =
+            await supabase.rpc(
+                'get_current_shift'
+            )
 
 
-    if (
-        !error
-        &&
-        data
-        &&
-        data.id
-        &&
-        data.branch_id
-        &&
-        data.opened_at
-    ) {
+        if (!error) {
 
-        state.shift =
-            data
+            const payload =
+                Array.isArray(data)
 
-        if (
-            data.business_date
-        ) {
+                    ? (
+                        data[0]
+                        ||
+                        null
+                    )
 
-            state.businessDate =
-                data.business_date
+                    : (
+                        data
+                        ||
+                        null
+                    )
+
+
+            if (
+                payload
+                &&
+                payload.id
+                &&
+                !payload.closed_at
+            ) {
+
+                shift =
+                    payload
+            }
+
+        } else {
+
+            console.warn(
+                'get_current_shift fallback:',
+                error
+            )
         }
 
-        return state.shift
-    }
-
-
-    if (error) {
+    } catch (error) {
 
         console.warn(
-            'get_current_shift fallback:',
+            'get_current_shift exception:',
             error
         )
     }
 
 
     /*
-     * V2:
-     * \u0E16\u0E49\u0E32 RPC \u0E40\u0E14\u0E34\u0E21\u0E2B\u0E32\u0E44\u0E21\u0E48\u0E40\u0E08\u0E2D \u0E41\u0E15\u0E48 POS01 \u0E22\u0E31\u0E07\u0E21\u0E35\u0E01\u0E30\u0E40\u0E1B\u0E34\u0E14\u0E43\u0E19\u0E10\u0E32\u0E19\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25
-     * \u0E43\u0E2B\u0E49\u0E42\u0E2B\u0E25\u0E14\u0E01\u0E30\u0E02\u0E2D\u0E07 Terminal \u0E42\u0E14\u0E22\u0E15\u0E23\u0E07
+     * 2) \u0E16\u0E49\u0E32 RPC \u0E40\u0E14\u0E34\u0E21\u0E44\u0E21\u0E48\u0E1E\u0E1A
+     * \u0E43\u0E0A\u0E49 RPC Security Definer \u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A POS01
      *
-     * \u0E1B\u0E49\u0E2D\u0E07\u0E01\u0E31\u0E19\u0E2D\u0E32\u0E01\u0E32\u0E23:
-     * \u0E2B\u0E19\u0E49\u0E32\u0E40\u0E27\u0E47\u0E1A\u0E1A\u0E2D\u0E01 "\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49\u0E40\u0E1B\u0E34\u0E14\u0E01\u0E30"
-     * \u0E41\u0E15\u0E48\u0E01\u0E14\u0E40\u0E1B\u0E34\u0E14\u0E41\u0E25\u0E49\u0E27\u0E44\u0E14\u0E49 TERMINAL_ALREADY_HAS_OPEN_SHIFT
+     * \u0E44\u0E21\u0E48 query public.shifts \u0E08\u0E32\u0E01 browser \u0E42\u0E14\u0E22\u0E15\u0E23\u0E07
+     * \u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E44\u0E21\u0E48\u0E0A\u0E19 RLS
      */
-    const {
-        data:
-            terminalShift,
-        error:
-            terminalError
-    } =
-        await supabase
-            .from(
-                'shifts'
-            )
-            .select(
-                '*'
-            )
-            .eq(
-                'branch_id',
-                state.profile.branch_id
-            )
-            .eq(
-                'terminal_code',
-                'POS01'
-            )
-            .is(
-                'closed_at',
-                null
-            )
-            .order(
-                'opened_at',
+    if (!shift) {
+
+        const {
+            data,
+            error
+        } =
+            await supabase.rpc(
+                'get_terminal_open_shift_v23',
                 {
-                    ascending:
-                        false
+                    p_terminal_code:
+                        'POS01'
                 }
             )
-            .limit(
-                1
+
+
+        if (error) {
+
+            console.error(
+                'Load POS01 open shift RPC error:',
+                error
             )
-            .maybeSingle()
+
+            throw error
+        }
 
 
-    if (terminalError) {
+        const payload =
+            Array.isArray(data)
 
-        console.error(
-            'Load POS01 open shift error:',
-            terminalError
-        )
+                ? (
+                    data[0]
+                    ||
+                    null
+                )
 
-        /*
-         * \u0E16\u0E49\u0E32 RLS \u0E44\u0E21\u0E48\u0E2D\u0E19\u0E38\u0E0D\u0E32\u0E15 query \u0E15\u0E23\u0E07
-         * \u0E43\u0E2B\u0E49\u0E41\u0E2A\u0E14\u0E07 error \u0E08\u0E23\u0E34\u0E07\u0E41\u0E17\u0E19\u0E01\u0E32\u0E23\u0E2B\u0E25\u0E2D\u0E01\u0E27\u0E48\u0E32\u0E44\u0E21\u0E48\u0E21\u0E35\u0E01\u0E30
-         */
-        throw terminalError
+                : (
+                    data
+                    ||
+                    null
+                )
+
+
+        if (
+            payload
+            &&
+            payload.id
+            &&
+            payload.branch_id
+            &&
+            payload.opened_at
+            &&
+            !payload.closed_at
+        ) {
+
+            shift =
+                payload
+        }
     }
 
 
+    /*
+     * 3) \u0E1B\u0E49\u0E2D\u0E07\u0E01\u0E31\u0E19\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E02\u0E49\u0E32\u0E21\u0E2A\u0E32\u0E02\u0E32
+     */
     if (
-        terminalShift
+        shift?.branch_id
         &&
-        terminalShift.id
+        state.profile?.branch_id
         &&
-        terminalShift.branch_id
-        &&
-        terminalShift.opened_at
+        shift.branch_id !==
+        state.profile.branch_id
     ) {
 
-        state.shift =
-            terminalShift
+        console.warn(
+            'Open shift belongs to another branch:',
+            shift
+        )
 
-        if (
-            terminalShift.business_date
-        ) {
-
-            state.businessDate =
-                terminalShift.business_date
-        }
-
-        return state.shift
+        shift =
+            null
     }
 
 
     state.shift =
-        null
+        shift
 
-    return null
+
+    if (
+        state.shift
+        &&
+        state.shift.business_date
+    ) {
+
+        state.businessDate =
+            state.shift.business_date
+    }
+
+
+    return state.shift
 }
 
 /* ========================================
