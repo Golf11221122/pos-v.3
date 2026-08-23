@@ -274,13 +274,13 @@ function formatRole(
     const map = {
 
         admin:
-            'ผู้ดูแลระบบ',
+            'à¸à¸¹à¹à¸à¸¹à¹à¸¥à¸£à¸°à¸à¸',
 
         manager:
-            'ผู้จัดการ',
+            'à¸à¸¹à¹à¸à¸±à¸à¸à¸²à¸£',
 
         staff:
-            'พนักงาน'
+            'à¸à¸à¸±à¸à¸à¸²à¸'
     }
 
 
@@ -384,13 +384,13 @@ function formatDuration(
     ) {
 
         return (
-            `${hours} ชม. ${minutes} นาที`
+            `${hours} à¸à¸¡. ${minutes} à¸à¸²à¸à¸µ`
         )
     }
 
 
     return (
-        `${minutes} นาที`
+        `${minutes} à¸à¸²à¸à¸µ`
     )
 }
 
@@ -496,7 +496,7 @@ async function loadProfile(
     if (!data) {
 
         throw new Error(
-            'ไม่พบข้อมูลผู้ใช้งาน'
+            'à¹à¸¡à¹à¸à¸à¸à¹à¸­à¸¡à¸¹à¸¥à¸à¸¹à¹à¹à¸à¹à¸à¸²à¸'
         )
     }
 
@@ -507,7 +507,7 @@ async function loadProfile(
     ) {
 
         throw new Error(
-            'บัญชีนี้ถูกปิดใช้งาน'
+            'à¸à¸±à¸à¸à¸µà¸à¸µà¹à¸à¸¹à¸à¸à¸´à¸à¹à¸à¹à¸à¸²à¸'
         )
     }
 
@@ -517,7 +517,7 @@ async function loadProfile(
     ) {
 
         throw new Error(
-            'บัญชียังไม่ได้กำหนดสาขา'
+            'à¸à¸±à¸à¸à¸µà¸¢à¸±à¸à¹à¸¡à¹à¹à¸à¹à¸à¸³à¸«à¸à¸à¸ªà¸²à¸à¸²'
         )
     }
 
@@ -560,7 +560,7 @@ async function loadBranch() {
     if (!data) {
 
         throw new Error(
-            'ไม่พบข้อมูลสาขา'
+            'à¹à¸¡à¹à¸à¸à¸à¹à¸­à¸¡à¸¹à¸¥à¸ªà¸²à¸à¸²'
         )
     }
 
@@ -584,7 +584,7 @@ function renderUser() {
             .email
             ?.split('@')[0]
         ||
-        'ผู้ใช้งาน'
+        'à¸à¸¹à¹à¹à¸à¹à¸à¸²à¸'
 
 
     el.userName.textContent =
@@ -598,7 +598,7 @@ function renderUser() {
 
 
     el.branchText.textContent =
-        `สาขา: ${state.branch.name}`
+        `à¸ªà¸²à¸à¸²: ${state.branch.name}`
 }
 
 
@@ -629,13 +629,13 @@ async function loadCurrentShift() {
 
 
     /*
-     * สำคัญ
+     * à¸ªà¸³à¸à¸±à¸
      *
-     * PostgreSQL function ที่ RETURNS public.shifts
-     * ตอน return null อาจส่งกลับมาเป็น object
-     * ที่ทุก column เป็น null
+     * PostgreSQL function à¸à¸µà¹ RETURNS public.shifts
+     * à¸à¸­à¸ return null à¸­à¸²à¸à¸ªà¹à¸à¸à¸¥à¸±à¸à¸¡à¸²à¹à¸à¹à¸ object
+     * à¸à¸µà¹à¸à¸¸à¸ column à¹à¸à¹à¸ null
      *
-     * เราจึงต้องตรวจ id จริง
+     * à¹à¸£à¸²à¸à¸¶à¸à¸à¹à¸­à¸à¸à¸£à¸§à¸ id à¸à¸£à¸´à¸
      */
     if (
         !data
@@ -673,8 +673,8 @@ async function loadLiveSummary() {
 
 
     /*
-     * ไม่มีกะ หรือข้อมูลกะไม่สมบูรณ์
-     * ห้าม query sales ด้วย UUID null
+     * à¹à¸¡à¹à¸¡à¸µà¸à¸° à¸«à¸£à¸·à¸­à¸à¹à¸­à¸¡à¸¹à¸¥à¸à¸°à¹à¸¡à¹à¸ªà¸¡à¸à¸¹à¸£à¸à¹
+     * à¸«à¹à¸²à¸¡ query sales à¸à¹à¸§à¸¢ UUID null
      */
     if (
         !shift
@@ -1000,7 +1000,7 @@ function renderShift() {
 
 
     el.shiftOpenedText.textContent =
-        `เปิดกะเมื่อ ${formatDateTime(
+        `à¹à¸à¸´à¸à¸à¸°à¹à¸¡à¸·à¹à¸­ ${formatDateTime(
             state.shift.opened_at
         )}`
 
@@ -1080,7 +1080,7 @@ async function openShift() {
     ) {
 
         message(
-            'เงินสดตั้งต้นต้องไม่ติดลบ'
+            'à¹à¸à¸´à¸à¸ªà¸à¸à¸±à¹à¸à¸à¹à¸à¸à¹à¸­à¸à¹à¸¡à¹à¸à¸´à¸à¸¥à¸'
         )
 
 
@@ -1090,9 +1090,9 @@ async function openShift() {
 
     const confirmed =
         confirm(
-            `ยืนยันเปิดกะด้วยเงินสดตั้งต้น ${money(
+            `à¸¢à¸·à¸à¸¢à¸±à¸à¹à¸à¸´à¸à¸à¸°à¸à¹à¸§à¸¢à¹à¸à¸´à¸à¸ªà¸à¸à¸±à¹à¸à¸à¹à¸ ${money(
                 openingCash
-            )} หรือไม่?`
+            )} à¸«à¸£à¸·à¸­à¹à¸¡à¹?`
         )
 
 
@@ -1107,7 +1107,7 @@ async function openShift() {
 
 
     el.openShiftBtn.textContent =
-        'กำลังเปิดกะ...'
+        'à¸à¸³à¸¥à¸±à¸à¹à¸à¸´à¸à¸à¸°...'
 
 
     message('')
@@ -1120,7 +1120,7 @@ async function openShift() {
             error
         } =
             await supabase.rpc(
-                'open_shift',
+                'open_shift_v2',
                 {
                     p_opening_cash:
                         openingCash,
@@ -1128,6 +1128,15 @@ async function openShift() {
                     p_opening_note:
                         openingNote
                         ||
+                        null,
+
+                    p_terminal_code:
+                        'POS01',
+
+                    p_float_mode:
+                        'fresh',
+
+                    p_carry_from_shift_id:
                         null
                 }
             )
@@ -1158,7 +1167,7 @@ async function openShift() {
 
 
         message(
-            'เปิดกะสำเร็จ',
+            'à¹à¸à¸´à¸à¸à¸°à¸ªà¸³à¹à¸£à¹à¸',
             'success'
         )
 
@@ -1174,7 +1183,7 @@ async function openShift() {
         let text =
             error.message
             ||
-            'เปิดกะไม่สำเร็จ'
+            'à¹à¸à¸´à¸à¸à¸°à¹à¸¡à¹à¸ªà¸³à¹à¸£à¹à¸'
 
 
         if (
@@ -1184,7 +1193,7 @@ async function openShift() {
         ) {
 
             text =
-                'บัญชีนี้มีกะที่เปิดอยู่แล้ว'
+                'à¸à¸±à¸à¸à¸µà¸à¸µà¹à¸¡à¸µà¸à¸°à¸à¸µà¹à¹à¸à¸´à¸à¸­à¸¢à¸¹à¹à¹à¸¥à¹à¸§'
         }
 
 
@@ -1195,7 +1204,7 @@ async function openShift() {
         ) {
 
             text =
-                'จำนวนเงินสดตั้งต้นไม่ถูกต้อง'
+                'à¸à¸³à¸à¸§à¸à¹à¸à¸´à¸à¸ªà¸à¸à¸±à¹à¸à¸à¹à¸à¹à¸¡à¹à¸à¸¹à¸à¸à¹à¸­à¸'
         }
 
 
@@ -1211,7 +1220,7 @@ async function openShift() {
 
 
         el.openShiftBtn.textContent =
-            'เปิดกะ'
+            'à¹à¸à¸´à¸à¸à¸°'
     }
 }
 
@@ -1326,7 +1335,7 @@ async function refreshShift() {
 
 
         message(
-            'อัปเดตยอดแล้ว',
+            'à¸­à¸±à¸à¹à¸à¸à¸¢à¸­à¸à¹à¸¥à¹à¸§',
             'success'
         )
 
@@ -1342,7 +1351,7 @@ async function refreshShift() {
         message(
             error.message
             ||
-            'รีเฟรชยอดไม่สำเร็จ'
+            'à¸£à¸µà¹à¸à¸£à¸à¸¢à¸­à¸à¹à¸¡à¹à¸ªà¸³à¹à¸£à¹à¸'
         )
 
 
@@ -1374,7 +1383,7 @@ async function closeShift() {
     ) {
 
         message(
-            'กรุณากรอกเงินสดที่นับได้จริง'
+            'à¸à¸£à¸¸à¸à¸²à¸à¸£à¸­à¸à¹à¸à¸´à¸à¸ªà¸à¸à¸µà¹à¸à¸±à¸à¹à¸à¹à¸à¸£à¸´à¸'
         )
 
 
@@ -1397,7 +1406,7 @@ async function closeShift() {
     ) {
 
         message(
-            'เงินสดที่นับได้ต้องไม่ติดลบ'
+            'à¹à¸à¸´à¸à¸ªà¸à¸à¸µà¹à¸à¸±à¸à¹à¸à¹à¸à¹à¸­à¸à¹à¸¡à¹à¸à¸´à¸à¸¥à¸'
         )
 
 
@@ -1418,15 +1427,15 @@ async function closeShift() {
     const confirmed =
         confirm(
             [
-                'ยืนยันปิดกะหรือไม่?',
+                'à¸¢à¸·à¸à¸¢à¸±à¸à¸à¸´à¸à¸à¸°à¸«à¸£à¸·à¸­à¹à¸¡à¹?',
                 '',
-                `เงินสดที่ควรมี: ${money(
+                `à¹à¸à¸´à¸à¸ªà¸à¸à¸µà¹à¸à¸§à¸£à¸¡à¸µ: ${money(
                     expected
                 )}`,
-                `เงินสดที่นับจริง: ${money(
+                `à¹à¸à¸´à¸à¸ªà¸à¸à¸µà¹à¸à¸±à¸à¸à¸£à¸´à¸: ${money(
                     countedCash
                 )}`,
-                `ผลต่าง: ${money(
+                `à¸à¸¥à¸à¹à¸²à¸: ${money(
                     difference
                 )}`
             ]
@@ -1447,7 +1456,7 @@ async function closeShift() {
 
 
     el.closeShiftBtn.textContent =
-        'กำลังปิดกะ...'
+        'à¸à¸³à¸¥à¸±à¸à¸à¸´à¸à¸à¸°...'
 
 
     message('')
@@ -1456,7 +1465,7 @@ async function closeShift() {
     try {
 
         /*
-         * รีเฟรชยอดล่าสุดก่อนปิด
+         * à¸£à¸µà¹à¸à¸£à¸à¸¢à¸­à¸à¸¥à¹à¸²à¸ªà¸¸à¸à¸à¹à¸­à¸à¸à¸´à¸
          */
         await loadLiveSummary()
 
@@ -1466,7 +1475,7 @@ async function closeShift() {
             error
         } =
             await supabase.rpc(
-                'close_shift',
+                'close_shift_v2',
                 {
                     p_counted_cash:
                         countedCash,
@@ -1497,7 +1506,7 @@ async function closeShift() {
 
 
         message(
-            'ปิดกะสำเร็จ',
+            'à¸à¸´à¸à¸à¸°à¸ªà¸³à¹à¸£à¹à¸',
             'success'
         )
 
@@ -1513,7 +1522,7 @@ async function closeShift() {
         let text =
             error.message
             ||
-            'ปิดกะไม่สำเร็จ'
+            'à¸à¸´à¸à¸à¸°à¹à¸¡à¹à¸ªà¸³à¹à¸£à¹à¸'
 
 
         if (
@@ -1523,7 +1532,7 @@ async function closeShift() {
         ) {
 
             text =
-                'ไม่พบกะที่กำลังเปิดอยู่'
+                'à¹à¸¡à¹à¸à¸à¸à¸°à¸à¸µà¹à¸à¸³à¸¥à¸±à¸à¹à¸à¸´à¸à¸­à¸¢à¸¹à¹'
         }
 
 
@@ -1534,7 +1543,7 @@ async function closeShift() {
         ) {
 
             text =
-                'กรุณากรอกเงินสดที่นับได้จริง'
+                'à¸à¸£à¸¸à¸à¸²à¸à¸£à¸­à¸à¹à¸à¸´à¸à¸ªà¸à¸à¸µà¹à¸à¸±à¸à¹à¸à¹à¸à¸£à¸´à¸'
         }
 
 
@@ -1545,7 +1554,7 @@ async function closeShift() {
         ) {
 
             text =
-                'จำนวนเงินสดที่นับได้ไม่ถูกต้อง'
+                'à¸à¸³à¸à¸§à¸à¹à¸à¸´à¸à¸ªà¸à¸à¸µà¹à¸à¸±à¸à¹à¸à¹à¹à¸¡à¹à¸à¸¹à¸à¸à¹à¸­à¸'
         }
 
 
@@ -1561,7 +1570,7 @@ async function closeShift() {
 
 
         el.closeShiftBtn.textContent =
-            'ปิดกะ'
+            'à¸à¸´à¸à¸à¸°'
     }
 }
 
@@ -1812,7 +1821,7 @@ async function init() {
         message(
             error.message
             ||
-            'โหลดระบบกะไม่สำเร็จ'
+            'à¹à¸«à¸¥à¸à¸£à¸°à¸à¸à¸à¸°à¹à¸¡à¹à¸ªà¸³à¹à¸£à¹à¸'
         )
     }
 }
