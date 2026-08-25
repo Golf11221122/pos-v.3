@@ -553,16 +553,15 @@ function normalizedRole() {
 function canProcessPayment() {
 
     /*
-     * ตอนนี้อนุญาตเฉพาะ:
-     * - admin
-     * - manager
-     *
-     * staff รับออเดอร์/ส่งเข้าครัวได้
-     * แต่ห้ามคิดเงิน
+     * USER ROLES & PERMISSIONS V2.6
+     * - admin / manager: รับชำระเงินได้
+     * - cashier: รับชำระเงินได้
+     * - staff: รับออเดอร์/จัดโต๊ะได้ แต่ห้ามรับเงิน
      */
     return [
         'admin',
-        'manager'
+        'manager',
+        'cashier'
     ].includes(
         normalizedRole()
     )
@@ -592,10 +591,10 @@ function applyPaymentPermissionUi() {
                 true
 
             el.checkoutBtn.textContent =
-                '🔒 ชำระเงิน — ผู้จัดการเท่านั้น'
+                '🔒 ไม่มีสิทธิ์รับชำระเงิน'
 
             el.checkoutBtn.title =
-                'บัญชี Staff ไม่มีสิทธิ์รับชำระเงิน'
+                'อนุญาตเฉพาะ Cashier / Manager / Admin'
 
         } else {
 

@@ -10,27 +10,28 @@ const PAGE_PERMISSIONS = {
     'dashboard.html': [
         'admin',
         'manager',
+        'cashier',
         'staff'
     ],
 
     'pos.html': [
         'admin',
         'manager',
+        'cashier',
         'staff'
     ],
 
     'shift.html': [
         'admin',
         'manager',
-        'staff'
+        'cashier'
     ],
 
     'sales-history.html': [
         'admin',
         'manager',
-        'staff'
+        'cashier'
     ],
-    /* เพิ่มใน PAGE_PERMISSIONS */
 
     'sales-report.html': [
         'admin',
@@ -49,7 +50,8 @@ const PAGE_PERMISSIONS = {
 
     'ingredients.html': [
         'admin',
-        'manager'
+        'manager',
+        'stock'
     ],
 
     'recipes.html': [
@@ -59,21 +61,22 @@ const PAGE_PERMISSIONS = {
 
     'stock-movements.html': [
         'admin',
-        'manager'
+        'manager',
+        'stock'
     ],
 
     'inventory-report.html': [
         'admin',
-        'manager'
+        'manager',
+        'stock'
     ],
 
     'tables.html': [
         'admin',
         'manager',
+        'cashier',
         'staff'
     ],
-
-    
 
     'kitchen-stations.html': [
         'admin',
@@ -83,36 +86,11 @@ const PAGE_PERMISSIONS = {
     'kitchen.html': [
         'admin',
         'manager',
-        'staff'
-    ],
-
-
-    'modifier-options.html': [
-        'admin',
-        'manager'
-    ],
-
-    'marketing.html': [
-        'admin',
-        'manager'
-    ],
-
-    'cost-control.html': [
-        'admin',
-        'manager'
+        'kitchen'
     ],
 
     'employees.html': [
         'admin'
-    ],
-
-    'cancellation-history.html': [
-        'admin'
-    ],
-
-    'order-history.html': [
-        'admin',
-        'manager'
     ]
 }
 
@@ -126,25 +104,27 @@ const MENU_PERMISSIONS = {
     dashboard: [
         'admin',
         'manager',
+        'cashier',
         'staff'
     ],
 
     pos: [
         'admin',
         'manager',
+        'cashier',
         'staff'
     ],
 
     shift: [
         'admin',
         'manager',
-        'staff'
+        'cashier'
     ],
 
     sales: [
         'admin',
         'manager',
-        'staff'
+        'cashier'
     ],
 
     salesReport: [
@@ -164,7 +144,8 @@ const MENU_PERMISSIONS = {
 
     ingredients: [
         'admin',
-        'manager'
+        'manager',
+        'stock'
     ],
 
     recipes: [
@@ -174,17 +155,20 @@ const MENU_PERMISSIONS = {
 
     stockMovements: [
         'admin',
-        'manager'
+        'manager',
+        'stock'
     ],
 
     inventoryReport: [
         'admin',
-        'manager'
+        'manager',
+        'stock'
     ],
 
     tables: [
         'admin',
         'manager',
+        'cashier',
         'staff'
     ],
 
@@ -193,39 +177,8 @@ const MENU_PERMISSIONS = {
         'manager'
     ],
 
-    kitchen: [
-    'admin',
-    'manager',
-    'staff'
-],
-
-
-    modifierOptions: [
-        'admin',
-        'manager'
-    ],
-
-    marketing: [
-        'admin',
-        'manager'
-    ],
-
-    costControl: [
-        'admin',
-        'manager'
-    ],
-
     employees: [
         'admin'
-    ],
-
-    cancellationHistory: [
-        'admin'
-    ],
-
-    orderHistory: [
-        'admin',
-        'manager'
     ],
 
     settings: [
@@ -269,14 +222,6 @@ function normalizeRole(role) {
     /*
      * รองรับ role เก่าชั่วคราว
      */
-    if (
-        value ===
-        'cashier'
-    ) {
-        return 'staff'
-    }
-
-
     return value
 }
 
@@ -473,50 +418,6 @@ function applySidebarPermissions(
     role
 ) {
 
-    /*
-     * ระบบจัดการทั้งก้อน
-     * Staff ไม่เห็นเลย
-     * Admin / Manager เห็นตามสิทธิ์เมนูย่อยเดิม
-     */
-    const managementToggle =
-        document.querySelector(
-            '#managementToggle'
-        )
-
-    const managementMenu =
-        document.querySelector(
-            '#managementMenu'
-        )
-
-    if (
-        role ===
-        'staff'
-    ) {
-
-        if (managementToggle) {
-            managementToggle.style.display =
-                'none'
-        }
-
-        if (managementMenu) {
-            managementMenu.style.display =
-                'none'
-        }
-
-    } else {
-
-        if (managementToggle) {
-            managementToggle.style.display =
-                ''
-        }
-
-        if (managementMenu) {
-            managementMenu.style.display =
-                ''
-        }
-    }
-
-
     setMenuVisibility(
         'a[href="./dashboard.html"]',
         role,
@@ -605,36 +506,11 @@ function applySidebarPermissions(
         MENU_PERMISSIONS.kitchenStations
     )
 
-    setMenuVisibility(
-        'a[href="./kitchen.html"]',
-        role,
-        MENU_PERMISSIONS.kitchen
-    )
-
 
     setMenuVisibility(
-        'a[href="./modifier-options.html"]',
-        role,
-        MENU_PERMISSIONS.modifierOptions
-    )
-setMenuVisibility(
         'a[href="./employees.html"]',
         role,
         MENU_PERMISSIONS.employees
-    )
-
-
-    setMenuVisibility(
-        'a[href="./cancellation-history.html"]',
-        role,
-        MENU_PERMISSIONS.cancellationHistory
-    )
-
-
-    setMenuVisibility(
-        'a[href="./order-history.html"]',
-        role,
-        MENU_PERMISSIONS.orderHistory
     )
 
 
@@ -726,32 +602,30 @@ function redirectNotAllowed(
     role
 ) {
 
-    /*
-     * Staff
-     * ให้กลับหน้าขาย POS
-     */
     if (
-        role ===
-        'staff'
+        role === 'staff'
+        ||
+        role === 'cashier'
     ) {
-
-        window.location
-            .replace(
-                './pos.html'
-            )
-
-
+        window.location.replace('./pos.html')
         return
     }
 
+    if (
+        role === 'kitchen'
+    ) {
+        window.location.replace('./kitchen.html')
+        return
+    }
 
-    /*
-     * Manager / Admin
-     */
-    window.location
-        .replace(
-            './dashboard.html'
-        )
+    if (
+        role === 'stock'
+    ) {
+        window.location.replace('./ingredients.html')
+        return
+    }
+
+    window.location.replace('./dashboard.html')
 }
 
 
@@ -869,7 +743,10 @@ export async function applyRoleGuard() {
             ![
                 'admin',
                 'manager',
-                'staff'
+                'cashier',
+                'staff',
+                'kitchen',
+                'stock'
             ].includes(
                 role
             )
