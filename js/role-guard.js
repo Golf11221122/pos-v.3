@@ -7,22 +7,112 @@ import { supabase } from './supabase.js'
 
 const PAGE_PERMISSIONS = {
 
-    'dashboard.html': ['admin','manager','cashier','staff'],
-    'pos.html': ['admin','manager','cashier','staff'],
-    'shift.html': ['admin','manager','cashier'],
-    'sales-history.html': ['admin','manager','cashier'],
-    'sales-report.html': ['admin','manager'],
-    'products.html': ['admin','manager'],
-    'categories.html': ['admin','manager'],
-    'ingredients.html': ['admin','manager','stock'],
-    'recipes.html': ['admin','manager'],
-    'stock-movements.html': ['admin','manager','stock'],
-    'inventory-report.html': ['admin','manager','stock'],
-    'tables.html': ['admin','manager','cashier','staff'],
-    'kitchen.html': ['admin','manager','kitchen'],
-    'kitchen-stations.html': ['admin','manager'],
-    'employees.html': ['admin'],
-    'audit-log.html': ['admin','manager']
+    'dashboard.html': [
+        'admin',
+        'manager',
+        'cashier',
+        'staff'
+    ],
+
+    'pos.html': [
+        'admin',
+        'manager',
+        'cashier',
+        'staff'
+    ],
+
+    'shift.html': [
+        'admin',
+        'manager',
+        'cashier',
+        'staff'
+    ],
+
+    'sales-history.html': [
+        'admin',
+        'manager',
+        'staff'
+    ],
+    /* เพิ่มใน PAGE_PERMISSIONS */
+
+    'sales-report.html': [
+        'admin',
+        'manager'
+    ],
+
+    'products.html': [
+        'admin',
+        'manager'
+    ],
+
+    'categories.html': [
+        'admin',
+        'manager'
+    ],
+
+    'ingredients.html': [
+        'admin',
+        'manager'
+    ],
+
+    'recipes.html': [
+        'admin',
+        'manager'
+    ],
+
+    'stock-movements.html': [
+        'admin',
+        'manager'
+    ],
+
+    'inventory-report.html': [
+        'admin',
+        'manager'
+    ],
+
+    'tables.html': [
+        'admin',
+        'manager',
+        'cashier',
+        'staff'
+    ],
+
+    
+
+    'kitchen-stations.html': [
+        'admin',
+        'manager'
+    ],
+
+    'kitchen.html': [
+        'admin',
+        'manager',
+        'staff'
+    ],
+
+
+    'modifier-options.html': [
+        'admin',
+        'manager'
+    ],
+
+    'marketing.html': [
+        'admin',
+        'manager'
+    ],
+
+    'cost-control.html': [
+        'admin',
+        'manager'
+    ],
+
+    'employees.html': [
+        'admin'
+    ],
+
+    'cancellation-history.html': [
+        'admin'
+    ]
 }
 
 
@@ -32,23 +122,113 @@ const PAGE_PERMISSIONS = {
 
 const MENU_PERMISSIONS = {
 
-    dashboard: ['admin','manager','cashier','staff'],
-    pos: ['admin','manager','cashier','staff'],
-    shift: ['admin','manager','cashier'],
-    sales: ['admin','manager','cashier'],
-    salesReport: ['admin','manager'],
-    products: ['admin','manager'],
-    categories: ['admin','manager'],
-    ingredients: ['admin','manager','stock'],
-    recipes: ['admin','manager'],
-    stockMovements: ['admin','manager','stock'],
-    inventoryReport: ['admin','manager','stock'],
-    tables: ['admin','manager','cashier','staff'],
-    kitchen: ['admin','manager','kitchen'],
-    kitchenStations: ['admin','manager'],
-    auditLog: ['admin','manager'],
-    employees: ['admin'],
-    settings: ['admin']
+    dashboard: [
+        'admin',
+        'manager',
+        'cashier',
+        'staff'
+    ],
+
+    pos: [
+        'admin',
+        'manager',
+        'cashier',
+        'staff'
+    ],
+
+    shift: [
+        'admin',
+        'manager',
+        'cashier',
+        'staff'
+    ],
+
+    sales: [
+        'admin',
+        'manager',
+        'staff'
+    ],
+
+    salesReport: [
+        'admin',
+        'manager'
+    ],
+
+    products: [
+        'admin',
+        'manager'
+    ],
+
+    categories: [
+        'admin',
+        'manager'
+    ],
+
+    ingredients: [
+        'admin',
+        'manager'
+    ],
+
+    recipes: [
+        'admin',
+        'manager'
+    ],
+
+    stockMovements: [
+        'admin',
+        'manager'
+    ],
+
+    inventoryReport: [
+        'admin',
+        'manager'
+    ],
+
+    tables: [
+        'admin',
+        'manager',
+        'cashier',
+        'staff'
+    ],
+
+    kitchenStations: [
+        'admin',
+        'manager'
+    ],
+
+    kitchen: [
+    'admin',
+    'manager',
+    'staff'
+],
+
+
+    modifierOptions: [
+        'admin',
+        'manager'
+    ],
+
+    marketing: [
+        'admin',
+        'manager'
+    ],
+
+    costControl: [
+        'admin',
+        'manager'
+    ],
+
+    employees: [
+        'admin'
+    ],
+
+    cancellationHistory: [
+        'admin'
+    ],
+
+    settings: [
+        'admin'
+    ]
 }
 
 
@@ -87,12 +267,7 @@ function normalizeRole(role) {
     /*
      * รองรับ role เก่าชั่วคราว
      */
-    if (
-        value ===
-        'cashier'
-    ) {
-        return 'staff'
-    }
+    
 
 
     return value
@@ -379,18 +554,29 @@ function applySidebarPermissions(
         MENU_PERMISSIONS.kitchenStations
     )
 
-
     setMenuVisibility(
-        'a[href="./audit-log.html"]',
+        'a[href="./kitchen.html"]',
         role,
-        MENU_PERMISSIONS.auditLog
+        MENU_PERMISSIONS.kitchen
     )
 
 
     setMenuVisibility(
+        'a[href="./modifier-options.html"]',
+        role,
+        MENU_PERMISSIONS.modifierOptions
+    )
+setMenuVisibility(
         'a[href="./employees.html"]',
         role,
         MENU_PERMISSIONS.employees
+    )
+
+
+    setMenuVisibility(
+        'a[href="./cancellation-history.html"]',
+        role,
+        MENU_PERMISSIONS.cancellationHistory
     )
 
 
@@ -456,35 +642,6 @@ function applyDashboardQuickActions(
 
 
 /* ========================================
-   ROLE SIDEBAR HARDENING V2.8
-======================================== */
-
-const ROLE_ALLOWED_HREFS_V28 = {
-    staff: new Set(['./dashboard.html','./pos.html','./tables.html']),
-    cashier: new Set(['./dashboard.html','./pos.html','./shift.html','./sales-history.html','./tables.html']),
-    kitchen: new Set(['./kitchen.html']),
-    stock: new Set(['./ingredients.html','./stock-movements.html','./inventory-report.html'])
-}
-
-function applyStrictRoleSidebarV28(role) {
-    const allowed = ROLE_ALLOWED_HREFS_V28[role]
-    if (!allowed) return
-
-    document.querySelectorAll('.sidebar a[href]').forEach(link => {
-        const href = link.getAttribute('href') || ''
-        if (!allowed.has(href)) link.style.display = 'none'
-    })
-
-    const managementMenu = document.getElementById('managementMenu')
-    const managementToggle = document.getElementById('managementToggle')
-
-    if (role === 'staff' || role === 'cashier' || role === 'kitchen') {
-        if (managementMenu) managementMenu.style.display = 'none'
-        if (managementToggle) managementToggle.style.display = 'none'
-    }
-}
-
-/* ========================================
    APPLY UI PERMISSIONS
 ======================================== */
 
@@ -500,11 +657,7 @@ function applyUiPermissions(
     applyDashboardQuickActions(
         role
     )
-
-
-    applyStrictRoleSidebarV28(
-        role
-    )
+    applyShiftRoleMenuV281(role)
 }
 
 
@@ -516,22 +669,32 @@ function redirectNotAllowed(
     role
 ) {
 
-    if (role === 'staff' || role === 'cashier') {
-        window.location.replace('./pos.html')
+    /*
+     * Staff
+     * ให้กลับหน้าขาย POS
+     */
+    if (
+        role ===
+        'staff'
+    ) {
+
+        window.location
+            .replace(
+                './pos.html'
+            )
+
+
         return
     }
 
-    if (role === 'kitchen') {
-        window.location.replace('./kitchen.html')
-        return
-    }
 
-    if (role === 'stock') {
-        window.location.replace('./ingredients.html')
-        return
-    }
-
-    window.location.replace('./dashboard.html')
+    /*
+     * Manager / Admin
+     */
+    window.location
+        .replace(
+            './dashboard.html'
+        )
 }
 
 
@@ -649,10 +812,7 @@ export async function applyRoleGuard() {
             ![
                 'admin',
                 'manager',
-                'cashier',
-                'staff',
-                'kitchen',
-                'stock'
+                'staff'
             ].includes(
                 role
             )
@@ -765,3 +925,20 @@ supabase.auth
             }
         }
     )
+/* V2.8.1 Staff/Cashier menu hardening */
+function applyShiftRoleMenuV281(role){
+ const r=String(role||'').trim().toLowerCase()
+ const allow={
+  staff:new Set(['./dashboard.html','./pos.html','./shift.html','./tables.html']),
+  cashier:new Set(['./dashboard.html','./pos.html','./shift.html','./sales-history.html','./tables.html'])
+ }[r]
+ if(!allow)return
+ document.querySelectorAll('.sidebar a[href]').forEach(a=>{
+  const href=a.getAttribute('href')||''
+  if(!allow.has(href))a.style.display='none'
+ })
+ const t=document.getElementById('managementToggle')
+ const m=document.getElementById('managementMenu')
+ if(t)t.style.display='none'
+ if(m)m.style.display='none'
+}

@@ -16,9 +16,6 @@ const state = {
     branch:
         null,
 
-    businessDate:
-        null,
-
     shift:
         null,
 
@@ -81,9 +78,6 @@ const el = {
     pageMessage:
         $('pageMessage'),
 
-    currentBusinessDate:
-        $('currentBusinessDate'),
-
     loadingState:
         $('loadingState'),
 
@@ -119,12 +113,6 @@ const el = {
 
     shiftOpeningCash:
         $('shiftOpeningCash'),
-
-    shiftBusinessDate:
-        $('shiftBusinessDate'),
-
-    shiftTerminal:
-        $('shiftTerminal'),
 
     shiftDuration:
         $('shiftDuration'),
@@ -286,13 +274,13 @@ function formatRole(
     const map = {
 
         admin:
-            '\u0E1C\u0E39\u0E49\u0E14\u0E39\u0E41\u0E25\u0E23\u0E30\u0E1A\u0E1A',
+            'ผู้ดูแลระบบ',
 
         manager:
-            '\u0E1C\u0E39\u0E49\u0E08\u0E31\u0E14\u0E01\u0E32\u0E23',
+            'ผู้จัดการ',
 
         staff:
-            '\u0E1E\u0E19\u0E31\u0E01\u0E07\u0E32\u0E19'
+            'พนักงาน'
     }
 
 
@@ -396,115 +384,14 @@ function formatDuration(
     ) {
 
         return (
-            `${hours} \u0E0A\u0E21. ${minutes} \u0E19\u0E32\u0E17\u0E35`
+            `${hours} ชม. ${minutes} นาที`
         )
     }
 
 
     return (
-        `${minutes} \u0E19\u0E32\u0E17\u0E35`
+        `${minutes} นาที`
     )
-}
-
-
-
-function formatBusinessDate(
-    value
-) {
-    if (!value) {
-        return '-'
-    }
-
-    const parts =
-        String(value)
-            .split('-')
-            .map(Number)
-
-    if (
-        parts.length !== 3
-        ||
-        !parts[0]
-        ||
-        !parts[1]
-        ||
-        !parts[2]
-    ) {
-        return String(value)
-    }
-
-    const date =
-        new Date(
-            parts[0],
-            parts[1] - 1,
-            parts[2]
-        )
-
-    return new Intl.DateTimeFormat(
-        'th-TH',
-        {
-            dateStyle:
-                'long'
-        }
-    ).format(
-        date
-    )
-}
-
-
-async function loadBusinessDate() {
-
-    const {
-        data,
-        error
-    } =
-        await supabase.rpc(
-            'jokjung_get_business_date_v22',
-            {
-                p_branch_id:
-                    state.profile.branch_id
-            }
-        )
-
-
-    if (error) {
-
-        console.error(
-            'Load business date error:',
-            error
-        )
-
-        /*
-         * \u0E44\u0E21\u0E48\u0E43\u0E2B\u0E49\u0E2B\u0E19\u0E49\u0E32 Shift \u0E25\u0E48\u0E21\u0E40\u0E1E\u0E23\u0E32\u0E30\u0E41\u0E04\u0E48\u0E1B\u0E49\u0E32\u0E22 Business Date
-         * \u0E16\u0E49\u0E32\u0E21\u0E35\u0E01\u0E30\u0E2D\u0E22\u0E39\u0E48 \u0E08\u0E30\u0E43\u0E0A\u0E49 business_date \u0E08\u0E32\u0E01\u0E01\u0E30\u0E41\u0E17\u0E19
-         */
-        state.businessDate =
-            state.shift
-                ?.business_date
-            ||
-            null
-
-        return state.businessDate
-    }
-
-
-    state.businessDate =
-        data
-        ||
-        null
-
-
-    if (
-        el.currentBusinessDate
-    ) {
-
-        el.currentBusinessDate.textContent =
-            formatBusinessDate(
-                state.businessDate
-            )
-    }
-
-
-    return state.businessDate
 }
 
 
@@ -609,7 +496,7 @@ async function loadProfile(
     if (!data) {
 
         throw new Error(
-            '\u0E44\u0E21\u0E48\u0E1E\u0E1A\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E1C\u0E39\u0E49\u0E43\u0E0A\u0E49\u0E07\u0E32\u0E19'
+            'ไม่พบข้อมูลผู้ใช้งาน'
         )
     }
 
@@ -620,7 +507,7 @@ async function loadProfile(
     ) {
 
         throw new Error(
-            '\u0E1A\u0E31\u0E0D\u0E0A\u0E35\u0E19\u0E35\u0E49\u0E16\u0E39\u0E01\u0E1B\u0E34\u0E14\u0E43\u0E0A\u0E49\u0E07\u0E32\u0E19'
+            'บัญชีนี้ถูกปิดใช้งาน'
         )
     }
 
@@ -630,7 +517,7 @@ async function loadProfile(
     ) {
 
         throw new Error(
-            '\u0E1A\u0E31\u0E0D\u0E0A\u0E35\u0E22\u0E31\u0E07\u0E44\u0E21\u0E48\u0E44\u0E14\u0E49\u0E01\u0E33\u0E2B\u0E19\u0E14\u0E2A\u0E32\u0E02\u0E32'
+            'บัญชียังไม่ได้กำหนดสาขา'
         )
     }
 
@@ -673,7 +560,7 @@ async function loadBranch() {
     if (!data) {
 
         throw new Error(
-            '\u0E44\u0E21\u0E48\u0E1E\u0E1A\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E2A\u0E32\u0E02\u0E32'
+            'ไม่พบข้อมูลสาขา'
         )
     }
 
@@ -697,7 +584,7 @@ function renderUser() {
             .email
             ?.split('@')[0]
         ||
-        '\u0E1C\u0E39\u0E49\u0E43\u0E0A\u0E49\u0E07\u0E32\u0E19'
+        'ผู้ใช้งาน'
 
 
     el.userName.textContent =
@@ -711,7 +598,7 @@ function renderUser() {
 
 
     el.branchText.textContent =
-        `\u0E2A\u0E32\u0E02\u0E32: ${state.branch.name}`
+        `สาขา: ${state.branch.name}`
 }
 
 
@@ -721,177 +608,59 @@ function renderUser() {
 
 async function loadCurrentShift() {
 
-    let shift =
-        null
+    const {
+        data,
+        error
+    } =
+        await supabase.rpc(
+            'get_current_shift'
+        )
 
 
-    /*
-     * 1) \u0E25\u0E2D\u0E07 RPC \u0E40\u0E14\u0E34\u0E21\u0E01\u0E48\u0E2D\u0E19
-     */
-    try {
+    if (error) {
 
-        const {
-            data,
-            error
-        } =
-            await supabase.rpc(
-                'get_current_shift'
-            )
-
-
-        if (!error) {
-
-            const payload =
-                Array.isArray(data)
-
-                    ? (
-                        data[0]
-                        ||
-                        null
-                    )
-
-                    : (
-                        data
-                        ||
-                        null
-                    )
-
-
-            if (
-                payload
-                &&
-                payload.id
-                &&
-                !payload.closed_at
-            ) {
-
-                shift =
-                    payload
-            }
-
-        } else {
-
-            console.warn(
-                'get_current_shift fallback:',
-                error
-            )
-        }
-
-    } catch (error) {
-
-        console.warn(
-            'get_current_shift exception:',
+        console.error(
+            'Get current shift error:',
             error
         )
+
+        throw error
     }
 
 
     /*
-     * 2) \u0E16\u0E49\u0E32 RPC \u0E40\u0E14\u0E34\u0E21\u0E44\u0E21\u0E48\u0E1E\u0E1A
-     * \u0E43\u0E0A\u0E49 RPC Security Definer \u0E2A\u0E33\u0E2B\u0E23\u0E31\u0E1A POS01
+     * สำคัญ
      *
-     * \u0E44\u0E21\u0E48 query public.shifts \u0E08\u0E32\u0E01 browser \u0E42\u0E14\u0E22\u0E15\u0E23\u0E07
-     * \u0E40\u0E1E\u0E37\u0E48\u0E2D\u0E44\u0E21\u0E48\u0E0A\u0E19 RLS
-     */
-    if (!shift) {
-
-        const {
-            data,
-            error
-        } =
-            await supabase.rpc(
-                'get_terminal_open_shift_v23',
-                {
-                    p_terminal_code:
-                        'POS01'
-                }
-            )
-
-
-        if (error) {
-
-            console.error(
-                'Load POS01 open shift RPC error:',
-                error
-            )
-
-            throw error
-        }
-
-
-        const payload =
-            Array.isArray(data)
-
-                ? (
-                    data[0]
-                    ||
-                    null
-                )
-
-                : (
-                    data
-                    ||
-                    null
-                )
-
-
-        if (
-            payload
-            &&
-            payload.id
-            &&
-            payload.branch_id
-            &&
-            payload.opened_at
-            &&
-            !payload.closed_at
-        ) {
-
-            shift =
-                payload
-        }
-    }
-
-
-    /*
-     * 3) \u0E1B\u0E49\u0E2D\u0E07\u0E01\u0E31\u0E19\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E02\u0E49\u0E32\u0E21\u0E2A\u0E32\u0E02\u0E32
+     * PostgreSQL function ที่ RETURNS public.shifts
+     * ตอน return null อาจส่งกลับมาเป็น object
+     * ที่ทุก column เป็น null
+     *
+     * เราจึงต้องตรวจ id จริง
      */
     if (
-        shift?.branch_id
-        &&
-        state.profile?.branch_id
-        &&
-        shift.branch_id !==
-        state.profile.branch_id
+        !data
+        ||
+        !data.id
+        ||
+        !data.branch_id
+        ||
+        !data.opened_at
     ) {
 
-        console.warn(
-            'Open shift belongs to another branch:',
-            shift
-        )
-
-        shift =
+        state.shift =
             null
+
+        return null
     }
 
 
     state.shift =
-        shift
-
-
-    if (
-        state.shift
-        &&
-        state.shift.business_date
-    ) {
-
-        state.businessDate =
-            state.shift.business_date
-    }
+        data
 
 
     return state.shift
 }
+
 
 /* ========================================
    LOAD LIVE SALES
@@ -904,8 +673,8 @@ async function loadLiveSummary() {
 
 
     /*
-     * \u0E44\u0E21\u0E48\u0E21\u0E35\u0E01\u0E30 \u0E2B\u0E23\u0E37\u0E2D\u0E02\u0E49\u0E2D\u0E21\u0E39\u0E25\u0E01\u0E30\u0E44\u0E21\u0E48\u0E2A\u0E21\u0E1A\u0E39\u0E23\u0E13\u0E4C
-     * \u0E2B\u0E49\u0E32\u0E21 query sales \u0E14\u0E49\u0E27\u0E22 UUID null
+     * ไม่มีกะ หรือข้อมูลกะไม่สมบูรณ์
+     * ห้าม query sales ด้วย UUID null
      */
     if (
         !shift
@@ -943,9 +712,9 @@ async function loadLiveSummary() {
                 'branch_id',
                 shift.branch_id
             )
-            .eq(
-                'shift_id',
-                shift.id
+            .gte(
+                'created_at',
+                shift.opened_at
             )
 
 
@@ -1231,14 +1000,12 @@ function renderShift() {
 
 
     el.shiftOpenedText.textContent =
-        `\u0E40\u0E1B\u0E34\u0E14\u0E01\u0E30\u0E40\u0E21\u0E37\u0E48\u0E2D ${formatDateTime(
+        `เปิดกะเมื่อ ${formatDateTime(
             state.shift.opened_at
         )}`
 
 
     el.shiftOpenedBy.textContent =
-        state.shift.cashier_name
-        ||
         state.profile.full_name
         ||
         '-'
@@ -1254,43 +1021,6 @@ function renderShift() {
         money(
             state.shift.opening_cash
         )
-
-
-    if (
-        el.shiftBusinessDate
-    ) {
-
-        el.shiftBusinessDate.textContent =
-            formatBusinessDate(
-                state.shift.business_date
-                ||
-                state.businessDate
-            )
-    }
-
-
-    if (
-        el.shiftTerminal
-    ) {
-
-        el.shiftTerminal.textContent =
-            state.shift.terminal_code
-            ||
-            'POS01'
-    }
-
-
-    if (
-        el.currentBusinessDate
-    ) {
-
-        el.currentBusinessDate.textContent =
-            formatBusinessDate(
-                state.shift.business_date
-                ||
-                state.businessDate
-            )
-    }
 
 
     el.shiftDuration.textContent =
@@ -1328,6 +1058,42 @@ function renderShift() {
 }
 
 
+
+/* SUPERVISOR PIN V2.8.1 */
+function requestSupervisorPin(actionText){
+ return new Promise(resolve=>{
+  document.getElementById('shiftSupervisorPinModalV281')?.remove()
+  const o=document.createElement('div')
+  o.id='shiftSupervisorPinModalV281'
+  o.style.cssText='position:fixed;inset:0;z-index:50000;background:rgba(0,0,0,.52);display:flex;align-items:flex-end;justify-content:center'
+  o.innerHTML=`<div style="width:100%;max-width:480px;background:#fff;border-radius:24px 24px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom));box-shadow:0 -10px 30px rgba(0,0,0,.18)">
+   <div style="font-size:21px;font-weight:900;margin-bottom:6px">🔐 อนุมัติ${actionText}</div>
+   <div style="font-size:14px;color:#667085;margin-bottom:16px">กรอก PIN 6 หลักของ Manager / Admin</div>
+   <input id="shiftSupervisorPinInputV281" type="password" inputmode="numeric" maxlength="6" autocomplete="off" placeholder="••••••" style="width:100%;min-height:58px;box-sizing:border-box;border:1px solid #d0d5dd;border-radius:14px;padding:12px 14px;font-size:24px;text-align:center;letter-spacing:8px">
+   <div id="shiftSupervisorPinMsgV281" style="min-height:22px;margin-top:8px;color:#d93025;font-size:13px"></div>
+   <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+    <button id="shiftSupervisorCancelV281" type="button" style="min-height:54px;border:1px solid #d0d5dd;background:#fff;border-radius:14px;font-weight:900;font-size:17px">ยกเลิก</button>
+    <button id="shiftSupervisorConfirmV281" type="button" style="min-height:54px;border:1px solid #f2b532;background:#f2b532;border-radius:14px;font-weight:900;font-size:17px">ยืนยัน</button>
+   </div></div>`
+  document.body.appendChild(o)
+  const i=o.querySelector('#shiftSupervisorPinInputV281'),msg=o.querySelector('#shiftSupervisorPinMsgV281')
+  const done=v=>{o.remove();resolve(v)}
+  o.querySelector('#shiftSupervisorCancelV281').onclick=()=>done(null)
+  const ok=o.querySelector('#shiftSupervisorConfirmV281')
+  ok.onclick=()=>{const p=String(i.value||'').trim();if(!/^\d{6}$/.test(p)){msg.textContent='กรุณากรอก PIN 6 หลัก';i.focus();return}done(p)}
+  i.addEventListener('keydown',e=>{if(e.key==='Enter')ok.click()})
+  o.addEventListener('click',e=>{if(e.target===o)done(null)})
+  setTimeout(()=>i.focus(),100)
+ })
+}
+function shiftApprovalErrorText(error,fallback){
+ const t=String(error?.message||fallback||'ทำรายการไม่สำเร็จ')
+ if(t.includes('INVALID_APPROVER_PIN'))return 'PIN Manager / Admin ไม่ถูกต้อง'
+ if(t.includes('APPROVER_PIN_NOT_CONFIGURED'))return 'ยังไม่ได้ตั้ง PIN ผู้อนุมัติให้ Manager / Admin'
+ if(t.includes('SHIFT_PERMISSION_DENIED'))return 'บัญชีนี้ไม่มีสิทธิ์ใช้งานกะ'
+ return t
+}
+
 /* ========================================
    OPEN SHIFT
 ======================================== */
@@ -1350,7 +1116,7 @@ async function openShift() {
     ) {
 
         message(
-            '\u0E40\u0E07\u0E34\u0E19\u0E2A\u0E14\u0E15\u0E31\u0E49\u0E07\u0E15\u0E49\u0E19\u0E15\u0E49\u0E2D\u0E07\u0E44\u0E21\u0E48\u0E15\u0E34\u0E14\u0E25\u0E1A'
+            'เงินสดตั้งต้นต้องไม่ติดลบ'
         )
 
 
@@ -1360,9 +1126,9 @@ async function openShift() {
 
     const confirmed =
         confirm(
-            `\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E40\u0E1B\u0E34\u0E14\u0E01\u0E30\u0E14\u0E49\u0E27\u0E22\u0E40\u0E07\u0E34\u0E19\u0E2A\u0E14\u0E15\u0E31\u0E49\u0E07\u0E15\u0E49\u0E19 ${money(
+            `ยืนยันเปิดกะด้วยเงินสดตั้งต้น ${money(
                 openingCash
-            )} \u0E2B\u0E23\u0E37\u0E2D\u0E44\u0E21\u0E48?`
+            )} หรือไม่?`
         )
 
 
@@ -1372,12 +1138,22 @@ async function openShift() {
     }
 
 
+    const supervisorPin =
+        await requestSupervisorPin(
+            'เปิดกะ'
+        )
+
+    if (!supervisorPin) {
+        return
+    }
+
+
     el.openShiftBtn.disabled =
         true
 
 
     el.openShiftBtn.textContent =
-        '\u0E01\u0E33\u0E25\u0E31\u0E07\u0E40\u0E1B\u0E34\u0E14\u0E01\u0E30...'
+        'กำลังเปิดกะ...'
 
 
     message('')
@@ -1390,7 +1166,7 @@ async function openShift() {
             error
         } =
             await supabase.rpc(
-                'open_shift_v2',
+                'open_shift_with_approval_v281',
                 {
                     p_opening_cash:
                         openingCash,
@@ -1400,14 +1176,11 @@ async function openShift() {
                         ||
                         null,
 
+                    p_manager_pin:
+                        supervisorPin,
+
                     p_terminal_code:
-                        'POS01',
-
-                    p_float_mode:
-                        'fresh',
-
-                    p_carry_from_shift_id:
-                        null
+                        'POS01'
                 }
             )
 
@@ -1437,7 +1210,7 @@ async function openShift() {
 
 
         message(
-            '\u0E40\u0E1B\u0E34\u0E14\u0E01\u0E30\u0E2A\u0E33\u0E40\u0E23\u0E47\u0E08',
+            'เปิดกะสำเร็จ',
             'success'
         )
 
@@ -1453,7 +1226,7 @@ async function openShift() {
         let text =
             error.message
             ||
-            '\u0E40\u0E1B\u0E34\u0E14\u0E01\u0E30\u0E44\u0E21\u0E48\u0E2A\u0E33\u0E40\u0E23\u0E47\u0E08'
+            'เปิดกะไม่สำเร็จ'
 
 
         if (
@@ -1463,40 +1236,7 @@ async function openShift() {
         ) {
 
             text =
-                '\u0E1A\u0E31\u0E0D\u0E0A\u0E35\u0E19\u0E35\u0E49\u0E21\u0E35\u0E01\u0E30\u0E17\u0E35\u0E48\u0E40\u0E1B\u0E34\u0E14\u0E2D\u0E22\u0E39\u0E48\u0E41\u0E25\u0E49\u0E27'
-        }
-
-
-        if (
-            text.includes(
-                'TERMINAL_ALREADY_HAS_OPEN_SHIFT'
-            )
-        ) {
-
-            text =
-                'POS01 \u0E21\u0E35\u0E01\u0E30\u0E40\u0E1B\u0E34\u0E14\u0E2D\u0E22\u0E39\u0E48\u0E41\u0E25\u0E49\u0E27 \u0E01\u0E33\u0E25\u0E31\u0E07\u0E42\u0E2B\u0E25\u0E14\u0E01\u0E30\u0E1B\u0E31\u0E08\u0E08\u0E38\u0E1A\u0E31\u0E19...'
-
-            message(
-                text
-            )
-
-            await loadCurrentShift()
-
-            renderShift()
-
-            if (
-                state.shift
-            ) {
-
-                await loadLiveSummary()
-
-                message(
-                    '\u0E42\u0E2B\u0E25\u0E14\u0E01\u0E30\u0E1B\u0E31\u0E08\u0E08\u0E38\u0E1A\u0E31\u0E19\u0E02\u0E2D\u0E07 POS01 \u0E41\u0E25\u0E49\u0E27',
-                    'success'
-                )
-
-                return
-            }
+                'บัญชีนี้มีกะที่เปิดอยู่แล้ว'
         }
 
 
@@ -1507,9 +1247,15 @@ async function openShift() {
         ) {
 
             text =
-                '\u0E08\u0E33\u0E19\u0E27\u0E19\u0E40\u0E07\u0E34\u0E19\u0E2A\u0E14\u0E15\u0E31\u0E49\u0E07\u0E15\u0E49\u0E19\u0E44\u0E21\u0E48\u0E16\u0E39\u0E01\u0E15\u0E49\u0E2D\u0E07'
+                'จำนวนเงินสดตั้งต้นไม่ถูกต้อง'
         }
 
+
+        text =
+            shiftApprovalErrorText(
+                error,
+                text
+            )
 
         message(
             text
@@ -1523,7 +1269,7 @@ async function openShift() {
 
 
         el.openShiftBtn.textContent =
-            '\u0E40\u0E1B\u0E34\u0E14\u0E01\u0E30'
+            'เปิดกะ'
     }
 }
 
@@ -1638,7 +1384,7 @@ async function refreshShift() {
 
 
         message(
-            '\u0E2D\u0E31\u0E1B\u0E40\u0E14\u0E15\u0E22\u0E2D\u0E14\u0E41\u0E25\u0E49\u0E27',
+            'อัปเดตยอดแล้ว',
             'success'
         )
 
@@ -1654,7 +1400,7 @@ async function refreshShift() {
         message(
             error.message
             ||
-            '\u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E22\u0E2D\u0E14\u0E44\u0E21\u0E48\u0E2A\u0E33\u0E40\u0E23\u0E47\u0E08'
+            'รีเฟรชยอดไม่สำเร็จ'
         )
 
 
@@ -1686,7 +1432,7 @@ async function closeShift() {
     ) {
 
         message(
-            '\u0E01\u0E23\u0E38\u0E13\u0E32\u0E01\u0E23\u0E2D\u0E01\u0E40\u0E07\u0E34\u0E19\u0E2A\u0E14\u0E17\u0E35\u0E48\u0E19\u0E31\u0E1A\u0E44\u0E14\u0E49\u0E08\u0E23\u0E34\u0E07'
+            'กรุณากรอกเงินสดที่นับได้จริง'
         )
 
 
@@ -1709,7 +1455,7 @@ async function closeShift() {
     ) {
 
         message(
-            '\u0E40\u0E07\u0E34\u0E19\u0E2A\u0E14\u0E17\u0E35\u0E48\u0E19\u0E31\u0E1A\u0E44\u0E14\u0E49\u0E15\u0E49\u0E2D\u0E07\u0E44\u0E21\u0E48\u0E15\u0E34\u0E14\u0E25\u0E1A'
+            'เงินสดที่นับได้ต้องไม่ติดลบ'
         )
 
 
@@ -1730,15 +1476,15 @@ async function closeShift() {
     const confirmed =
         confirm(
             [
-                '\u0E22\u0E37\u0E19\u0E22\u0E31\u0E19\u0E1B\u0E34\u0E14\u0E01\u0E30\u0E2B\u0E23\u0E37\u0E2D\u0E44\u0E21\u0E48?',
+                'ยืนยันปิดกะหรือไม่?',
                 '',
-                `\u0E40\u0E07\u0E34\u0E19\u0E2A\u0E14\u0E17\u0E35\u0E48\u0E04\u0E27\u0E23\u0E21\u0E35: ${money(
+                `เงินสดที่ควรมี: ${money(
                     expected
                 )}`,
-                `\u0E40\u0E07\u0E34\u0E19\u0E2A\u0E14\u0E17\u0E35\u0E48\u0E19\u0E31\u0E1A\u0E08\u0E23\u0E34\u0E07: ${money(
+                `เงินสดที่นับจริง: ${money(
                     countedCash
                 )}`,
-                `\u0E1C\u0E25\u0E15\u0E48\u0E32\u0E07: ${money(
+                `ผลต่าง: ${money(
                     difference
                 )}`
             ]
@@ -1754,12 +1500,22 @@ async function closeShift() {
     }
 
 
+    const supervisorPin =
+        await requestSupervisorPin(
+            'ปิดกะ'
+        )
+
+    if (!supervisorPin) {
+        return
+    }
+
+
     el.closeShiftBtn.disabled =
         true
 
 
     el.closeShiftBtn.textContent =
-        '\u0E01\u0E33\u0E25\u0E31\u0E07\u0E1B\u0E34\u0E14\u0E01\u0E30...'
+        'กำลังปิดกะ...'
 
 
     message('')
@@ -1768,7 +1524,7 @@ async function closeShift() {
     try {
 
         /*
-         * \u0E23\u0E35\u0E40\u0E1F\u0E23\u0E0A\u0E22\u0E2D\u0E14\u0E25\u0E48\u0E32\u0E2A\u0E38\u0E14\u0E01\u0E48\u0E2D\u0E19\u0E1B\u0E34\u0E14
+         * รีเฟรชยอดล่าสุดก่อนปิด
          */
         await loadLiveSummary()
 
@@ -1778,7 +1534,7 @@ async function closeShift() {
             error
         } =
             await supabase.rpc(
-                'close_shift_v2',
+                'close_shift_with_approval_v281',
                 {
                     p_counted_cash:
                         countedCash,
@@ -1788,7 +1544,13 @@ async function closeShift() {
                             .value
                             .trim()
                         ||
-                        null
+                        null,
+
+                    p_manager_pin:
+                        supervisorPin,
+
+                    p_terminal_code:
+                        'POS01'
                 }
             )
 
@@ -1809,7 +1571,7 @@ async function closeShift() {
 
 
         message(
-            '\u0E1B\u0E34\u0E14\u0E01\u0E30\u0E2A\u0E33\u0E40\u0E23\u0E47\u0E08',
+            'ปิดกะสำเร็จ',
             'success'
         )
 
@@ -1825,7 +1587,7 @@ async function closeShift() {
         let text =
             error.message
             ||
-            '\u0E1B\u0E34\u0E14\u0E01\u0E30\u0E44\u0E21\u0E48\u0E2A\u0E33\u0E40\u0E23\u0E47\u0E08'
+            'ปิดกะไม่สำเร็จ'
 
 
         if (
@@ -1835,7 +1597,7 @@ async function closeShift() {
         ) {
 
             text =
-                '\u0E44\u0E21\u0E48\u0E1E\u0E1A\u0E01\u0E30\u0E17\u0E35\u0E48\u0E01\u0E33\u0E25\u0E31\u0E07\u0E40\u0E1B\u0E34\u0E14\u0E2D\u0E22\u0E39\u0E48'
+                'ไม่พบกะที่กำลังเปิดอยู่'
         }
 
 
@@ -1846,7 +1608,7 @@ async function closeShift() {
         ) {
 
             text =
-                '\u0E01\u0E23\u0E38\u0E13\u0E32\u0E01\u0E23\u0E2D\u0E01\u0E40\u0E07\u0E34\u0E19\u0E2A\u0E14\u0E17\u0E35\u0E48\u0E19\u0E31\u0E1A\u0E44\u0E14\u0E49\u0E08\u0E23\u0E34\u0E07'
+                'กรุณากรอกเงินสดที่นับได้จริง'
         }
 
 
@@ -1857,9 +1619,15 @@ async function closeShift() {
         ) {
 
             text =
-                '\u0E08\u0E33\u0E19\u0E27\u0E19\u0E40\u0E07\u0E34\u0E19\u0E2A\u0E14\u0E17\u0E35\u0E48\u0E19\u0E31\u0E1A\u0E44\u0E14\u0E49\u0E44\u0E21\u0E48\u0E16\u0E39\u0E01\u0E15\u0E49\u0E2D\u0E07'
+                'จำนวนเงินสดที่นับได้ไม่ถูกต้อง'
         }
 
+
+        text =
+            shiftApprovalErrorText(
+                error,
+                text
+            )
 
         message(
             text
@@ -1873,7 +1641,7 @@ async function closeShift() {
 
 
         el.closeShiftBtn.textContent =
-            '\u0E1B\u0E34\u0E14\u0E01\u0E30'
+            'ปิดกะ'
     }
 }
 
@@ -2092,32 +1860,7 @@ async function init() {
         renderUser()
 
 
-        await loadBusinessDate()
-
-
         await loadCurrentShift()
-
-
-        if (
-            state.shift
-            &&
-            state.shift.business_date
-        ) {
-
-            state.businessDate =
-                state.shift.business_date
-        }
-
-
-        if (
-            el.currentBusinessDate
-        ) {
-
-            el.currentBusinessDate.textContent =
-                formatBusinessDate(
-                    state.businessDate
-                )
-        }
 
 
         renderShift()
@@ -2149,7 +1892,7 @@ async function init() {
         message(
             error.message
             ||
-            '\u0E42\u0E2B\u0E25\u0E14\u0E23\u0E30\u0E1A\u0E1A\u0E01\u0E30\u0E44\u0E21\u0E48\u0E2A\u0E33\u0E40\u0E23\u0E47\u0E08'
+            'โหลดระบบกะไม่สำเร็จ'
         )
     }
 }
