@@ -3446,3 +3446,251 @@ and
         color: var(--text) !important;
     }
 }
+
+
+/* =========================================================
+   JOKJUNG POS PAYMENT MODAL MOBILE UI FIX V2.5.5
+   Clean mobile-first layout for payment screen
+   ========================================================= */
+
+@media (max-width: 760px) {
+
+    #paymentModal {
+        position: fixed !important;
+        inset: 0 !important;
+        z-index: 30000 !important;
+        display: flex !important;
+        align-items: flex-end !important;
+        justify-content: center !important;
+        padding: 0 !important;
+        background: rgba(0,0,0,.50) !important;
+    }
+
+    #paymentModal.hidden {
+        display: none !important;
+    }
+
+    #paymentModal .modal-card {
+        width: 100% !important;
+        max-width: 760px !important;
+        max-height: calc(100dvh - 18px - env(safe-area-inset-top)) !important;
+        overflow-y: auto !important;
+        overscroll-behavior: contain !important;
+        border-radius: 24px 24px 0 0 !important;
+        padding: 20px 18px calc(18px + env(safe-area-inset-bottom)) !important;
+        background: #fff !important;
+        box-shadow: 0 -8px 30px rgba(0,0,0,.16) !important;
+    }
+
+    #paymentModal .modal-head,
+    #paymentModal .modal-header {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: space-between !important;
+        gap: 12px !important;
+        margin-bottom: 16px !important;
+    }
+
+    #paymentModal .modal-head h2,
+    #paymentModal .modal-header h2,
+    #paymentModal h2 {
+        margin: 0 !important;
+        font-size: 26px !important;
+        line-height: 1.15 !important;
+    }
+
+    #paymentModal .close-btn,
+    #paymentModal #closePaymentBtn {
+        width: 50px !important;
+        height: 50px !important;
+        min-width: 50px !important;
+        border-radius: 14px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+
+    #paymentModal .payment-total-card,
+    #paymentModal .total-card,
+    #paymentModal [class*="payment-total"] {
+        border-radius: 18px !important;
+        padding: 22px 16px !important;
+        margin: 8px 0 18px !important;
+    }
+
+    #paymentModal #paymentTotalText {
+        font-size: 34px !important;
+        line-height: 1 !important;
+        font-weight: 900 !important;
+    }
+
+    /* Promotion / Discount section */
+    #paymentModal .promotion-section,
+    #paymentModal .discount-section,
+    #paymentModal [class*="promotion"],
+    #paymentModal [class*="discount"] {
+        margin-bottom: 14px !important;
+    }
+
+    #paymentModal #activePromotionSelect,
+    #paymentModal #couponCodeInput {
+        width: 100% !important;
+        min-height: 50px !important;
+        box-sizing: border-box !important;
+        border-radius: 12px !important;
+        font-size: 16px !important;
+    }
+
+    #paymentModal #applyPromotionBtn,
+    #paymentModal #applyCouponBtn,
+    #paymentModal #manualDiscountBtn {
+        min-height: 50px !important;
+        border-radius: 12px !important;
+        font-size: 16px !important;
+        font-weight: 800 !important;
+    }
+
+    /* stack promotion controls cleanly */
+    #paymentModal .promotion-row,
+    #paymentModal .coupon-row,
+    #paymentModal .discount-row {
+        display: grid !important;
+        grid-template-columns: 1fr !important;
+        gap: 10px !important;
+    }
+
+    #paymentModal #applyPromotionBtn,
+    #paymentModal #applyCouponBtn {
+        width: 100% !important;
+    }
+
+    #paymentModal #manualDiscountBtn {
+        width: 100% !important;
+        margin-top: 4px !important;
+    }
+
+    /* Payment method buttons */
+    #paymentModal .payment-methods,
+    #paymentModal .payment-tabs,
+    #paymentModal [class*="payment-method"] {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 12px !important;
+        width: 100% !important;
+    }
+
+    #paymentModal .payment-methods button,
+    #paymentModal .payment-tabs button,
+    #paymentModal [data-payment],
+    #paymentModal [data-method] {
+        min-height: 58px !important;
+        width: 100% !important;
+        border-radius: 14px !important;
+        font-size: 18px !important;
+        font-weight: 900 !important;
+    }
+
+    /* Cash input and quick cash */
+    #paymentModal #receivedInput {
+        width: 100% !important;
+        min-height: 58px !important;
+        border-radius: 14px !important;
+        font-size: 28px !important;
+        text-align: right !important;
+        padding: 12px 16px !important;
+        box-sizing: border-box !important;
+    }
+
+    #paymentModal #quickCash {
+        display: grid !important;
+        grid-template-columns: repeat(4, 1fr) !important;
+        gap: 10px !important;
+        width: 100% !important;
+        margin-top: 10px !important;
+    }
+
+    #paymentModal #quickCash button {
+        min-height: 50px !important;
+        border-radius: 12px !important;
+        font-size: 17px !important;
+    }
+
+    #paymentModal .change-box,
+    #paymentModal [class*="change"] {
+        border-radius: 14px !important;
+    }
+
+    #paymentModal #changeText {
+        font-size: 22px !important;
+        font-weight: 900 !important;
+    }
+
+    #paymentModal #saleNote {
+        width: 100% !important;
+        min-height: 84px !important;
+        box-sizing: border-box !important;
+        border-radius: 12px !important;
+    }
+
+    /* Final action buttons */
+    #paymentModal .modal-actions {
+        position: static !important;
+        display: grid !important;
+        grid-template-columns: 1fr 1.05fr !important;
+        gap: 12px !important;
+        width: 100% !important;
+        margin-top: 18px !important;
+        padding: 0 !important;
+        background: transparent !important;
+    }
+
+    #paymentModal #cancelPaymentBtn,
+    #paymentModal #confirmPaymentBtn {
+        width: 100% !important;
+        min-width: 0 !important;
+        min-height: 58px !important;
+        border-radius: 14px !important;
+        font-size: 18px !important;
+        font-weight: 900 !important;
+    }
+
+    #paymentModal #cancelPaymentBtn {
+        background: #fff !important;
+        border: 1px solid var(--border) !important;
+        color: var(--text) !important;
+    }
+
+    #paymentModal #confirmPaymentBtn {
+        background: var(--primary) !important;
+        border: 1px solid var(--primary) !important;
+        color: var(--text) !important;
+    }
+
+    /* Remove awkward empty gap at bottom */
+    #paymentModal .modal-card > :last-child {
+        margin-bottom: 0 !important;
+    }
+
+    body:has(#paymentModal:not(.hidden)) .mobile-cart-bar {
+        display: none !important;
+    }
+
+    body:has(#paymentModal:not(.hidden)) {
+        overflow: hidden !important;
+    }
+}
+
+@media (max-width: 420px) {
+    #paymentModal .modal-card {
+        padding-left: 14px !important;
+        padding-right: 14px !important;
+    }
+
+    #paymentModal #quickCash {
+        grid-template-columns: repeat(2, 1fr) !important;
+    }
+
+    #paymentModal .modal-actions {
+        grid-template-columns: 1fr 1fr !important;
+    }
+}
