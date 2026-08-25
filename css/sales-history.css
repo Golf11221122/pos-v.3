@@ -1013,3 +1013,228 @@ td {
         page-break-inside:avoid;
     }
 }
+
+
+/* =========================================================
+   RECEIPT PRINT LAYOUT V2.4.2
+   80mm thermal - compact VOID / REFUND document
+   ========================================================= */
+
+:root{
+    --receipt-paper-width: 80mm;
+    --receipt-content-width: 72mm;
+}
+
+#receiptPrint{
+    width:var(--receipt-content-width);
+    max-width:var(--receipt-content-width);
+    margin:0 auto;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,"Noto Sans Thai","Tahoma",sans-serif;
+    font-size:11px;
+    line-height:1.2;
+    color:#000;
+    background:#fff;
+}
+
+#receiptPrint *{
+    box-sizing:border-box;
+}
+
+#receiptPrint .receipt-center{
+    text-align:center;
+}
+
+#receiptPrint .receipt-row{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:6px;
+    margin:1.5px 0;
+}
+
+#receiptPrint .receipt-row > span{
+    flex:1 1 auto;
+    min-width:0;
+}
+
+#receiptPrint .receipt-row > strong{
+    flex:0 0 auto;
+    max-width:42mm;
+    text-align:right;
+    overflow-wrap:anywhere;
+}
+
+#receiptPrint hr{
+    border:0;
+    border-top:1px dashed #000;
+    margin:5px 0;
+}
+
+#receiptPrint .receipt-items{
+    margin-top:2px;
+}
+
+#receiptPrint .receipt-item{
+    margin:0 0 4px;
+    break-inside:avoid;
+    page-break-inside:avoid;
+}
+
+#receiptPrint .receipt-item-name{
+    font-weight:800;
+    line-height:1.15;
+    margin-bottom:1px;
+}
+
+#receiptPrint .receipt-item-line{
+    display:flex;
+    justify-content:space-between;
+    gap:6px;
+}
+
+#receiptPrint .receipt-summary{
+    margin-top:3px;
+}
+
+#receiptPrint .receipt-audit-box{
+    margin:5px 0;
+    padding:5px 0;
+    border-top:1px dashed #000;
+    border-bottom:0;
+}
+
+#receiptPrint .receipt-audit-title{
+    font-size:12px;
+    line-height:1.15;
+    font-weight:900;
+    letter-spacing:.1px;
+}
+
+#receiptPrint .receipt-audit-heading{
+    margin:0 0 4px;
+    font-size:11px;
+    font-weight:900;
+}
+
+#receiptPrint .receipt-refund-history{
+    display:block;
+    margin-top:4px;
+}
+
+#receiptPrint .receipt-refund-entry{
+    margin:0;
+    padding:5px 0 0;
+    border-top:1px dotted #555;
+    break-inside:avoid;
+    page-break-inside:avoid;
+}
+
+#receiptPrint .receipt-refund-no{
+    margin:0 0 3px;
+    font-size:11px;
+    font-weight:900;
+}
+
+#receiptPrint .receipt-refund-empty{
+    padding:3px 0 1px;
+    text-align:center;
+    font-size:10px;
+}
+
+#receiptPrint .receipt-line-area{
+    margin-top:5px;
+}
+
+#receiptPrint .receipt-line-label{
+    margin-bottom:2px;
+    font-size:10px;
+}
+
+#receiptPrint .receipt-line-area img,
+#receiptPrint img[alt*="LINE"],
+#receiptPrint img[src*="line"],
+#receiptPrint img[src*="LINE"]{
+    display:block;
+    width:25mm !important;
+    height:25mm !important;
+    object-fit:contain;
+    margin:2px auto !important;
+}
+
+#receiptPrint .receipt-thanks{
+    margin-top:3px;
+    font-size:10px;
+}
+
+/* Browser preview on mobile should resemble the final 80mm receipt */
+@media screen{
+    #receiptPrint{
+        width:min(var(--receipt-content-width), 100%);
+    }
+}
+
+/* Actual thermal print */
+@media print{
+    @page{
+        size:80mm auto;
+        margin:2mm 3mm 2mm 3mm;
+    }
+
+    html,body{
+        width:80mm !important;
+        max-width:80mm !important;
+        margin:0 !important;
+        padding:0 !important;
+        background:#fff !important;
+    }
+
+    body *{
+        visibility:hidden !important;
+    }
+
+    #receiptPrint,
+    #receiptPrint *{
+        visibility:visible !important;
+    }
+
+    #receiptPrint{
+        position:absolute !important;
+        left:0 !important;
+        top:0 !important;
+        width:72mm !important;
+        max-width:72mm !important;
+        margin:0 !important;
+        padding:0 !important;
+        overflow:visible !important;
+    }
+
+    #receiptPrint .receipt-audit-box.hidden{
+        display:none !important;
+    }
+
+    #receiptPrint .receipt-refund-entry,
+    #receiptPrint .receipt-item{
+        break-inside:avoid !important;
+        page-break-inside:avoid !important;
+    }
+
+    /* Do not force the QR/footer to the next page */
+    #receiptLineArea{
+        break-before:auto !important;
+        page-break-before:auto !important;
+        break-inside:avoid !important;
+        page-break-inside:avoid !important;
+    }
+
+    /* Remove application controls from print */
+    .no-print,
+    button,
+    .modal-actions,
+    .toolbar,
+    .topbar,
+    .sidebar{
+        display:none !important;
+    }
+}
