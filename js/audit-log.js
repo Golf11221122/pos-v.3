@@ -89,6 +89,201 @@ function entityLabel(v) {
     return map[v] || v || '-'
 }
 
+
+function money(v) {
+    const n = Number(v || 0)
+    return new Intl.NumberFormat('th-TH',{
+        style:'currency',
+        currency:'THB',
+        minimumFractionDigits:2
+    }).format(n)
+}
+
+function cleanText(v) {
+    return String(v ?? '')
+        .replaceAll('â€¢','•')
+        .replaceAll('â–','')
+        .replaceAll('�','')
+        .trim()
+}
+
+function getInvoiceNo(row) {
+    return (
+        row?.after_data?.invoice_no
+        ||
+        row?.before_data?.invoice_no
+        ||
+        row?.metadata?.invoice_no
+        ||
+        ''
+    )
+}
+
+function auditTitle(row) {
+    const invoice = getInvoiceNo(row)
+
+    if (row.entity_type === 'sale' && invoice) {
+        return `${invoice} • ${actionLabel(row.action_type)}`
+    }
+
+    const label = entityLabel(row.entity_type)
+    const action = actionLabel(row.action_type)
+
+    return `${label} • ${action}`
+}
+
+function displayValue(key, value) {
+    if (value === null || value === undefined || value === '') {
+        return '-'
+    }
+
+    const moneyKeys = new Set([
+        'amount',
+        'subtotal',
+        'discount',
+        'total',
+        'received_amount',
+        'change_amount',
+        'unit_cost',
+        'cost_per_unit',
+        'current_stock'
+    ])
+
+    if (moneyKeys.has(key) && !Number.isNaN(Number(value))) {
+        return money(value)
+    }
+
+    if (
+        key.endsWith('_at')
+        ||
+        key === 'created_at'
+        ||
+        key === 'updated_at'
+    ) {
+        const dt = new Date(value)
+        if (!Number.isNaN(dt.getTime())) {
+            return formatDateTime(value)
+        }
+    }
+
+    if (typeof value === 'boolean') {
+        return value ? 'ใช่' : 'ไม่ใช่'
+    }
+
+    if (typeof value === 'object') {
+        return JSON.stringify(value)
+    }
+
+    return cleanText(value)
+}
+
+function fieldLabel(key) {
+    const map = {
+        invoice_no:'เลขบิล',
+        amount:'จำนวนเงิน',
+        reason:'เหตุผล',
+        approver_id:'ผู้อนุมัติ',
+        subtotal:'ยอดก่อนลด',
+        discount:'ส่วนลด',
+        total:'ยอดสุทธิ',
+        payment_method:'วิธีชำระเงิน',
+        status:'สถานะ',
+        full_name:'ชื่อพนักงาน',
+        role:'ตำแหน่ง',
+        is_active:'สถานะบัญชี',
+        name:'ชื่อ',
+        price:'ราคา',
+        current_stock:'สต็อกคงเหลือ',
+        quantity:'จำนวน',
+        movement_type:'ประเภทการเคลื่อนไหว',
+        unit_cost:'ต้นทุนต่อหน่วย',
+        cost_per_unit:'ต้นทุนต่อหน่วย',
+        created_at:'สร้างเมื่อ',
+        updated_at:'แก้ไขเมื่อ',
+        voided_at:'เวลา VOID'
+    }
+
+    return map[key] || key
+}
+
+function importantEntries(data) {
+    if (!data || typeof data !== 'object') {
+        return []
+    }
+
+    const preferred = [
+        'invoice_no',
+        'amount',
+        'reason',
+        'approver_id',
+        'subtotal',
+        'discount',
+        'total',
+        'payment_method',
+        'status',
+        'full_name',
+        'role',
+        'is_active',
+        'name',
+        'price',
+        'quantity',
+        'current_stock',
+        'movement_type',
+        'unit_cost',
+        'cost_per_unit',
+        'created_at',
+        'updated_at',
+        'voided_at'
+    ]
+
+    const result = []
+
+    preferred.forEach(key => {
+        if (Object.prototype.hasOwnProperty.call(data,key)) {
+            result.push([key,data[key]])
+        }
+    })
+
+    Object.keys(data).forEach(key => {
+        if (
+            !preferred.includes(key)
+            &&
+            ![
+                'id',
+                'branch_id',
+                'actor_id',
+                'cashier_id'
+            ].includes(key)
+        ) {
+            result.push([key,data[key]])
+        }
+    })
+
+    return result
+}
+
+function renderFriendlyData(target, data, emptyText='ไม่มีข้อมูลก่อนแก้ไข') {
+    if (!target) return
+
+    const entries = importantEntries(data)
+
+    if (!entries.length) {
+        target.innerHTML = `
+            <div class="friendly-empty">
+                ${esc(emptyText)}
+            </div>
+        `
+        return
+    }
+
+    target.innerHTML = entries.map(([key,value]) => `
+        <div class="friendly-row">
+            <span>${esc(fieldLabel(key))}</span>
+            <strong>${esc(displayValue(key,value))}</strong>
+        </div>
+    `).join('')
+}
+
 async function requireAccess() {
     const { data:{session}, error } = await supabase.auth.getSession()
     if (error) throw error
@@ -161,7 +356,7 @@ function renderRows(rows) {
                     <span class="badge action-${esc(row.action_type)}">${esc(actionLabel(row.action_type))}</span>
                     <span class="badge entity-badge">${esc(entityLabel(row.entity_type))}</span>
                 </div>
-                <strong>${esc(row.description || row.entity_type)}</strong>
+                <strong>${esc(auditTitle(row))}</strong>
                 <small>${esc(formatDateTime(row.created_at))}</small>
             </div>
             <div class="audit-side">
@@ -204,14 +399,22 @@ function openDetail(id) {
     const row=state.rows.find(x=>x.id===id)
     if (!row) return
 
-    el.detailTitle.textContent=`${actionLabel(row.action_type)} • ${entityLabel(row.entity_type)}`
-    el.detailMeta.textContent=`${formatDateTime(row.created_at)} • ${row.actor_name || 'System'}`
-    el.beforeData.textContent=row.before_data
-        ? JSON.stringify(row.before_data,null,2)
-        : '-'
-    el.afterData.textContent=row.after_data
-        ? JSON.stringify(row.after_data,null,2)
-        : '-'
+    el.detailTitle.textContent=auditTitle(row)
+    el.detailMeta.textContent=
+        `${formatDateTime(row.created_at)} • ผู้ทำ: ${row.actor_name || 'System'}`
+
+    renderFriendlyData(
+        el.beforeData,
+        row.before_data,
+        'ไม่มีข้อมูลก่อนแก้ไข'
+    )
+
+    renderFriendlyData(
+        el.afterData,
+        row.after_data,
+        'ไม่มีข้อมูลหลังแก้ไข'
+    )
+
     el.detailModal.classList.remove('hidden')
 }
 
