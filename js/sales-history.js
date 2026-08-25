@@ -12,6 +12,7 @@ const state = {
 
     selectedSale: null,
     selectedItems: [],
+    selectedRefunds: [],
 
     profiles: new Map()
 }
@@ -139,6 +140,26 @@ const el = {
 
     confirmVoidBtn:
         $('confirmVoidBtn'),
+
+
+    // REFUND V2.4
+    detailRefundWrap: $('detailRefundWrap'),
+    detailRefundedTotal: $('detailRefundedTotal'),
+    detailRefundRemaining: $('detailRefundRemaining'),
+    refundHistory: $('refundHistory'),
+    refundSaleBtn: $('refundSaleBtn'),
+    refundModal: $('refundModal'),
+    refundInvoiceText: $('refundInvoiceText'),
+    refundBillTotal: $('refundBillTotal'),
+    refundRemainingText: $('refundRemainingText'),
+    refundAmountInput: $('refundAmountInput'),
+    refundMethodInput: $('refundMethodInput'),
+    refundReferenceInput: $('refundReferenceInput'),
+    refundReasonInput: $('refundReasonInput'),
+    refundMessage: $('refundMessage'),
+    closeRefundBtn: $('closeRefundBtn'),
+    cancelRefundBtn: $('cancelRefundBtn'),
+    confirmRefundBtn: $('confirmRefundBtn'),
 
     // RECEIPT
     receiptBranch:
@@ -1164,6 +1185,8 @@ async function openSaleDetail(
 
     renderSaleItems()
 
+    await loadSaleRefunds()
+
     buildReceipt()
 }
 
@@ -1238,6 +1261,210 @@ function renderSaleItems() {
 
             `
         ).join('')
+}
+
+
+
+/* ========================================
+   REFUND CONTROL V2.4
+======================================== */
+
+const activeRefunds = () =>
+    (state.selectedRefunds || [])
+        .filter(row => !row.reversed_at)
+
+const refundedTotal = () =>
+    activeRefunds()
+        .reduce((sum,row) => sum + Number(row.amount || 0), 0)
+
+const refundRemaining = () =>
+    Math.max(
+        Number(state.selectedSale?.total || 0) - refundedTotal(),
+        0
+    )
+
+function canRefundSale() {
+    const role = String(state.profile?.role || '').trim().toLowerCase()
+    return ['admin','manager'].includes(role)
+}
+
+async function loadSaleRefunds() {
+    state.selectedRefunds = []
+
+    if (!state.selectedSale || state.selectedSale.status !== 'cancelled') {
+        el.detailRefundWrap?.classList.add('hidden')
+        return
+    }
+
+    const { data, error } = await supabase.rpc(
+        'get_sale_refunds_v24',
+        { p_sale_id: state.selectedSale.id }
+    )
+
+    if (error) {
+        console.error('Load refunds error:', error)
+        if (el.refundHistory) {
+            el.refundHistory.innerHTML =
+                `<div class="state">โหลดประวัติคืนเงินไม่สำเร็จ: ${esc(error.message || '')}</div>`
+        }
+        return
+    }
+
+    state.selectedRefunds = data || []
+    renderRefundInfo()
+}
+
+function renderRefundInfo() {
+    if (!state.selectedSale || state.selectedSale.status !== 'cancelled') {
+        el.detailRefundWrap?.classList.add('hidden')
+        return
+    }
+
+    el.detailRefundWrap?.classList.remove('hidden')
+
+    const total = refundedTotal()
+    const remaining = refundRemaining()
+
+    if (el.detailRefundedTotal) el.detailRefundedTotal.textContent = money(total)
+    if (el.detailRefundRemaining) el.detailRefundRemaining.textContent = money(remaining)
+
+    if (el.refundSaleBtn) {
+        const allowed = canRefundSale() && remaining > 0.009
+        el.refundSaleBtn.classList.toggle('hidden', !allowed)
+        el.refundSaleBtn.disabled = !allowed
+    }
+
+    if (!el.refundHistory) return
+
+    const rows = state.selectedRefunds || []
+    el.refundHistory.innerHTML = rows.length
+        ? rows.map(row => `
+            <div class="refund-history-row ${row.reversed_at ? 'is-reversed' : ''}">
+                <div>
+                    <strong>${money(row.amount)}</strong>
+                    <small>${esc(row.refund_method || '-')} • ${formatDateTime(row.refunded_at)}</small>
+                    <small>${esc(row.reason || '-')}</small>
+                    ${row.reference_no ? `<small>Ref: ${esc(row.reference_no)}</small>` : ''}
+                    ${row.reversed_at ? `<small>ย้อนรายการ: ${esc(row.reversal_reason || '-')}</small>` : ''}
+                </div>
+                <span>${esc(row.refunded_by_name || '-')}</span>
+            </div>
+        `).join('')
+        : '<div class="state">ยังไม่มีการคืนเงินจริง</div>'
+}
+
+function openRefundModal() {
+    const sale = state.selectedSale
+    if (!sale || sale.status !== 'cancelled') {
+        alert('ต้อง VOID บิลก่อนบันทึกการคืนเงิน')
+        return
+    }
+
+    if (!canRefundSale()) {
+        alert('การคืนเงินอนุญาตเฉพาะ Manager / Admin')
+        return
+    }
+
+    const remaining = refundRemaining()
+    if (remaining <= 0.009) {
+        alert('บิลนี้คืนเงินครบแล้ว')
+        return
+    }
+
+    el.refundInvoiceText.textContent = sale.invoice_no || '-'
+    el.refundBillTotal.textContent = money(sale.total)
+    el.refundRemainingText.textContent = money(remaining)
+    el.refundAmountInput.value = remaining.toFixed(2)
+    el.refundAmountInput.max = remaining.toFixed(2)
+    el.refundMethodInput.value =
+        ['cash','qr'].includes(sale.payment_method)
+            ? sale.payment_method
+            : 'other'
+    el.refundReferenceInput.value = ''
+    el.refundReasonInput.value = ''
+    message(el.refundMessage,'')
+    el.refundModal.classList.remove('hidden')
+}
+
+function closeRefundModal() {
+    el.refundModal.classList.add('hidden')
+    message(el.refundMessage,'')
+}
+
+async function confirmRefund() {
+    const sale = state.selectedSale
+    if (!sale) return
+
+    const amount = Number(el.refundAmountInput.value || 0)
+    const method = el.refundMethodInput.value
+    const reason = el.refundReasonInput.value.trim()
+    const ref = el.refundReferenceInput.value.trim()
+
+    if (!(amount > 0)) {
+        message(el.refundMessage,'กรุณากรอกจำนวนเงินคืน')
+        return
+    }
+
+    if (amount > refundRemaining() + 0.009) {
+        message(el.refundMessage,'จำนวนเงินคืนเกินยอดที่คืนได้')
+        return
+    }
+
+    if (!reason) {
+        message(el.refundMessage,'กรุณาระบุเหตุผลการคืนเงิน')
+        return
+    }
+
+    if (!confirm(`ยืนยันคืนเงิน ${money(amount)} สำหรับบิล ${sale.invoice_no} หรือไม่?`)) {
+        return
+    }
+
+    el.confirmRefundBtn.disabled = true
+    el.confirmRefundBtn.textContent = 'กำลังบันทึก...'
+
+    try {
+        const { data, error } = await supabase.rpc(
+            'record_sale_refund_v24',
+            {
+                p_sale_id: sale.id,
+                p_amount: amount,
+                p_refund_method: method,
+                p_reason: reason,
+                p_reference_no: ref || null
+            }
+        )
+
+        if (error) throw error
+
+        closeRefundModal()
+        await loadSaleRefunds()
+
+        alert(
+            `บันทึกคืนเงิน ${money(data?.amount || amount)} สำเร็จ\n` +
+            `คืนสะสม ${money(data?.refunded_total || refundedTotal())}\n` +
+            `คงเหลือที่คืนได้ ${money(data?.remaining_refundable || refundRemaining())}`
+        )
+
+    } catch (error) {
+        console.error('Refund error:', error)
+        let text = error.message || 'บันทึกคืนเงินไม่สำเร็จ'
+
+        if (text.includes('SALE_MUST_BE_VOIDED_FIRST'))
+            text = 'ต้อง VOID บิลก่อนจึงจะคืนเงินได้'
+        else if (text.includes('REFUND_PERMISSION_DENIED'))
+            text = 'เฉพาะ Manager / Admin เท่านั้นที่คืนเงินได้'
+        else if (text.includes('REFUND_EXCEEDS_REMAINING'))
+            text = 'จำนวนเงินคืนเกินยอดคงเหลือ'
+        else if (text.includes('SALE_ALREADY_FULLY_REFUNDED'))
+            text = 'บิลนี้คืนเงินครบแล้ว'
+        else if (text.includes('REFUND_REASON_REQUIRED'))
+            text = 'กรุณาระบุเหตุผลการคืนเงิน'
+
+        message(el.refundMessage,text)
+    } finally {
+        el.confirmRefundBtn.disabled = false
+        el.confirmRefundBtn.textContent = 'ยืนยันคืนเงิน'
+    }
 }
 
 
@@ -2100,6 +2327,19 @@ el.cancelVoidBtn.onclick =
 el.confirmVoidBtn.onclick =
     confirmVoidSale
 
+/* REFUND V2.4 */
+el.refundSaleBtn.onclick =
+    openRefundModal
+
+el.closeRefundBtn.onclick =
+    closeRefundModal
+
+el.cancelRefundBtn.onclick =
+    closeRefundModal
+
+el.confirmRefundBtn.onclick =
+    confirmRefund
+
 
 /*
  * คลิกพื้นหลัง Detail
@@ -2132,6 +2372,16 @@ el.voidModal.onclick =
 
 
 /*
+ * คลิกพื้นหลัง Refund
+ */
+el.refundModal.onclick =
+    event => {
+        if (event.target === el.refundModal) {
+            closeRefundModal()
+        }
+    }
+
+/*
  * ESC
  */
 document.addEventListener(
@@ -2145,6 +2395,15 @@ document.addEventListener(
             return
         }
 
+
+        if (
+            !el.refundModal
+                .classList
+                .contains('hidden')
+        ) {
+            closeRefundModal()
+            return
+        }
 
         /*
          * ถ้า VOID modal เปิดอยู่
