@@ -437,6 +437,18 @@
 
             </div>
 
+            <div id="detailRefundWrap" class="refund-box hidden">
+                <div class="refund-box-head">
+                    <strong>💸 การคืนเงิน</strong>
+                    <button id="refundSaleBtn" class="outline-btn" type="button">คืนเงิน</button>
+                </div>
+                <div class="refund-summary-grid">
+                    <div><span>คืนแล้ว</span><strong id="detailRefundedTotal">฿0.00</strong></div>
+                    <div><span>คืนได้อีก</span><strong id="detailRefundRemaining">฿0.00</strong></div>
+                </div>
+                <div id="refundHistory" class="refund-history"></div>
+            </div>
+
 
 
             <div class="detail-items">
@@ -897,6 +909,63 @@
 
     </section>
 
+
+    <!-- =========================================
+     REFUND CONTROL V2.4
+========================================= -->
+    <div id="refundModal" class="modal hidden">
+        <div class="modal-card" style="max-width:520px;">
+            <div class="modal-head">
+                <div>
+                    <h2>คืนเงินลูกค้า</h2>
+                    <small id="refundInvoiceText">-</small>
+                </div>
+                <button id="closeRefundBtn" class="icon-btn" type="button">×</button>
+            </div>
+
+            <div class="note-box" style="margin-bottom:16px;">
+                บันทึกนี้คือ <b>เงินที่คืนจริง</b> หลังจาก VOID บิลแล้ว
+                การคืนเงินในหน้านี้จะไม่ตัดหรือคืน Stock ซ้ำ
+            </div>
+
+            <div class="refund-summary-grid">
+                <div><span>ยอดบิล</span><strong id="refundBillTotal">฿0.00</strong></div>
+                <div><span>คืนได้อีก</span><strong id="refundRemainingText">฿0.00</strong></div>
+            </div>
+
+            <div class="field">
+                <label for="refundAmountInput">จำนวนเงิน *</label>
+                <input id="refundAmountInput" type="number" min="0.01" step="0.01" inputmode="decimal">
+            </div>
+
+            <div class="field">
+                <label for="refundMethodInput">วิธีคืนเงิน *</label>
+                <select id="refundMethodInput">
+                    <option value="cash">เงินสด</option>
+                    <option value="qr">QR</option>
+                    <option value="transfer">โอนเงิน</option>
+                    <option value="other">อื่น ๆ</option>
+                </select>
+            </div>
+
+            <div class="field">
+                <label for="refundReferenceInput">เลขอ้างอิง</label>
+                <input id="refundReferenceInput" type="text" maxlength="120" placeholder="เช่น เลขรายการโอน">
+            </div>
+
+            <div class="field">
+                <label for="refundReasonInput">เหตุผล *</label>
+                <textarea id="refundReasonInput" maxlength="500" placeholder="เหตุผลที่คืนเงิน"></textarea>
+            </div>
+
+            <p id="refundMessage" class="message"></p>
+
+            <div class="modal-actions">
+                <button id="cancelRefundBtn" class="outline-btn" type="button">ยกเลิก</button>
+                <button id="confirmRefundBtn" class="primary-btn" type="button">ยืนยันคืนเงิน</button>
+            </div>
+        </div>
+    </div>
 
 
     <script type="module" src="./js/sales-history.js"></script>
