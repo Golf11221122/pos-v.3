@@ -575,6 +575,120 @@ function applyDashboardQuickActions(
 }
 
 
+
+/* ========================================
+   STRICT STAFF SIDEBAR V2.6.1
+   Staff เห็นเฉพาะฟังก์ชันที่ใช้งานได้จริง
+======================================== */
+
+function applyStrictStaffSidebarV261(role) {
+
+    if (role !== 'staff') {
+        return
+    }
+
+
+    /*
+     * STAFF ใช้งานจริง:
+     * - Dashboard
+     * - POS รับออเดอร์
+     * - จัดการโต๊ะ
+     *
+     * ห้ามเห็น:
+     * - จอครัว
+     * - Shift / Sales History
+     * - ระบบจัดการทั้งหมด
+     * - Reports / Cost / Marketing / Stock / Employee / Settings
+     */
+    const allowedHrefs = new Set([
+        './dashboard.html',
+        './pos.html',
+        './tables.html'
+    ])
+
+
+    document
+        .querySelectorAll(
+            '.sidebar a.menu-item, .sidebar .menu-item[href]'
+        )
+        .forEach(
+            link => {
+
+                const href =
+                    link.getAttribute(
+                        'href'
+                    )
+                    ||
+                    ''
+
+                const allowed =
+                    allowedHrefs.has(
+                        href
+                    )
+
+                link.style.display =
+                    allowed
+                        ? ''
+                        : 'none'
+
+                link.setAttribute(
+                    'aria-hidden',
+                    allowed
+                        ? 'false'
+                        : 'true'
+                )
+            }
+        )
+
+
+    /*
+     * ระบบจัดการไม่มีเมนูที่ Staff ใช้
+     * ซ่อนทั้งหัวข้อ ไม่ให้เหลือกล่องว่าง
+     */
+    const managementToggle =
+        document.getElementById(
+            'managementToggle'
+        )
+
+    const managementMenu =
+        document.getElementById(
+            'managementMenu'
+        )
+
+    if (managementToggle) {
+        managementToggle.style.display =
+            'none'
+    }
+
+    if (managementMenu) {
+        managementMenu.style.display =
+            'none'
+
+        managementMenu.classList
+            .remove(
+                'open'
+            )
+    }
+
+
+    /*
+     * ป้องกันเมนูที่เป็น button และไม่ใช่ <a>
+     * เช่นเมนูจัดการพิเศษใน Sidebar
+     */
+    document
+        .querySelectorAll(
+            '.sidebar button[data-role-admin], ' +
+            '.sidebar button[data-management], ' +
+            '.sidebar [data-admin-only]'
+        )
+        .forEach(
+            node => {
+                node.style.display =
+                    'none'
+            }
+        )
+}
+
 /* ========================================
    APPLY UI PERMISSIONS
 ======================================== */
@@ -589,6 +703,16 @@ function applyUiPermissions(
 
 
     applyDashboardQuickActions(
+        role
+    )
+
+
+    /*
+     * V2.6.1
+     * หลังจาก permission เดิมทำงานแล้ว
+     * บังคับ Sidebar ของ Staff ให้เหลือเฉพาะเมนูที่ใช้จริง
+     */
+    applyStrictStaffSidebarV261(
         role
     )
 }
