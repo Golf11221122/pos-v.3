@@ -249,6 +249,7 @@ function fieldLabel(key) {
         amount:'จำนวนเงิน',
         reason:'เหตุผล',
         approver_id:'ผู้อนุมัติ',
+        approver_name:'ผู้อนุมัติ',
         voided_by:'ผู้อนุมัติ VOID',
         refunded_by:'ผู้คืนเงิน',
         cashier_id:'พนักงานขาย',
@@ -449,7 +450,7 @@ async function loadData() {
     }
 
     const [{data:rows,error},{data:summary,error:se}] = await Promise.all([
-        supabase.rpc('central_audit_list_v27',args),
+        supabase.rpc('central_audit_list_v274',args),
         supabase.rpc('central_audit_summary_v27',{
             p_date_from:el.dateFrom.value,
             p_date_to:el.dateTo.value
@@ -478,9 +479,39 @@ function openDetail(id) {
         'ไม่มีข้อมูลก่อนแก้ไข'
     )
 
+    const afterData =
+        row.after_data
+            ? { ...row.after_data }
+            : {}
+
+    /*
+     * V2.7.4
+     * ใช้ชื่อผู้อนุมัติที่ resolve จาก SQL RPC โดยตรง
+     * เพื่อไม่ให้ติด RLS/Cache จากการอ่าน profiles ฝั่ง browser
+     */
+    if (
+        row.approver_id
+        ||
+        Object.prototype.hasOwnProperty.call(
+            afterData,
+            'approver_id'
+        )
+        ||
+        Object.prototype.hasOwnProperty.call(
+            afterData,
+            'voided_by'
+        )
+    ) {
+        afterData.approver_name =
+            row.approver_name || '-'
+
+        delete afterData.approver_id
+        delete afterData.voided_by
+    }
+
     renderFriendlyData(
         el.afterData,
-        row.after_data,
+        afterData,
         'ไม่มีข้อมูลหลังแก้ไข'
     )
 
