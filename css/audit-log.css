@@ -1,0 +1,54 @@
+*{box-sizing:border-box}
+:root{--primary:#f2b532;--text:#1f2937;--muted:#667085;--border:#e5e7eb;--bg:#f6f7f9}
+body{margin:0;font-family:Arial,"Noto Sans Thai",Tahoma,sans-serif;background:var(--bg);color:var(--text)}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.hidden{display:none!important}
+.topbar{position:sticky;top:0;z-index:10;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 22px;background:#fff;border-bottom:1px solid var(--border)}
+.topbar-left,.topbar-right{display:flex;align-items:center;gap:12px}
+.topbar h1{margin:0;font-size:22px}
+.topbar small{color:var(--muted)}
+.icon-btn,.outline-btn,.primary-btn{border:1px solid var(--border);border-radius:12px;background:#fff;padding:10px 14px;font-weight:800}
+.icon-btn{width:44px;height:44px;padding:0;font-size:22px}
+.primary-btn{background:var(--primary);border-color:var(--primary)}
+.page{max-width:1180px;margin:0 auto;padding:22px}
+.page-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:16px}
+.page-head h2{margin:0 0 4px}.page-head p{margin:0;color:var(--muted)}
+.summary-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:16px}
+.summary-card,.filter-card,.audit-card{background:#fff;border:1px solid var(--border);border-radius:16px}
+.summary-card{padding:16px}.summary-card span{display:block;color:var(--muted);font-size:13px}.summary-card strong{display:block;margin-top:6px;font-size:27px}
+.filter-card{padding:16px;margin-bottom:16px}
+.filter-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.field{display:flex;flex-direction:column;gap:6px}.field label{font-weight:800;font-size:13px}
+.field input,.field select{width:100%;min-height:46px;border:1px solid var(--border);border-radius:10px;padding:9px 11px;background:#fff}
+.filter-actions{display:flex;gap:10px;margin-top:14px}
+.message{min-height:20px;color:#c5221f}
+.audit-list{display:flex;flex-direction:column;gap:10px}
+.audit-card{display:flex;justify-content:space-between;gap:18px;padding:15px}
+.audit-main,.audit-side{display:flex;flex-direction:column;gap:6px}.audit-side{align-items:flex-end;text-align:right;font-size:13px;color:var(--muted)}
+.audit-badges{display:flex;gap:6px;flex-wrap:wrap}
+.badge{display:inline-flex;padding:4px 8px;border-radius:999px;font-size:12px;font-weight:900;background:#eef2f6}
+.action-void,.action-delete,.action-refund_reverse{background:#fee4e2;color:#b42318}
+.action-discount,.action-refund{background:#fff3cd;color:#8a6100}
+.action-insert{background:#dcfae6;color:#067647}
+.action-update{background:#e0f2fe;color:#075985}
+.detail-btn{border:0;background:#111827;color:#fff;border-radius:9px;padding:7px 10px;font-weight:800}
+.empty{padding:36px;text-align:center;color:var(--muted)}
+.modal{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.48);display:flex;align-items:center;justify-content:center;padding:18px}
+.modal-card{width:min(980px,100%);max-height:90vh;overflow:auto;background:#fff;border-radius:18px;padding:18px}
+.modal-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}.modal-head h3{margin:0}.modal-head small{color:var(--muted)}
+.detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.detail-grid section{min-width:0}.detail-grid h4{margin:0 0 8px}
+pre{margin:0;min-height:180px;max-height:58vh;overflow:auto;background:#111827;color:#f9fafb;padding:12px;border-radius:12px;font-size:12px;white-space:pre-wrap;overflow-wrap:anywhere}
+@media(max-width:800px){
+ .topbar{padding:12px}.topbar-right span{display:none}
+ .page{padding:14px}.page-head{align-items:flex-start}
+ .summary-grid{grid-template-columns:1fr 1fr}
+ .filter-grid{grid-template-columns:1fr 1fr}
+ .audit-card{flex-direction:column}.audit-side{align-items:flex-start;text-align:left}
+ .detail-grid{grid-template-columns:1fr}
+}
+@media(max-width:480px){
+ .topbar h1{font-size:18px}.outline-btn{padding:9px}
+ .summary-grid,.filter-grid{grid-template-columns:1fr}
+ .filter-actions{display:grid;grid-template-columns:1fr 1fr}.filter-actions .primary-btn{grid-column:1/-1}
+}
