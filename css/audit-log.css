@@ -52,3 +52,93 @@ pre{margin:0;min-height:180px;max-height:58vh;overflow:auto;background:#111827;c
  .summary-grid,.filter-grid{grid-template-columns:1fr}
  .filter-actions{display:grid;grid-template-columns:1fr 1fr}.filter-actions .primary-btn{grid-column:1/-1}
 }
+
+
+/* =========================================================
+   JOKJUNG AUDIT LOG UI POLISH V2.7.1
+   Friendly detail view + clean Thai display
+   ========================================================= */
+
+#beforeData,
+#afterData{
+    margin:0;
+    min-height:120px;
+    max-height:56vh;
+    overflow:auto;
+    background:#f8fafc;
+    color:#1f2937;
+    padding:12px;
+    border:1px solid #e5e7eb;
+    border-radius:12px;
+    font-family:Arial,"Noto Sans Thai",Tahoma,sans-serif;
+    font-size:14px;
+    white-space:normal;
+}
+
+.friendly-row{
+    display:grid;
+    grid-template-columns:minmax(120px,.8fr) minmax(0,1.4fr);
+    gap:12px;
+    padding:9px 0;
+    border-bottom:1px solid #e5e7eb;
+}
+
+.friendly-row:last-child{
+    border-bottom:0;
+}
+
+.friendly-row span{
+    color:#667085;
+    font-weight:700;
+}
+
+.friendly-row strong{
+    text-align:right;
+    color:#111827;
+    overflow-wrap:anywhere;
+    word-break:break-word;
+}
+
+.friendly-empty{
+    padding:18px 8px;
+    text-align:center;
+    color:#98a2b3;
+}
+
+.audit-card .audit-main>strong{
+    overflow-wrap:anywhere;
+    word-break:break-word;
+}
+
+@media(max-width:640px){
+    .modal{
+        align-items:flex-end;
+        padding:0;
+    }
+
+    .modal-card{
+        width:100%;
+        max-height:88dvh;
+        border-radius:22px 22px 0 0;
+        padding:18px 16px calc(18px + env(safe-area-inset-bottom));
+    }
+
+    .detail-grid{
+        grid-template-columns:1fr;
+    }
+
+    .friendly-row{
+        grid-template-columns:1fr;
+        gap:4px;
+    }
+
+    .friendly-row strong{
+        text-align:left;
+    }
+
+    #beforeData,
+    #afterData{
+        min-height:80px;
+        max-height:none;
+    }
+}
