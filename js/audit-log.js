@@ -35,7 +35,8 @@ const state = {
     session: null,
     profile: null,
     branch: null,
-    rows: []
+    rows: [],
+    profileNames: {}
 }
 
 function esc(v) {
@@ -119,6 +120,57 @@ function getInvoiceNo(row) {
     )
 }
 
+
+function personNameById(userId) {
+    if (!userId) {
+        return '-'
+    }
+
+    return (
+        state.profileNames?.[String(userId)]
+        ||
+        String(userId)
+    )
+}
+
+async function loadProfileNames() {
+    if (!state.profile?.branch_id) {
+        state.profileNames = {}
+        return
+    }
+
+    const {
+        data,
+        error
+    } = await supabase
+        .from('profiles')
+        .select('id,full_name')
+        .eq(
+            'branch_id',
+            state.profile.branch_id
+        )
+
+    if (error) {
+        console.warn(
+            'Load profile names error:',
+            error
+        )
+
+        state.profileNames = {}
+        return
+    }
+
+    state.profileNames =
+        Object.fromEntries(
+            (data || []).map(
+                row => [
+                    String(row.id),
+                    row.full_name || row.id
+                ]
+            )
+        )
+}
+
 function auditTitle(row) {
     const invoice = getInvoiceNo(row)
 
@@ -135,6 +187,20 @@ function auditTitle(row) {
 function displayValue(key, value) {
     if (value === null || value === undefined || value === '') {
         return '-'
+    }
+
+    const personIdKeys = new Set([
+        'approver_id',
+        'actor_id',
+        'cashier_id',
+        'voided_by',
+        'refunded_by',
+        'created_by',
+        'updated_by'
+    ])
+
+    if (personIdKeys.has(key)) {
+        return personNameById(value)
     }
 
     const moneyKeys = new Set([
@@ -183,6 +249,9 @@ function fieldLabel(key) {
         amount:'จำนวนเงิน',
         reason:'เหตุผล',
         approver_id:'ผู้อนุมัติ',
+        voided_by:'ผู้อนุมัติ VOID',
+        refunded_by:'ผู้คืนเงิน',
+        cashier_id:'พนักงานขาย',
         subtotal:'ยอดก่อนลด',
         discount:'ส่วนลด',
         total:'ยอดสุทธิ',
@@ -460,6 +529,8 @@ async function init() {
         setDefaultWeek()
         const ok=await requireAccess()
         if (!ok) return
+
+        await loadProfileNames()
         await loadData()
     } catch(error) {
         showError(error)
