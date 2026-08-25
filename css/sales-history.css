@@ -951,3 +951,65 @@ td {
     .refund-summary-grid{grid-template-columns:1fr}
     .refund-box-head{align-items:flex-start}
 }
+
+
+/* VOID / REFUND RECEIPT DETAIL V2.4.1 */
+.receipt-audit-box{
+    margin:8px 0;
+    padding:7px 0;
+    border-top:1px dashed #000;
+    border-bottom:1px dashed #000;
+}
+.receipt-audit-title{
+    font-size:14px;
+    font-weight:900;
+}
+.receipt-audit-heading{
+    margin-bottom:6px;
+    font-weight:900;
+}
+.receipt-refund-history{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    margin-top:7px;
+}
+.receipt-refund-entry{
+    padding-top:7px;
+    border-top:1px dotted #555;
+}
+.receipt-refund-entry:first-child{
+    border-top:0;
+}
+.receipt-refund-entry.is-reversed{
+    opacity:.58;
+}
+.receipt-refund-no{
+    margin-bottom:4px;
+    font-weight:900;
+}
+.receipt-wrap-row{
+    align-items:flex-start;
+}
+.receipt-wrap-row strong{
+    max-width:44mm;
+    text-align:right;
+    overflow-wrap:anywhere;
+    white-space:normal;
+}
+.receipt-refund-empty{
+    padding:5px 0;
+    text-align:center;
+}
+@media print{
+    #receiptPrint .receipt-audit-box{
+        display:block;
+    }
+    #receiptPrint .receipt-audit-box.hidden{
+        display:none !important;
+    }
+    #receiptPrint .receipt-refund-entry{
+        break-inside:avoid;
+        page-break-inside:avoid;
+    }
+}
