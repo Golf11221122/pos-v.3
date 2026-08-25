@@ -123,44 +123,30 @@ function message(
 
 
 function roleLabel(role) {
-    if (role === 'admin') {
-        return 'Admin'
+    const map = {
+        admin: 'Admin',
+        manager: 'Manager',
+        cashier: 'Cashier',
+        staff: 'Staff',
+        kitchen: 'Kitchen',
+        stock: 'Stock'
     }
 
-    if (role === 'manager') {
-        return 'Manager'
-    }
-
-    if (role === 'cashier') {
-        return 'Cashier'
-    }
-
-    if (role === 'staff') {
-        return 'Staff / Service'
-    }
-
-    if (role === 'kitchen') {
-        return 'Kitchen'
-    }
-
-    if (role === 'stock') {
-        return 'Stock'
-    }
-
-    return role || '-'
+    return map[role] || role || '-'
 }
 
 
 function roleClass(role) {
-    if (role === 'admin') {
-        return 'badge-admin'
+    const map = {
+        admin: 'badge-admin',
+        manager: 'badge-manager',
+        cashier: 'badge-cashier',
+        staff: 'badge-staff',
+        kitchen: 'badge-kitchen',
+        stock: 'badge-stock'
     }
 
-    if (role === 'manager') {
-        return 'badge-manager'
-    }
-
-    return 'badge-staff'
+    return map[role] || 'badge-staff'
 }
 
 
@@ -769,9 +755,14 @@ function openEditModal(
         ''
 
     el.editRole.value =
-        employee.role ===
-        'manager'
-            ? 'manager'
+        [
+            'manager',
+            'cashier',
+            'staff',
+            'kitchen',
+            'stock'
+        ].includes(employee.role)
+            ? employee.role
             : 'staff'
 
     el.editIsActive.checked =
@@ -853,9 +844,9 @@ async function saveEmployee() {
 
     if (
         ![
-            'staff',
             'manager',
             'cashier',
+            'staff',
             'kitchen',
             'stock'
         ].includes(
@@ -887,7 +878,7 @@ async function saveEmployee() {
             error
         } =
             await supabase.rpc(
-                'admin_update_staff',
+                'admin_update_employee_v29',
                 {
                     p_user_id:
                         employee.id,
@@ -911,24 +902,6 @@ async function saveEmployee() {
             'Update employee:',
             data
         )
-
-        /*
-         * V2.6.2
-         * sync role through hardened V2.6 role RPC
-         */
-        const {
-            error: roleError
-        } = await supabase.rpc(
-            'admin_set_staff_role_v26',
-            {
-                p_user_id: employee.id,
-                p_role: role
-            }
-        )
-
-        if (roleError) {
-            throw roleError
-        }
 
         closeEditModal()
 
@@ -963,7 +936,7 @@ async function saveEmployee() {
             )
         ) {
             text =
-                'ตำแหน่งไม่ถูกต้อง กรุณาเลือก Manager / Cashier / Staff / Kitchen / Stock'
+                'ตำแหน่งไม่ถูกต้อง'
         }
 
         if (
