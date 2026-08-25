@@ -13,6 +13,7 @@ const state = {
     selectedSale: null,
     selectedItems: [],
     selectedRefunds: [],
+    selectedControlAudit: [],
 
     profiles: new Map()
 }
@@ -99,6 +100,11 @@ const el = {
 
     printReceiptBtn:
         $('printReceiptBtn'),
+
+    // POS CONTROL AUDIT V2.5
+    controlAuditWrap: $('controlAuditWrap'),
+    controlAuditCount: $('controlAuditCount'),
+    controlAuditList: $('controlAuditList'),
 
     // VOID INFORMATION
     detailVoidWrap:
@@ -1199,6 +1205,7 @@ async function openSaleDetail(
     renderSaleItems()
 
     await loadSaleRefunds()
+    await loadSaleControlAuditV25()
 
     buildReceipt()
 
@@ -1493,6 +1500,97 @@ async function confirmRefund() {
         el.confirmRefundBtn.disabled = false
         el.confirmRefundBtn.textContent = 'ยืนยันคืนเงิน'
     }
+}
+
+
+
+/* ========================================
+   POS CONTROL AUDIT V2.5
+======================================== */
+
+async function loadSaleControlAuditV25() {
+    const sale = state.selectedSale
+
+    if (!sale) {
+        state.selectedControlAudit = []
+        renderSaleControlAuditV25()
+        return
+    }
+
+    const { data, error } =
+        await supabase.rpc(
+            'pos_sale_control_detail_v25',
+            { p_sale_id: sale.id }
+        )
+
+    if (error) {
+        console.error('Load POS control audit error:', error)
+        state.selectedControlAudit = []
+        renderSaleControlAuditV25()
+        return
+    }
+
+    state.selectedControlAudit =
+        Array.isArray(data?.actions)
+            ? data.actions
+            : []
+
+    renderSaleControlAuditV25()
+}
+
+
+function controlActionLabelV25(type) {
+    if (type === 'discount') return 'ส่วนลด'
+    if (type === 'void') return 'VOID'
+    if (type === 'refund') return 'Refund'
+    if (type === 'refund_reverse') return 'Reverse Refund'
+    return type || '-'
+}
+
+
+function renderSaleControlAuditV25() {
+    if (!el.controlAuditWrap || !el.controlAuditList) return
+
+    const rows = state.selectedControlAudit || []
+
+    el.controlAuditWrap.classList.toggle(
+        'hidden',
+        rows.length === 0
+    )
+
+    if (el.controlAuditCount) {
+        el.controlAuditCount.textContent =
+            String(rows.length)
+    }
+
+    el.controlAuditList.innerHTML =
+        rows.map(row => `
+            <div class="control-audit-row">
+                <div class="control-audit-main">
+                    <strong>${esc(controlActionLabelV25(row.action_type))}</strong>
+                    <small>${esc(formatDateTime(row.created_at))}</small>
+                </div>
+
+                <div class="control-audit-detail">
+                    ${
+                        Number(row.amount || 0) > 0
+                            ? `<span>${money(row.amount)}</span>`
+                            : ''
+                    }
+                    ${
+                        row.reason
+                            ? `<span>เหตุผล: ${esc(row.reason)}</span>`
+                            : ''
+                    }
+                    <span>ผู้ทำ: ${esc(row.actor_name || '-')}</span>
+                    ${
+                        row.approver_id
+                            ? `<span>ผู้อนุมัติ: ${esc(row.approver_name || '-')}</span>`
+                            : ''
+                    }
+                </div>
+            </div>
+        `).join('')
 }
 
 
