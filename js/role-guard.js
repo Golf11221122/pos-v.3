@@ -89,6 +89,11 @@ const PAGE_PERMISSIONS = {
         'kitchen'
     ],
 
+    'audit-log.html': [
+        'admin',
+        'manager'
+    ],
+
     'employees.html': [
         'admin'
     ]
@@ -173,6 +178,11 @@ const MENU_PERMISSIONS = {
     ],
 
     kitchenStations: [
+        'admin',
+        'manager'
+    ],
+
+    auditLog: [
         'admin',
         'manager'
     ],
@@ -504,6 +514,13 @@ function applySidebarPermissions(
         'a[href="./kitchen-stations.html"]',
         role,
         MENU_PERMISSIONS.kitchenStations
+    )
+
+
+    setMenuVisibility(
+        'a[href="./audit-log.html"]',
+        role,
+        MENU_PERMISSIONS.auditLog
     )
 
 
