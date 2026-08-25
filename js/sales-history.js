@@ -2683,3 +2683,9 @@ supabase.auth.onAuthStateChange(
 ======================================== */
 
 init()
+
+
+/* VOID / REFUND RECEIPT DETAIL V2.4.2
+ * Layout-only patch: printing is controlled by CSS @page 80mm.
+ * No database changes required.
+ */
