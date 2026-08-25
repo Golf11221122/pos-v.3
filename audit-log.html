@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit Log | JOKJUNG POS</title>
+    <link rel="stylesheet" href="./css/audit-log.css">
+</head>
+<body>
+<header class="topbar">
+    <div class="topbar-left">
+        <button id="backBtn" class="icon-btn" type="button">←</button>
+        <div>
+            <h1>🔎 Central Audit Log</h1>
+            <small id="branchText">กำลังโหลดสาขา...</small>
+        </div>
+    </div>
+    <div class="topbar-right">
+        <span id="userName">ผู้ใช้งาน</span>
+        <button id="logoutBtn" class="outline-btn" type="button">ออกจากระบบ</button>
+    </div>
+</header>
+
+<main class="page">
+    <section class="page-head">
+        <div>
+            <h2>ประวัติการเปลี่ยนแปลงระบบ</h2>
+            <p>ตรวจว่าใครทำอะไร เมื่อไร และข้อมูลก่อน/หลังการแก้ไข</p>
+        </div>
+        <button id="refreshBtn" class="primary-btn" type="button">↻ รีเฟรช</button>
+    </section>
+
+    <section class="summary-grid">
+        <article class="summary-card"><span>ทั้งหมด</span><strong id="sumTotal">0</strong></article>
+        <article class="summary-card"><span>VOID</span><strong id="sumVoid">0</strong></article>
+        <article class="summary-card"><span>ส่วนลด</span><strong id="sumDiscount">0</strong></article>
+        <article class="summary-card"><span>แก้ไขข้อมูล</span><strong id="sumUpdate">0</strong></article>
+        <article class="summary-card"><span>Stock Movement</span><strong id="sumStock">0</strong></article>
+    </section>
+
+    <section class="filter-card">
+        <div class="filter-grid">
+            <div class="field">
+                <label for="dateFrom">จากวันที่</label>
+                <input id="dateFrom" type="date">
+            </div>
+            <div class="field">
+                <label for="dateTo">ถึงวันที่</label>
+                <input id="dateTo" type="date">
+            </div>
+            <div class="field">
+                <label for="actionFilter">การทำรายการ</label>
+                <select id="actionFilter">
+                    <option value="">ทั้งหมด</option>
+                    <option value="insert">เพิ่มข้อมูล</option>
+                    <option value="update">แก้ไขข้อมูล</option>
+                    <option value="delete">ลบข้อมูล</option>
+                    <option value="discount">ส่วนลด</option>
+                    <option value="void">VOID</option>
+                    <option value="refund">Refund</option>
+                    <option value="refund_reverse">Reverse Refund</option>
+                </select>
+            </div>
+            <div class="field">
+                <label for="entityFilter">หมวดข้อมูล</label>
+                <select id="entityFilter">
+                    <option value="">ทั้งหมด</option>
+                    <option value="sale">การขาย / POS Control</option>
+                    <option value="products">สินค้า</option>
+                    <option value="categories">หมวดหมู่</option>
+                    <option value="ingredients">วัตถุดิบ</option>
+                    <option value="recipes">สูตร</option>
+                    <option value="restaurant_tables">โต๊ะ</option>
+                    <option value="profiles">พนักงาน / สิทธิ์</option>
+                    <option value="ingredient_stock_movements">Stock Movement</option>
+                </select>
+            </div>
+        </div>
+        <div class="filter-actions">
+            <button id="loadBtn" class="primary-btn" type="button">ค้นหา</button>
+            <button id="todayBtn" class="outline-btn" type="button">วันนี้</button>
+            <button id="weekBtn" class="outline-btn" type="button">7 วัน</button>
+        </div>
+    </section>
+
+    <p id="message" class="message"></p>
+
+    <section class="audit-list" id="auditList"></section>
+    <div id="emptyState" class="empty hidden">ไม่พบรายการ Audit ในช่วงที่เลือก</div>
+</main>
+
+<div id="detailModal" class="modal hidden">
+    <div class="modal-card">
+        <div class="modal-head">
+            <div>
+                <h3 id="detailTitle">รายละเอียด Audit</h3>
+                <small id="detailMeta">-</small>
+            </div>
+            <button id="closeDetailBtn" class="icon-btn" type="button">×</button>
+        </div>
+        <div class="detail-grid">
+            <section>
+                <h4>ก่อนแก้ไข</h4>
+                <pre id="beforeData">-</pre>
+            </section>
+            <section>
+                <h4>หลังแก้ไข</h4>
+                <pre id="afterData">-</pre>
+            </section>
+        </div>
+    </div>
+</div>
+
+<script type="module" src="./js/audit-log.js"></script>
+</body>
+</html>
