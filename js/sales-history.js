@@ -193,7 +193,20 @@ const el = {
         $('receiptChange'),
 
     receiptPayment:
-        $('receiptPayment')
+        $('receiptPayment'),
+
+    // VOID / REFUND RECEIPT DETAIL V2.4.1
+    receiptDocumentStatusWrap: $('receiptDocumentStatusWrap'),
+    receiptDocumentStatus: $('receiptDocumentStatus'),
+    receiptVoidWrap: $('receiptVoidWrap'),
+    receiptVoidReason: $('receiptVoidReason'),
+    receiptVoidedBy: $('receiptVoidedBy'),
+    receiptVoidedAt: $('receiptVoidedAt'),
+    receiptRefundWrap: $('receiptRefundWrap'),
+    receiptOriginalTotal: $('receiptOriginalTotal'),
+    receiptRefundedTotal: $('receiptRefundedTotal'),
+    receiptRefundRemaining: $('receiptRefundRemaining'),
+    receiptRefundHistory: $('receiptRefundHistory')
 }
 
 
@@ -1188,6 +1201,21 @@ async function openSaleDetail(
     await loadSaleRefunds()
 
     buildReceipt()
+
+    if (el.printReceiptBtn) {
+        const totalRefund =
+            refundedTotal()
+
+        if (sale.status === 'cancelled') {
+            el.printReceiptBtn.textContent =
+                totalRefund > 0.009
+                    ? 'พิมพ์เอกสาร VOID / REFUND'
+                    : 'พิมพ์เอกสาร VOID'
+        } else {
+            el.printReceiptBtn.textContent =
+                'พิมพ์ใบเสร็จ'
+        }
+    }
 }
 
 
@@ -2003,6 +2031,197 @@ function buildReceipt() {
         paymentLabel(
             sale.payment_method
         )
+
+
+    /*
+     * VOID / REFUND RECEIPT DETAIL V2.4.1
+     * เอกสารพิมพ์จากบิลที่ VOID ต้องแสดง audit trail
+     * และรายการคืนเงินจริงทุกครั้ง
+     */
+    const isVoided =
+        sale.status === 'cancelled'
+
+    const refunds =
+        state.selectedRefunds || []
+
+    const active =
+        refunds.filter(
+            row => !row.reversed_at
+        )
+
+    const totalRefunded =
+        active.reduce(
+            (sum, row) =>
+                sum +
+                Number(row.amount || 0),
+            0
+        )
+
+    const remaining =
+        Math.max(
+            Number(sale.total || 0) -
+            totalRefunded,
+            0
+        )
+
+
+    if (el.receiptDocumentStatusWrap) {
+        el.receiptDocumentStatusWrap
+            .classList
+            .toggle(
+                'hidden',
+                !isVoided
+            )
+    }
+
+
+    if (el.receiptDocumentStatus) {
+        el.receiptDocumentStatus.textContent =
+            isVoided
+                ? (
+                    totalRefunded > 0.009
+                        ? (
+                            remaining <= 0.009
+                                ? 'เอกสาร VOID / REFUND COMPLETE'
+                                : 'เอกสาร VOID / PARTIAL REFUND'
+                        )
+                        : 'เอกสาร VOID'
+                )
+                : 'ใบเสร็จรับเงิน'
+    }
+
+
+    if (el.receiptVoidWrap) {
+        el.receiptVoidWrap
+            .classList
+            .toggle(
+                'hidden',
+                !isVoided
+            )
+    }
+
+
+    if (isVoided) {
+        if (el.receiptVoidReason) {
+            el.receiptVoidReason.textContent =
+                sale.void_reason || '-'
+        }
+
+        if (el.receiptVoidedBy) {
+            el.receiptVoidedBy.textContent =
+                getProfileName(
+                    sale.voided_by
+                )
+        }
+
+        if (el.receiptVoidedAt) {
+            el.receiptVoidedAt.textContent =
+                formatDateTime(
+                    sale.voided_at
+                )
+        }
+    }
+
+
+    if (el.receiptRefundWrap) {
+        el.receiptRefundWrap
+            .classList
+            .toggle(
+                'hidden',
+                !isVoided
+            )
+    }
+
+
+    if (isVoided) {
+        if (el.receiptOriginalTotal) {
+            el.receiptOriginalTotal.textContent =
+                money(
+                    sale.total
+                )
+        }
+
+        if (el.receiptRefundedTotal) {
+            el.receiptRefundedTotal.textContent =
+                money(
+                    totalRefunded
+                )
+        }
+
+        if (el.receiptRefundRemaining) {
+            el.receiptRefundRemaining.textContent =
+                money(
+                    remaining
+                )
+        }
+
+        if (el.receiptRefundHistory) {
+            el.receiptRefundHistory.innerHTML =
+                refunds.length
+                    ? refunds.map(
+                        (row, index) => `
+                            <div class="receipt-refund-entry ${row.reversed_at ? 'is-reversed' : ''}">
+                                <div class="receipt-refund-no">
+                                    คืนเงิน #${index + 1}
+                                    ${row.reversed_at ? ' (REVERSED)' : ''}
+                                </div>
+
+                                <div class="receipt-row">
+                                    <span>จำนวน</span>
+                                    <strong>${money(row.amount)}</strong>
+                                </div>
+
+                                <div class="receipt-row">
+                                    <span>วิธีคืน</span>
+                                    <strong>${esc(paymentLabel(row.refund_method))}</strong>
+                                </div>
+
+                                ${
+                                    row.reference_no
+                                        ? `
+                                            <div class="receipt-row">
+                                                <span>Ref.</span>
+                                                <strong>${esc(row.reference_no)}</strong>
+                                            </div>
+                                        `
+                                        : ''
+                                }
+
+                                <div class="receipt-row receipt-wrap-row">
+                                    <span>เหตุผล</span>
+                                    <strong>${esc(row.reason || '-')}</strong>
+                                </div>
+
+                                <div class="receipt-row receipt-wrap-row">
+                                    <span>ผู้คืนเงิน</span>
+                                    <strong>${esc(row.refunded_by_name || '-')}</strong>
+                                </div>
+
+                                <div class="receipt-row receipt-wrap-row">
+                                    <span>เวลาคืน</span>
+                                    <strong>${esc(formatDateTime(row.refunded_at))}</strong>
+                                </div>
+
+                                ${
+                                    row.reversed_at
+                                        ? `
+                                            <div class="receipt-row receipt-wrap-row">
+                                                <span>เหตุผลย้อนรายการ</span>
+                                                <strong>${esc(row.reversal_reason || '-')}</strong>
+                                            </div>
+                                        `
+                                        : ''
+                                }
+                            </div>
+                        `
+                    ).join('')
+                    : `
+                        <div class="receipt-refund-empty">
+                            ยังไม่มีการคืนเงินจริง
+                        </div>
+                    `
+        }
+    }
 }
 
 
