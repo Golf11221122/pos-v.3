@@ -3363,3 +3363,86 @@ and
         font-weight: 900 !important;
     }
 }
+
+
+/* =========================================================
+   JOKJUNG POS DISCOUNT MODAL UI FIX V2.5.4
+   Restore full-width fields + balanced action buttons
+   ========================================================= */
+
+#manualDiscountModal #manualDiscountAmount,
+#manualDiscountModal #manualDiscountPin,
+#manualDiscountModal #manualDiscountReason {
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    box-sizing: border-box !important;
+}
+
+#manualDiscountModal #manualDiscountAmount,
+#manualDiscountModal #manualDiscountPin {
+    min-height: 54px !important;
+    padding: 12px 14px !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 12px !important;
+    background: var(--white) !important;
+}
+
+#manualDiscountModal #manualDiscountAmount {
+    font-size: 22px !important;
+    text-align: right !important;
+}
+
+#manualDiscountModal #manualDiscountPin {
+    font-size: 20px !important;
+    letter-spacing: 3px !important;
+}
+
+#manualDiscountModal #manualDiscountReason {
+    min-height: 110px !important;
+    resize: vertical !important;
+}
+
+#manualDiscountModal .modal-actions {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px !important;
+    width: 100% !important;
+}
+
+#manualDiscountModal .modal-actions button,
+#manualDiscountModal #cancelManualDiscountBtn,
+#manualDiscountModal #confirmManualDiscountBtn {
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 56px !important;
+    padding: 12px 14px !important;
+    border-radius: 14px !important;
+    font-size: 17px !important;
+    font-weight: 900 !important;
+}
+
+@media (max-width: 760px) {
+    #manualDiscountModal .modal-card {
+        padding-left: 18px !important;
+        padding-right: 18px !important;
+    }
+
+    #manualDiscountModal .modal-actions {
+        margin-top: 22px !important;
+        padding-bottom:
+            calc(6px + env(safe-area-inset-bottom)) !important;
+    }
+
+    #manualDiscountModal #cancelManualDiscountBtn {
+        border: 1px solid var(--border) !important;
+        background: var(--white) !important;
+        color: var(--text) !important;
+    }
+
+    #manualDiscountModal #confirmManualDiscountBtn {
+        border: 1px solid var(--primary) !important;
+        background: var(--primary) !important;
+        color: var(--text) !important;
+    }
+}
