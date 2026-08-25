@@ -119,7 +119,8 @@ button:disabled {
         var(--white);
 
     border-bottom:
-        1px solid var(--border);
+        1px solid
+        var(--border);
 
 }
 
@@ -173,7 +174,8 @@ button:disabled {
         8px 13px;
 
     border:
-        1px solid var(--border);
+        1px solid
+        var(--border);
 
     border-radius: 10px;
 
@@ -211,10 +213,13 @@ button:disabled {
     display: grid;
 
     grid-template-columns:
-        minmax(0, 1fr) 390px;
+        minmax(0, 1fr)
+        390px;
 
     min-height:
-        calc(100vh - 70px);
+        calc(
+            100vh - 70px
+        );
 
 }
 
@@ -243,7 +248,8 @@ button:disabled {
     display: grid;
 
     grid-template-columns:
-        minmax(0, 1fr) auto;
+        minmax(0, 1fr)
+        auto;
 
     gap: 10px;
 
@@ -260,7 +266,8 @@ button:disabled {
         0 14px;
 
     border:
-        1px solid var(--border);
+        1px solid
+        var(--border);
 
     border-radius: 12px;
 
@@ -278,10 +285,13 @@ button:disabled {
         var(--primary);
 
     box-shadow:
-        0 0 0 3px rgba(245,
+        0 0 0 3px
+        rgba(
+            245,
             180,
             0,
-            .13);
+            .13
+        );
 
 }
 
@@ -352,7 +362,8 @@ button:disabled {
         8px 15px;
 
     border:
-        1px solid var(--border);
+        1px solid
+        var(--border);
 
     border-radius:
         999px;
@@ -414,9 +425,13 @@ button:disabled {
     display: grid;
 
     grid-template-columns:
-        repeat(auto-fill,
-            minmax(150px,
-                1fr));
+        repeat(
+            auto-fill,
+            minmax(
+                150px,
+                1fr
+            )
+        );
 
     gap: 12px;
 
@@ -435,7 +450,8 @@ button:disabled {
     overflow: hidden;
 
     border:
-        1px solid var(--border);
+        1px solid
+        var(--border);
 
     border-radius: 14px;
 
@@ -550,7 +566,7 @@ button:disabled {
 }
 
 
-.product-info>div {
+.product-info > div {
 
     display: flex;
 
@@ -611,7 +627,9 @@ button:disabled {
     display: flex;
 
     height:
-        calc(100vh - 70px);
+        calc(
+            100vh - 70px
+        );
 
     flex-direction:
         column;
@@ -620,7 +638,8 @@ button:disabled {
         var(--white);
 
     border-left:
-        1px solid var(--border);
+        1px solid
+        var(--border);
 
 }
 
@@ -651,7 +670,8 @@ button:disabled {
     padding: 18px;
 
     border-bottom:
-        1px solid var(--border);
+        1px solid
+        var(--border);
 
 }
 
@@ -739,7 +759,8 @@ button:disabled {
     display: grid;
 
     grid-template-columns:
-        minmax(0, 1fr) auto;
+        minmax(0, 1fr)
+        auto;
 
     gap: 10px;
 
@@ -747,7 +768,8 @@ button:disabled {
         13px 0;
 
     border-bottom:
-        1px solid var(--border);
+        1px solid
+        var(--border);
 
 }
 
@@ -784,7 +806,8 @@ button:disabled {
     height: 32px;
 
     border:
-        1px solid var(--border);
+        1px solid
+        var(--border);
 
     border-radius: 8px;
 
@@ -821,7 +844,8 @@ button:disabled {
         16px 18px;
 
     border-top:
-        1px solid var(--border);
+        1px solid
+        var(--border);
 
     background:
         var(--white);
@@ -829,7 +853,7 @@ button:disabled {
 }
 
 
-.summary>div,
+.summary > div,
 .summary label {
 
     display: flex;
@@ -853,7 +877,8 @@ button:disabled {
     padding: 8px;
 
     border:
-        1px solid var(--border);
+        1px solid
+        var(--border);
 
     border-radius: 9px;
 
@@ -867,7 +892,8 @@ button:disabled {
     padding-top: 13px;
 
     border-top:
-        1px dashed var(--border);
+        1px dashed
+        var(--border);
 
     font-size: 20px;
 
@@ -889,7 +915,8 @@ button:disabled {
         10px 16px;
 
     border:
-        1px solid var(--primary);
+        1px solid
+        var(--primary);
 
     border-radius: 12px;
 
@@ -960,10 +987,12 @@ button:disabled {
     padding: 20px;
 
     background:
-        rgba(0,
+        rgba(
             0,
             0,
-            .50);
+            0,
+            .50
+        );
 
 }
 
@@ -971,11 +1000,15 @@ button:disabled {
 .modal-card {
 
     width:
-        min(500px,
-            100%);
+        min(
+            500px,
+            100%
+        );
 
     max-height:
-        calc(100vh - 40px);
+        calc(
+            100vh - 40px
+        );
 
     overflow-y: auto;
 
@@ -1068,7 +1101,8 @@ button:disabled {
     min-height: 65px;
 
     border:
-        1px solid var(--border);
+        1px solid
+        var(--border);
 
     border-radius: 12px;
 
@@ -1116,7 +1150,8 @@ textarea {
     padding: 11px;
 
     border:
-        1px solid var(--border);
+        1px solid
+        var(--border);
 
     border-radius: 10px;
 
@@ -1142,8 +1177,10 @@ textarea {
     display: grid;
 
     grid-template-columns:
-        repeat(4,
-            1fr);
+        repeat(
+            4,
+            1fr
+        );
 
     gap: 7px;
 
@@ -1157,7 +1194,8 @@ textarea {
     min-height: 39px;
 
     border:
-        1px solid var(--border);
+        1px solid
+        var(--border);
 
     border-radius: 8px;
 
@@ -1301,7 +1339,7 @@ textarea {
 }
 
 
-.actions>* {
+.actions > * {
 
     flex: 1;
 
@@ -1346,7 +1384,7 @@ textarea {
 }
 
 
-.success>p {
+.success > p {
 
     margin-top: 10px;
 
@@ -1419,12 +1457,19 @@ textarea {
    TABLET
 ======================================== */
 
-@media (max-width: 1000px) and (min-width: 761px) {
+@media (
+    max-width: 1000px
+)
+and
+(
+    min-width: 761px
+) {
 
     .layout {
 
         grid-template-columns:
-            minmax(0, 1fr) 330px;
+            minmax(0, 1fr)
+            330px;
 
     }
 
@@ -1432,9 +1477,13 @@ textarea {
     .product-grid {
 
         grid-template-columns:
-            repeat(auto-fill,
-                minmax(140px,
-                    1fr));
+            repeat(
+                auto-fill,
+                minmax(
+                    140px,
+                    1fr
+                )
+            );
 
     }
 
@@ -1446,12 +1495,20 @@ textarea {
    MOBILE
 ======================================== */
 
-@media (max-width: 760px) {
+@media (
+    max-width: 760px
+) {
 
     body {
 
         padding-bottom:
-            calc(82px + env(safe-area-inset-bottom));
+            calc(
+                82px
+                +
+                env(
+                    safe-area-inset-bottom
+                )
+            );
 
     }
 
@@ -1590,7 +1647,8 @@ textarea {
         z-index: 25;
 
         grid-template-columns:
-            minmax(0, 1fr) 46px;
+            minmax(0, 1fr)
+            46px;
 
         gap: 7px;
 
@@ -1687,9 +1745,13 @@ textarea {
     .product-grid {
 
         grid-template-columns:
-            repeat(2,
-                minmax(0,
-                    1fr));
+            repeat(
+                2,
+                minmax(
+                    0,
+                    1fr
+                )
+            );
 
         gap: 9px;
 
@@ -1772,8 +1834,10 @@ textarea {
         display: flex;
 
         height:
-            min(78vh,
-                650px);
+            min(
+                78vh,
+                650px
+            );
 
         flex-direction:
             column;
@@ -1781,25 +1845,36 @@ textarea {
         border: 0;
 
         border-radius:
-            22px 22px 0 0;
+            22px
+            22px
+            0
+            0;
 
         background:
             var(--white);
 
         box-shadow:
-            0 -10px 40px rgba(0,
+            0 -10px 40px
+            rgba(
                 0,
                 0,
-                .18);
+                0,
+                .18
+            );
 
         transform:
-            translateY(110%);
+            translateY(
+                110%
+            );
 
         transition:
-            transform .25s ease;
+            transform
+            .25s ease;
 
         padding-bottom:
-            env(safe-area-inset-bottom);
+            env(
+                safe-area-inset-bottom
+            );
 
     }
 
@@ -1876,7 +1951,8 @@ textarea {
         place-items: center;
 
         border:
-            1px solid var(--border);
+            1px solid
+            var(--border);
 
         border-radius:
             50%;
@@ -1926,12 +2002,19 @@ textarea {
             0 0 auto;
 
         padding:
-            12px 16px calc(12px + env(safe-area-inset-bottom));
+            12px 16px
+            calc(
+                12px
+                +
+                env(
+                    safe-area-inset-bottom
+                )
+            );
 
     }
 
 
-    .summary>div,
+    .summary > div,
     .summary label {
 
         margin-bottom: 9px;
@@ -1969,10 +2052,12 @@ textarea {
         z-index: 70;
 
         background:
-            rgba(0,
+            rgba(
                 0,
                 0,
-                .40);
+                0,
+                .40
+            );
 
     }
 
@@ -1996,7 +2081,13 @@ textarea {
         right: 10px;
 
         bottom:
-            calc(8px + env(safe-area-inset-bottom));
+            calc(
+                8px
+                +
+                env(
+                    safe-area-inset-bottom
+                )
+            );
 
         left: 10px;
 
@@ -2017,7 +2108,8 @@ textarea {
             8px 14px;
 
         border:
-            1px solid #d99e00;
+            1px solid
+            #d99e00;
 
         border-radius: 16px;
 
@@ -2028,10 +2120,13 @@ textarea {
             var(--text);
 
         box-shadow:
-            0 7px 25px rgba(0,
+            0 7px 25px
+            rgba(
                 0,
                 0,
-                .22);
+                0,
+                .22
+            );
 
         text-align: left;
 
@@ -2134,10 +2229,20 @@ textarea {
         max-height: 92vh;
 
         padding:
-            18px 16px calc(18px + env(safe-area-inset-bottom));
+            18px 16px
+            calc(
+                18px
+                +
+                env(
+                    safe-area-inset-bottom
+                )
+            );
 
         border-radius:
-            22px 22px 0 0;
+            22px
+            22px
+            0
+            0;
 
     }
 
@@ -2178,9 +2283,13 @@ textarea {
     .quick-cash {
 
         grid-template-columns:
-            repeat(4,
-                minmax(0,
-                    1fr));
+            repeat(
+                4,
+                minmax(
+                    0,
+                    1fr
+                )
+            );
 
     }
 
@@ -2200,8 +2309,10 @@ textarea {
     .promptpay-qr {
 
         width:
-            min(220px,
-                100%);
+            min(
+                220px,
+                100%
+            );
 
         min-height: 220px;
 
@@ -2229,7 +2340,9 @@ textarea {
    SMALL MOBILE
 ======================================== */
 
-@media (max-width: 390px) {
+@media (
+    max-width: 390px
+) {
 
     .product-grid {
 
@@ -2379,7 +2492,8 @@ textarea {
         border: 0;
 
         border-top:
-            1px dashed #000000;
+            1px dashed
+            #000000;
 
     }
 
@@ -2503,7 +2617,8 @@ textarea {
             8px 10px 10px !important;
 
         box-shadow:
-            0 4px 8px rgba(0, 0, 0, 0.04) !important;
+            0 4px 8px
+            rgba(0, 0, 0, 0.04) !important;
     }
 
 
@@ -2533,11 +2648,18 @@ textarea {
 
 
     /* รองรับ iPhone safe area */
-    @supports (padding-bottom: env(safe-area-inset-bottom)) {
+    @supports (
+        padding-bottom:
+        env(safe-area-inset-bottom)
+    ) {
 
         .mobile-cart-bar {
             bottom:
-                calc(8px + env(safe-area-inset-bottom)) !important;
+                calc(
+                    8px
+                    +
+                    env(safe-area-inset-bottom)
+                ) !important;
         }
     }
 
@@ -2606,7 +2728,8 @@ textarea {
        ซ่อนแถบล่าง
     ================================= */
 
-    body:has(.cart.mobile-open) .mobile-cart-bar {
+    body:has(.cart.mobile-open)
+    .mobile-cart-bar {
         display: none !important;
     }
 }
@@ -2665,9 +2788,11 @@ textarea {
        ซ่อน Search / Category
     ----------------------------------------- */
 
-    body:has(#paymentModal:not(.hidden)) .toolbar,
+    body:has(#paymentModal:not(.hidden))
+    .toolbar,
 
-    body:has(#paymentModal:not(.hidden)) .tabs {
+    body:has(#paymentModal:not(.hidden))
+    .tabs {
 
         visibility: hidden !important;
     }
@@ -2678,7 +2803,8 @@ textarea {
        ซ่อนแถบตะกร้าสีเหลือง
     ----------------------------------------- */
 
-    body:has(#paymentModal:not(.hidden)) .mobile-cart-bar {
+    body:has(#paymentModal:not(.hidden))
+    .mobile-cart-bar {
 
         display: none !important;
     }
@@ -2689,7 +2815,8 @@ textarea {
        ก็ซ่อนแถบตะกร้าล่างเช่นกัน
     ----------------------------------------- */
 
-    body:has(.cart.mobile-open) .mobile-cart-bar {
+    body:has(.cart.mobile-open)
+    .mobile-cart-bar {
 
         display: none !important;
     }
@@ -2709,7 +2836,9 @@ textarea {
 
         top: auto !important;
 
-        bottom: calc(8px + env(safe-area-inset-bottom)) !important;
+        bottom: calc(
+            8px + env(safe-area-inset-bottom)
+        ) !important;
 
         margin: 0 !important;
 
@@ -2727,7 +2856,8 @@ textarea {
 
     /* เมื่อหน้าบันทึกการขายสำเร็จเปิดอยู่
        ซ่อนแถบตะกร้าด้านล่าง */
-    body:has(#successModal:not(.hidden)) .mobile-cart-bar {
+    body:has(#successModal:not(.hidden))
+    .mobile-cart-bar {
         display: none !important;
     }
 
@@ -2767,7 +2897,10 @@ textarea {
         overflow-y: auto !important;
 
         padding:
-            22px 18px calc(22px + env(safe-area-inset-bottom)) !important;
+            22px 18px
+            calc(
+                22px + env(safe-area-inset-bottom)
+            ) !important;
 
         border-radius:
             24px 24px 0 0 !important;
@@ -2815,8 +2948,11 @@ textarea {
         margin-top: 16px !important;
 
         padding:
-            10px 0 max(4px,
-                env(safe-area-inset-bottom)) !important;
+            10px 0
+            max(
+                4px,
+                env(safe-area-inset-bottom)
+            ) !important;
 
         background: #fff !important;
 
@@ -2831,7 +2967,6 @@ textarea {
     }
 
 }
-
 /* ========================================
    START ORDER
 ======================================== */
@@ -3114,7 +3249,6 @@ textarea {
 .back-dashboard-btn:active {
     transform: scale(0.99);
 }
-
 .hold-table-btn {
     width: 100%;
     margin-bottom: 10px;
@@ -3140,392 +3274,92 @@ textarea {
     transform: scale(0.99);
 }
 
-/* ========================================
-   CONFIRM ORDER / DRAFT CART
-======================================== */
-
-.confirm-order-btn {
-    width: 100%;
-    min-height: 54px;
-    margin-top: 12px;
-    padding: 11px 16px;
-    border: 1px solid #188038;
-    border-radius: 12px;
-    background: #188038;
-    color: #ffffff;
-    font-weight: 900;
-    font-size: 16px;
-    box-shadow: 0 4px 12px rgba(24, 128, 56, .18);
-}
-
-.confirm-order-btn:hover {
-    background: #137333;
-}
-
-.confirm-order-btn:disabled {
-    background: #dfe3e7;
-    border-color: #dfe3e7;
-    color: #8a9096;
-    box-shadow: none;
-}
-
-.confirm-order-help {
-    display: block;
-    margin: 6px 2px 12px;
-    color: var(--muted);
-    font-size: 11px;
-    line-height: 1.4;
-    text-align: center;
-}
-
-.cart-order-status {
-    display: block;
-    width: fit-content;
-    margin-top: 5px;
-    padding: 3px 7px;
-    border-radius: 999px;
-    font-size: 11px;
-    font-weight: 800;
-}
-
-.cart-order-status.draft {
-    background: #fff4c7;
-    color: #8a5a00;
-}
-
-.cart-order-status.confirmed {
-    background: #e6f4ea;
-    color: #137333;
-}
-
-.confirmed-qty {
-    display: inline-flex;
-    min-height: 32px;
-    align-items: center;
-    padding: 0 9px;
-    border-radius: 8px;
-    background: #f1f3f4;
-    color: #5f6368;
-    font-size: 12px;
-    font-weight: 800;
-}
-
-@media (max-width: 760px) {
-    .confirm-order-btn {
-        min-height: 58px;
-        font-size: 17px;
-    }
-
-    .confirm-order-help {
-        font-size: 12px;
-    }
-}
-
-/* ========================================
-   MOBILE CART - REVIEW MODE
-   เพิ่มพื้นที่ทวนรายการ
-======================================== */
+/* =========================================================
+   JOKJUNG POS DISCOUNT MODAL MOBILE FIX V2.5.3
+   Hide mobile cart bar and keep confirm button visible
+   ========================================================= */
 
 @media (max-width: 760px) {
 
-    /* ตะกร้าบนมือถือ */
-    .cart {
-        height: 92vh;
-        max-height: 92vh;
-    }
-
-    /* ส่วนรายการสินค้า */
-    .cart-items {
-        flex: 1;
-
-        min-height: 38vh;
-        max-height: none;
-
-        overflow-y: auto;
-
-        padding:
-            12px 16px 18px;
-
-        -webkit-overflow-scrolling: touch;
-    }
-
-    /* ทำให้แต่ละรายการอ่านง่ายขึ้น */
-    .cart-item {
-        padding:
-            16px 0;
-
-        gap: 12px;
-    }
-
-    .cart-item>div:first-child>strong {
-        font-size: 18px;
-        line-height: 1.4;
-    }
-
-    .cart-item small {
-        font-size: 14px;
-        line-height: 1.45;
-    }
-
-    .cart-order-status {
-        font-size: 12px;
-        padding: 4px 8px;
-    }
-
-    /* ราคาแต่ละรายการ */
-    .cart-item>strong {
-        font-size: 18px;
-    }
-
-    /* ปุ่ม +/- ใหญ่ขึ้น กดง่าย */
-    .qty button {
-        width: 40px;
-        height: 40px;
-
-        font-size: 20px;
-    }
-
-    .qty b {
-        min-width: 28px;
-
-        font-size: 18px;
-        text-align: center;
-    }
-
-    /* ส่วนยอดรวมด้านล่าง ให้กะทัดรัดขึ้น */
-    .summary {
-        flex-shrink: 0;
-
-        padding:
-            12px 16px 16px;
-    }
-
-    .summary>div,
-    .summary label {
-        margin-bottom: 8px;
-    }
-
-    .summary .total {
-        padding-top: 9px;
-    }
-
-    /* ปุ่มด้านล่าง */
-    .confirm-order-btn {
-        min-height: 56px;
-        margin-top: 9px;
-    }
-
-    .confirm-order-help {
-        margin:
-            4px 2px 8px;
-    }
-
-    .hold-table-btn,
-    #checkoutBtn {
-        min-height: 50px;
-    }
-}
-
-
-/* ========================================
-   PAYMENT DISCOUNT / PROMOTION
-======================================== */
-
-.payment-discount-card {
-    margin: 14px 0 18px;
-    padding: 14px;
-    border: 1px solid var(--border, #e2e5e9);
-    border-radius: 14px;
-    background: #fafafa;
-}
-
-.payment-discount-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    gap: 10px;
-    margin-bottom: 10px;
-}
-
-.payment-discount-head>div {
-    display: grid;
-    gap: 3px;
-}
-
-.payment-discount-head strong {
-    font-size: 16px;
-}
-
-.payment-discount-head small {
-    color: var(--muted, #70757a);
-    font-size: 12px;
-}
-
-.promotion-select-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 8px;
-}
-
-.promotion-select-row select {
-    min-width: 0;
-    min-height: 44px;
-    padding: 8px 10px;
-    border: 1px solid var(--border, #dfe3e8);
-    border-radius: 10px;
-    background: #fff;
-}
-
-.manual-discount-btn {
-    width: 100%;
-    min-height: 44px;
-    margin-top: 9px;
-    border: 1px solid #d99b00;
-    border-radius: 10px;
-    background: #fff7d6;
-    color: #805700;
-    font-weight: 800;
-}
-
-.manual-discount-btn:disabled {
-    opacity: .5;
-}
-
-.payment-discount-summary {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    margin-top: 10px;
-    padding: 10px 12px;
-    border: 1px solid #b7dfc4;
-    border-radius: 10px;
-    background: #eaf7ee;
-    color: #137333;
-}
-
-.payment-discount-summary strong {
-    font-size: 17px;
-    font-weight: 900;
-}
-
-.discount-clear-btn {
-    flex: 0 0 auto;
-    padding: 5px 8px;
-    border: 0;
-    background: transparent;
-    color: #b3261e;
-    font-size: 12px;
-    font-weight: 800;
-}
-
-.manual-discount-modal-card label {
-    display: block;
-    margin-top: 12px;
-    margin-bottom: 6px;
-    font-weight: 800;
-}
-
-.manual-discount-modal-card input,
-.manual-discount-modal-card textarea {
-    width: 100%;
-    box-sizing: border-box;
-    padding: 11px 12px;
-    border: 1px solid var(--border, #dfe3e8);
-    border-radius: 10px;
-    background: #fff;
-    font: inherit;
-}
-
-@media (max-width: 760px) {
-    .payment-discount-card {
-        padding: 12px;
-        margin: 10px 0 14px;
-    }
-
-    .promotion-select-row {
-        grid-template-columns: 1fr;
-    }
-
-    .promotion-select-row .outline-btn {
-        width: 100%;
-        min-height: 46px;
-    }
-
-    .manual-discount-btn {
-        min-height: 48px;
-    }
-
-    #paymentModal .modal-card,
-    #manualDiscountModal .modal-card {
-        max-height: 94dvh !important;
-        overflow-y: auto !important;
-        -webkit-overflow-scrolling: touch;
-    }
-
-    /* ให้ Admin / Manager เห็นปุ่มชำระเงินในมือถือแน่นอน */
-    .cart {
-        height: 94dvh !important;
-        max-height: 94dvh !important;
+    /* ส่วนลดพิเศษต้องอยู่เหนือ UI ทั้งหมด */
+    #manualDiscountModal {
+        position: fixed !important;
+        inset: 0 !important;
+        z-index: 40000 !important;
         display: flex !important;
-        flex-direction: column !important;
-        overflow: hidden !important;
+        align-items: flex-end !important;
+        justify-content: center !important;
+        padding: 0 !important;
+        background: rgba(0,0,0,.50) !important;
     }
 
-    .cart-items {
-        flex: 1 1 auto !important;
-        min-height: 180px !important;
-        max-height: none !important;
-        overflow-y: auto !important;
-        -webkit-overflow-scrolling: touch;
+    #manualDiscountModal.hidden {
+        display: none !important;
     }
 
-    .summary {
-        flex: 0 0 auto !important;
-        max-height: 46dvh !important;
-        overflow-y: auto !important;
-        padding-bottom: calc(18px + env(safe-area-inset-bottom)) !important;
-        background: #fff !important;
-    }
+    #manualDiscountModal .modal-card {
+        position: relative !important;
+        z-index: 40001 !important;
 
-    #checkoutBtn {
-        display: block !important;
-        visibility: visible !important;
         width: 100% !important;
-        min-height: 56px !important;
-        margin-top: 10px !important;
-        font-size: 18px !important;
+        max-width: 760px !important;
+
+        max-height:
+            calc(100dvh - 26px - env(safe-area-inset-top)) !important;
+
+        overflow-y: auto !important;
+        overscroll-behavior: contain !important;
+
+        padding-bottom:
+            calc(24px + env(safe-area-inset-bottom)) !important;
+
+        border-radius: 24px 24px 0 0 !important;
+    }
+
+    /*
+     * ต้นเหตุจากรูป:
+     * V2.5.2 ซ่อน Payment Modal ก่อนเปิด Discount Modal
+     * ทำให้ selector เดิมของ Payment ไม่ได้ซ่อน mobile cart bar แล้ว
+     * จึงเห็นปุ่มยอดเงินสีเหลืองมาทับปุ่มยืนยันส่วนลด
+     */
+    body:has(#manualDiscountModal:not(.hidden))
+    .mobile-cart-bar {
+        display: none !important;
+    }
+
+    /*
+     * ถ้าตะกร้า Bottom Sheet ค้างสถานะ mobile-open
+     * ให้ซ่อนทั้ง Cart และ Backdrop ขณะอนุมัติส่วนลด
+     */
+    body:has(#manualDiscountModal:not(.hidden))
+    .cart {
+        visibility: hidden !important;
+        pointer-events: none !important;
+    }
+
+    body:has(#manualDiscountModal:not(.hidden))
+    .cart-backdrop {
+        display: none !important;
+        pointer-events: none !important;
+    }
+
+    /*
+     * Footer ของ modal ต้องเลื่อนมาถึงและกดได้จริง
+     * ไม่วาง fixed/sticky ทับฟอร์ม
+     */
+    #manualDiscountModal .modal-actions {
+        position: static !important;
+        margin-top: 18px !important;
+        padding-bottom:
+            calc(4px + env(safe-area-inset-bottom)) !important;
+        background: #fff !important;
+        z-index: auto !important;
+    }
+
+    #manualDiscountModal #confirmManualDiscountBtn {
+        min-height: 54px !important;
+        width: 100% !important;
+        font-size: 17px !important;
         font-weight: 900 !important;
     }
 }
-
-
-.coupon-redeem-row {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 8px;
-    margin-top: 9px;
-}
-
-.coupon-redeem-row input {
-    min-width: 0;
-    min-height: 44px;
-    padding: 9px 11px;
-    border: 1px solid var(--border, #dfe3e8);
-    border-radius: 10px;
-    background: #fff;
-    text-transform: uppercase;
-    font-weight: 800;
-    letter-spacing: .04em;
-}
-
-@media (max-width: 760px) {
-    .coupon-redeem-row {
-        grid-template-columns: 1fr;
-    }
-
-    .coupon-redeem-row button {
-        width: 100%;
-        min-height: 46px;
-    }
-}\n\n/* ========================================\n   VAT READY\n======================================== */\n.vat-breakdown{margin:-6px 0 16px;padding:12px 14px;border:1px dashed var(--border);border-radius:11px;background:#fafafa}.vat-breakdown>div{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 0}.vat-breakdown small{display:block;margin-top:7px;color:var(--muted);font-size:11px;text-align:right}.receipt-vat-breakdown{margin:2px 0}.receipt-vat-note{margin:3px 0 5px;font-size:9px}\n
