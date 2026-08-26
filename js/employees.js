@@ -1,4 +1,5 @@
 import { supabase } from './supabase.js'
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
 
 const state = {
@@ -1314,6 +1315,411 @@ function handleAddRoleChange() {
 
 
 /* ========================================
+   CREATE EMPLOYEE V2.11.3
+======================================== */
+
+function normalizeEmployeeEmail(value) {
+    return String(value || '')
+        .trim()
+        .toLowerCase()
+}
+
+
+function validateNewEmployeeForm() {
+    const fullName =
+        el.addFullName.value
+            .trim()
+
+    const email =
+        normalizeEmployeeEmail(
+            el.addEmail.value
+        )
+
+    const password =
+        String(
+            el.addPassword.value ||
+            ''
+        )
+
+    const role =
+        String(
+            el.addRole.value ||
+            ''
+        )
+            .trim()
+            .toLowerCase()
+
+    const managerPin =
+        String(
+            el.addManagerPin.value ||
+            ''
+        )
+            .trim()
+
+
+    if (!fullName) {
+        message(
+            el.addEmployeeMessage,
+            'กรุณากรอกชื่อพนักงาน'
+        )
+
+        el.addFullName.focus()
+        return null
+    }
+
+
+    if (
+        !email
+        ||
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+            email
+        )
+    ) {
+        message(
+            el.addEmployeeMessage,
+            'กรุณากรอก Email ให้ถูกต้อง'
+        )
+
+        el.addEmail.focus()
+        return null
+    }
+
+
+    if (
+        password.length <
+        8
+    ) {
+        message(
+            el.addEmployeeMessage,
+            'Password เริ่มต้นต้องมีอย่างน้อย 8 ตัวอักษร'
+        )
+
+        el.addPassword.focus()
+        return null
+    }
+
+
+    if (
+        ![
+            'manager',
+            'cashier',
+            'staff',
+            'kitchen',
+            'stock'
+        ].includes(
+            role
+        )
+    ) {
+        message(
+            el.addEmployeeMessage,
+            'ตำแหน่งไม่ถูกต้อง'
+        )
+
+        return null
+    }
+
+
+    if (
+        role ===
+        'manager'
+        &&
+        !/^\d{6}$/.test(
+            managerPin
+        )
+    ) {
+        message(
+            el.addEmployeeMessage,
+            'Manager PIN ต้องเป็นตัวเลข 6 หลัก'
+        )
+
+        el.addManagerPin.focus()
+        return null
+    }
+
+
+    return {
+        fullName,
+        email,
+        password,
+        role,
+        managerPin
+    }
+}
+
+
+function createIsolatedEmployeeAuthClient() {
+    const url =
+        supabase.supabaseUrl
+
+    const key =
+        supabase.supabaseKey
+
+
+    if (
+        !url
+        ||
+        !key
+    ) {
+        throw new Error(
+            'SUPABASE_CLIENT_CONFIG_NOT_FOUND'
+        )
+    }
+
+
+    return createClient(
+        url,
+        key,
+        {
+            auth: {
+                persistSession: false,
+                autoRefreshToken: false,
+                detectSessionInUrl: false
+            }
+        }
+    )
+}
+
+
+async function createEmployee() {
+    const form =
+        validateNewEmployeeForm()
+
+    if (!form) {
+        return
+    }
+
+
+    el.saveNewEmployeeBtn.disabled =
+        true
+
+    el.saveNewEmployeeBtn.textContent =
+        'กำลังสร้างพนักงาน...'
+
+    message(
+        el.addEmployeeMessage,
+        ''
+    )
+
+
+    try {
+        /*
+         * ใช้ auth client แยก
+         * เพื่อไม่ให้ session Admin ปัจจุบันถูกแทนด้วย session ของพนักงานใหม่
+         */
+        const employeeAuth =
+            createIsolatedEmployeeAuthClient()
+
+
+        const {
+            data: signUpData,
+            error: signUpError
+        } =
+            await employeeAuth.auth.signUp({
+                email:
+                    form.email,
+
+                password:
+                    form.password,
+
+                options: {
+                    data: {
+                        full_name:
+                            form.fullName,
+
+                        employee_role:
+                            form.role
+                    }
+                }
+            })
+
+
+        if (signUpError) {
+            throw signUpError
+        }
+
+
+        const newUserId =
+            signUpData?.user?.id
+
+
+        if (!newUserId) {
+            throw new Error(
+                'AUTH_USER_NOT_CREATED'
+            )
+        }
+
+
+        /*
+         * ผูก Auth User ใหม่เข้ากับ profile + branch ของ Admin
+         * ใช้ RPC ที่สร้างไว้ใน Employee Create Flow V2.9.1
+         */
+        const {
+            error: onboardError
+        } =
+            await supabase.rpc(
+                'admin_onboard_employee_v291',
+                {
+                    p_user_id:
+                        newUserId,
+
+                    p_full_name:
+                        form.fullName,
+
+                    p_role:
+                        form.role
+                }
+            )
+
+
+        if (onboardError) {
+            throw onboardError
+        }
+
+
+        /*
+         * Manager ใช้ Manager PIN เดิมของระบบ
+         */
+        if (
+            form.role ===
+            'manager'
+        ) {
+            const {
+                error: pinError
+            } =
+                await supabase.rpc(
+                    'admin_set_manager_pin',
+                    {
+                        p_user_id:
+                            newUserId,
+
+                        p_manager_pin:
+                            form.managerPin
+                    }
+                )
+
+
+            if (pinError) {
+                throw pinError
+            }
+        }
+
+
+        message(
+            el.addEmployeeMessage,
+            'สร้างพนักงานสำเร็จ',
+            'success'
+        )
+
+
+        await loadEmployees()
+
+
+        setTimeout(
+            () => {
+                closeAddEmployeeModal()
+            },
+            500
+        )
+
+
+    } catch (error) {
+        console.error(
+            'Create employee error:',
+            error
+        )
+
+
+        let text =
+            error?.message
+            ||
+            'สร้างพนักงานไม่สำเร็จ'
+
+
+        if (
+            text.includes(
+                'User already registered'
+            )
+            ||
+            text.includes(
+                'already been registered'
+            )
+        ) {
+            text =
+                'Email นี้มีบัญชีอยู่แล้ว'
+        }
+
+
+        if (
+            text.includes(
+                'ADMIN_REQUIRED'
+            )
+        ) {
+            text =
+                'เฉพาะ Admin เท่านั้นที่สร้างพนักงานได้'
+        }
+
+
+        if (
+            text.includes(
+                'INVALID_ROLE'
+            )
+        ) {
+            text =
+                'ตำแหน่งไม่ถูกต้อง'
+        }
+
+
+        if (
+            text.includes(
+                'AUTH_USER_NOT_FOUND'
+            )
+            ||
+            text.includes(
+                'USER_NOT_FOUND'
+            )
+        ) {
+            text =
+                'สร้างบัญชี Auth แล้ว แต่ไม่พบผู้ใช้สำหรับผูกข้อมูลพนักงาน'
+        }
+
+
+        if (
+            text.includes(
+                'SUPABASE_CLIENT_CONFIG_NOT_FOUND'
+            )
+        ) {
+            text =
+                'ไม่พบค่าเชื่อมต่อ Supabase สำหรับสร้างบัญชีพนักงาน'
+        }
+
+
+        if (
+            text.includes(
+                'rate limit'
+            )
+        ) {
+            text =
+                'Supabase จำกัดการสร้างบัญชีชั่วคราว กรุณารอสักครู่แล้วลองใหม่'
+        }
+
+
+        message(
+            el.addEmployeeMessage,
+            text
+        )
+
+
+    } finally {
+        el.saveNewEmployeeBtn.disabled =
+            false
+
+        el.saveNewEmployeeBtn.textContent =
+            'สร้างพนักงาน'
+    }
+}
+
+
+/* ========================================
    CLEAR FILTER
 ======================================== */
 
@@ -1446,6 +1852,10 @@ el.cancelAddEmployeeBtn.onclick =
 
 el.addRole.onchange =
     handleAddRoleChange
+
+
+el.saveNewEmployeeBtn.onclick =
+    createEmployee
 
 
 el.employeeTableBody.onclick =
