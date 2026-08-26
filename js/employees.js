@@ -694,6 +694,18 @@ function renderEmployees() {
                                                 แก้ไข
                                             </button>
 
+                                            <button
+                                                type="button"
+                                                class="action-btn"
+                                                data-reset-password-id="${
+                                                    esc(
+                                                        employee.id
+                                                    )
+                                                }"
+                                            >
+                                                รีเซ็ตรหัสผ่าน
+                                            </button>
+
                                             ${
                                                 active
                                                     ? `
@@ -1346,6 +1358,164 @@ function handleAddRoleChange() {
 
 
 /* ========================================
+   EMPLOYEE PASSWORD RESET V2.13
+======================================== */
+
+async function sendEmployeePasswordReset(
+    employeeId
+) {
+    const employee =
+        state.employees.find(
+            item =>
+                item.id ===
+                employeeId
+        )
+
+    if (!employee) {
+        return
+    }
+
+
+    const confirmed =
+        window.confirm(
+            `ส่งลิงก์ตั้งรหัสผ่านใหม่ให้ ${employee.full_name || 'พนักงาน'} ใช่หรือไม่?`
+        )
+
+
+    if (!confirmed) {
+        return
+    }
+
+
+    try {
+        /*
+         * ดึง Email จาก auth.users ผ่าน Admin-only RPC
+         * ไม่เก็บ Password และไม่แสดง Password เดิม
+         */
+        const {
+            data,
+            error
+        } =
+            await supabase.rpc(
+                'admin_get_employee_login_email_v213',
+                {
+                    p_user_id:
+                        employeeId
+                }
+            )
+
+
+        if (error) {
+            throw error
+        }
+
+
+        const row =
+            Array.isArray(data)
+                ? data[0]
+                : data
+
+
+        const email =
+            String(
+                row?.email ||
+                ''
+            )
+                .trim()
+                .toLowerCase()
+
+
+        if (!email) {
+            throw new Error(
+                'EMPLOYEE_EMAIL_NOT_FOUND'
+            )
+        }
+
+
+        const redirectTo =
+            new URL(
+                './reset-password.html',
+                window.location.href
+            )
+                .href
+
+
+        const {
+            error: resetError
+        } =
+            await supabase.auth
+                .resetPasswordForEmail(
+                    email,
+                    {
+                        redirectTo
+                    }
+                )
+
+
+        if (resetError) {
+            throw resetError
+        }
+
+
+        alert(
+            `ส่งลิงก์ตั้งรหัสผ่านใหม่แล้ว\n${email}`
+        )
+
+
+    } catch (error) {
+        console.error(
+            'Employee password reset error:',
+            error
+        )
+
+
+        let text =
+            error?.message
+            ||
+            'ส่งลิงก์รีเซ็ตรหัสผ่านไม่สำเร็จ'
+
+
+        if (
+            text.includes(
+                'ADMIN_REQUIRED'
+            )
+        ) {
+            text =
+                'เฉพาะ Admin เท่านั้นที่ส่งลิงก์รีเซ็ตรหัสผ่านได้'
+        }
+
+
+        if (
+            text.includes(
+                'USER_NOT_FOUND'
+            )
+            ||
+            text.includes(
+                'EMPLOYEE_EMAIL_NOT_FOUND'
+            )
+        ) {
+            text =
+                'ไม่พบ Email สำหรับเข้าสู่ระบบของพนักงาน'
+        }
+
+
+        if (
+            text.toLowerCase()
+                .includes(
+                    'rate limit'
+                )
+        ) {
+            text =
+                'ส่งอีเมลบ่อยเกินไป กรุณารอสักครู่แล้วลองใหม่'
+        }
+
+
+        alert(text)
+    }
+}
+
+
+/* ========================================
    ARCHIVE / RESTORE EMPLOYEE V2.12
 ======================================== */
 
@@ -1716,6 +1886,20 @@ el.employeeTableBody.onclick =
         if (pinButton) {
             openPinModal(
                 pinButton.dataset.pinId
+            )
+
+            return
+        }
+
+
+        const resetPasswordButton =
+            event.target.closest(
+                '[data-reset-password-id]'
+            )
+
+        if (resetPasswordButton) {
+            sendEmployeePasswordReset(
+                resetPasswordButton.dataset.resetPasswordId
             )
 
             return
