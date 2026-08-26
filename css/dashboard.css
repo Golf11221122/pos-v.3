@@ -1275,3 +1275,618 @@ button {
         visibility: visible;
     }
 }
+
+/* =========================================================
+   JOKJUNG DASHBOARD PROFESSIONAL UX/UI V3.2
+   Dashboard-specific layer. Loaded before pro-ui.css,
+   so selectors are deliberately specific where needed.
+   ========================================================= */
+
+:root {
+    --dash-navy: #152033;
+    --dash-navy-2: #26344a;
+    --dash-gold: #c28b00;
+    --dash-gold-soft: #fff7df;
+    --dash-bg: #f4f6f8;
+    --dash-surface: #ffffff;
+    --dash-text: #172033;
+    --dash-muted: #667085;
+    --dash-border: #e1e5ea;
+    --dash-success: #027a48;
+    --dash-shadow: 0 5px 18px rgba(16,24,40,.07);
+}
+
+/* Layout */
+body {
+    background:
+        radial-gradient(circle at 100% 0%, rgba(194,139,0,.05), transparent 24%),
+        var(--dash-bg);
+}
+
+.main-content {
+    background: transparent;
+}
+
+.page-content {
+    max-width: 1540px;
+    padding-top: 24px;
+}
+
+/* Sidebar — formal dark shell */
+.sidebar {
+    width: 272px;
+    padding: 20px 16px;
+    background:
+        linear-gradient(180deg, #152033 0%, #101827 100%) !important;
+    border-right: 1px solid rgba(255,255,255,.04);
+}
+
+.main-content {
+    width: calc(100% - 272px);
+    margin-left: 272px;
+}
+
+.brand {
+    padding: 5px 8px 22px;
+}
+
+.brand-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: var(--dash-gold) !important;
+    color: #172033;
+    box-shadow: 0 5px 14px rgba(194,139,0,.20);
+}
+
+.brand h1 {
+    font-size: 20px;
+    letter-spacing: .5px;
+}
+
+.brand p {
+    color: #98a2b3;
+}
+
+.menu-item,
+.management-toggle {
+    min-height: 44px;
+    border-radius: 10px;
+}
+
+.menu-item.active {
+    position: relative;
+    background: rgba(255,255,255,.11) !important;
+    color: #fff !important;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,.04);
+}
+
+.menu-item.active::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 9px;
+    bottom: 9px;
+    width: 3px;
+    border-radius: 999px;
+    background: var(--dash-gold);
+}
+
+.management-menu {
+    border-left-color: rgba(255,255,255,.16);
+}
+
+.logout-button {
+    min-height: 44px;
+    border-color: rgba(255,255,255,.16);
+    border-radius: 11px;
+    color: #f2f4f7;
+}
+
+/* Topbar */
+.topbar {
+    min-height: 76px;
+    padding: 12px 28px;
+    background: rgba(255,255,255,.96) !important;
+    border-bottom: 1px solid #e6e9ee !important;
+    box-shadow: 0 2px 10px rgba(16,24,40,.04) !important;
+}
+
+.topbar h2 {
+    color: var(--dash-text);
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: -.2px;
+}
+
+.topbar p {
+    color: var(--dash-muted);
+}
+
+.user-section {
+    padding: 7px 10px 7px 7px;
+    border: 1px solid #e3e7ec;
+    border-radius: 999px;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(16,24,40,.05);
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    background: var(--dash-navy) !important;
+    color: #fff;
+    border: 2px solid #f4e2a5;
+}
+
+.user-information strong {
+    color: var(--dash-text);
+}
+
+/* Welcome — formal hero, no large yellow block */
+.welcome-card {
+    position: relative;
+    min-height: 168px;
+    padding: 30px 34px;
+    border: 1px solid rgba(255,255,255,.10);
+    border-radius: 20px;
+    overflow: hidden;
+    background:
+        linear-gradient(125deg, #152033 0%, #22324a 66%, #34455f 100%);
+    color: #fff;
+    box-shadow: 0 14px 34px rgba(21,32,51,.16);
+}
+
+.welcome-card::after {
+    content: "";
+    position: absolute;
+    right: -64px;
+    top: -78px;
+    width: 230px;
+    height: 230px;
+    border-radius: 50%;
+    border: 34px solid rgba(194,139,0,.14);
+}
+
+.welcome-label {
+    color: #f4d77e;
+    font-size: 13px;
+    letter-spacing: .2px;
+}
+
+.welcome-card h3 {
+    color: #fff;
+    font-size: clamp(27px, 3vw, 34px);
+    font-weight: 900;
+    letter-spacing: -.4px;
+}
+
+.welcome-card > div > p:last-child {
+    color: #d0d5dd;
+}
+
+.welcome-illustration {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    width: 112px;
+    height: 112px;
+    place-items: center;
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 28px;
+    background: rgba(255,255,255,.08);
+    font-size: 60px;
+    transform: none;
+}
+
+/* Section headings */
+.section-title {
+    margin-top: 28px;
+    margin-bottom: 13px;
+}
+
+.section-title h3,
+.panel-header h3 {
+    color: var(--dash-text);
+    font-weight: 900;
+    letter-spacing: -.15px;
+}
+
+.section-title p,
+.panel-header p {
+    color: var(--dash-muted);
+}
+
+.small-button {
+    min-height: 38px;
+    padding: 8px 13px;
+    border: 1px solid #d0d5dd;
+    border-radius: 10px;
+    background: #fff;
+    color: #344054;
+    font-weight: 800;
+    box-shadow: 0 1px 3px rgba(16,24,40,.05);
+}
+
+.small-button:hover {
+    border-color: #98a2b3;
+    background: #f9fafb;
+}
+
+/* Primary summary */
+.summary-grid {
+    gap: 14px;
+}
+
+.summary-card {
+    position: relative;
+    min-height: 126px;
+    padding: 20px;
+    border: 1px solid var(--dash-border);
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: var(--dash-shadow);
+    overflow: hidden;
+}
+
+.summary-card::after {
+    content: "";
+    position: absolute;
+    right: -18px;
+    top: -22px;
+    width: 74px;
+    height: 74px;
+    border-radius: 50%;
+    background: rgba(194,139,0,.055);
+}
+
+.summary-icon {
+    position: relative;
+    z-index: 1;
+    flex-basis: 48px;
+    width: 48px;
+    height: 48px;
+    border: 1px solid #ead99f;
+    border-radius: 13px;
+    background: var(--dash-gold-soft);
+    font-size: 22px;
+}
+
+.summary-card p {
+    color: #667085;
+    font-weight: 700;
+}
+
+.summary-card h3 {
+    margin: 5px 0 4px;
+    color: var(--dash-text);
+    font-size: 25px;
+    font-weight: 900;
+    letter-spacing: -.4px;
+}
+
+.summary-card span {
+    color: #98a2b3;
+}
+
+/* Business metrics */
+.business-summary {
+    gap: 14px;
+}
+
+.metric-card {
+    position: relative;
+    min-height: 118px;
+    padding: 18px 20px;
+    border: 1px solid var(--dash-border);
+    border-radius: 15px;
+    background: #fff;
+    box-shadow: 0 2px 10px rgba(16,24,40,.045);
+}
+
+.metric-card > span {
+    color: #667085;
+    font-weight: 700;
+}
+
+.metric-card strong {
+    color: var(--dash-text);
+    font-size: 24px;
+    font-weight: 900;
+}
+
+.metric-card small {
+    color: #98a2b3;
+}
+
+/* Panels */
+.panel {
+    padding: 22px;
+    border: 1px solid var(--dash-border);
+    border-radius: 17px;
+    background: #fff;
+    box-shadow: 0 3px 14px rgba(16,24,40,.055);
+}
+
+.panel-header {
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid #edf0f3;
+}
+
+/* Chart */
+.sales-chart {
+    min-height: 260px;
+    gap: 10px;
+}
+
+.chart-bar-wrap {
+    height: 176px;
+}
+
+.chart-bar {
+    border-radius: 7px 7px 3px 3px;
+    background:
+        linear-gradient(180deg, #d6a91f 0%, #9f7200 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.18);
+}
+
+.chart-column:hover .chart-bar {
+    background:
+        linear-gradient(180deg, #26344a 0%, #152033 100%);
+}
+
+.chart-value {
+    color: #344054;
+}
+
+.chart-label {
+    color: #667085;
+}
+
+/* Top products */
+.top-product {
+    padding: 12px 2px;
+}
+
+.top-rank {
+    background: #f2f4f7;
+    color: #344054;
+    border: 1px solid #e4e7ec;
+}
+
+.top-product:nth-child(1) .top-rank {
+    background: var(--dash-gold-soft);
+    border-color: #ead99f;
+    color: #7a5200;
+}
+
+.top-info strong {
+    color: var(--dash-text);
+}
+
+.top-qty {
+    color: var(--dash-navy);
+}
+
+/* Quick actions */
+.quick-actions {
+    gap: 12px;
+}
+
+.quick-action {
+    position: relative;
+    min-height: 120px;
+    padding: 17px;
+    border: 1px solid #e1e5ea;
+    border-radius: 14px;
+    background: #fff;
+    color: var(--dash-text);
+    box-shadow: 0 1px 4px rgba(16,24,40,.04);
+    overflow: hidden;
+}
+
+.quick-action::after {
+    content: "›";
+    position: absolute;
+    right: 15px;
+    bottom: 13px;
+    color: #98a2b3;
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.quick-action:hover {
+    border-color: #c9ced6;
+    background: #f9fafb;
+    box-shadow: 0 7px 18px rgba(16,24,40,.08);
+    transform: translateY(-2px);
+}
+
+.quick-action span {
+    display: grid;
+    width: 42px;
+    height: 42px;
+    place-items: center;
+    margin-bottom: 12px;
+    border-radius: 11px;
+    background: var(--dash-gold-soft);
+    font-size: 21px;
+}
+
+.quick-action strong {
+    color: var(--dash-text);
+    font-size: 15px;
+}
+
+.quick-action small {
+    color: #667085;
+}
+
+/* Profile */
+.profile-panel .profile-row {
+    padding: 13px 0;
+}
+
+.profile-row span {
+    color: #667085;
+}
+
+.profile-row strong {
+    color: #344054;
+}
+
+.online-text {
+    color: var(--dash-success) !important;
+}
+
+/* Status message */
+.status-message:not(:empty) {
+    margin-top: 16px;
+    padding: 11px 13px;
+    border: 1px solid #fda29b;
+    border-radius: 10px;
+    background: #fef3f2;
+    color: #b42318 !important;
+    font-weight: 700;
+}
+
+/* Responsive */
+@media (max-width: 1150px) {
+    .sidebar {
+        width: 248px;
+    }
+
+    .main-content {
+        width: calc(100% - 248px);
+        margin-left: 248px;
+    }
+}
+
+@media (max-width: 760px) {
+    .sidebar {
+        width: min(84vw, 320px);
+    }
+
+    .main-content {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .topbar {
+        min-height: 68px;
+        padding: 10px 14px;
+    }
+
+    .topbar h2 {
+        font-size: 19px;
+    }
+
+    .page-content {
+        padding: 16px 12px 28px;
+    }
+
+    .welcome-card {
+        min-height: 138px;
+        padding: 22px;
+        border-radius: 17px;
+    }
+
+    .welcome-card h3 {
+        font-size: 25px;
+    }
+
+    .welcome-illustration {
+        width: 74px;
+        height: 74px;
+        border-radius: 20px;
+        font-size: 42px;
+    }
+
+    .summary-grid,
+    .business-summary {
+        grid-template-columns: repeat(2, minmax(0,1fr));
+        gap: 10px;
+    }
+
+    .summary-card {
+        display: block;
+        min-height: 140px;
+        padding: 15px;
+    }
+
+    .summary-icon {
+        width: 42px;
+        height: 42px;
+        margin-bottom: 12px;
+        font-size: 20px;
+    }
+
+    .summary-card h3 {
+        font-size: 20px;
+    }
+
+    .metric-card {
+        min-height: 108px;
+        padding: 15px;
+    }
+
+    .metric-card strong {
+        font-size: 19px;
+    }
+
+    .report-grid,
+    .dashboard-grid {
+        gap: 12px;
+        margin-top: 15px;
+    }
+
+    .panel {
+        padding: 16px;
+        border-radius: 15px;
+    }
+
+    .quick-actions {
+        grid-template-columns: repeat(2, minmax(0,1fr));
+        gap: 10px;
+    }
+
+    .quick-action {
+        min-height: 128px;
+        padding: 14px;
+    }
+
+    .quick-action span {
+        width: 38px;
+        height: 38px;
+        font-size: 19px;
+    }
+}
+
+@media (max-width: 430px) {
+    .welcome-illustration {
+        display: none;
+    }
+
+    .summary-grid,
+    .business-summary,
+    .quick-actions {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .summary-card span,
+    .metric-card small {
+        font-size: 11px;
+    }
+
+    .user-section {
+        padding: 4px;
+        border-radius: 999px;
+    }
+
+    .user-avatar {
+        width: 36px;
+        height: 36px;
+    }
+}
+
