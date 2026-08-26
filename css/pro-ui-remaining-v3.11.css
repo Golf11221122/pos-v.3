@@ -1,0 +1,695 @@
+/* =========================================================
+   JOKJUNG REMAINING PAGES PROFESSIONAL UX/UI V3.11
+   Applies only to pages not already individually upgraded.
+   No business logic, SQL, auth, stock, or payment logic.
+   ========================================================= */
+
+:root{
+    --r-navy:#152033;
+    --r-navy-2:#26344a;
+    --r-gold:#c28b00;
+    --r-gold-soft:#fff7df;
+    --r-bg:#f4f6f8;
+    --r-surface:#fff;
+    --r-text:#172033;
+    --r-muted:#667085;
+    --r-border:#dfe3e8;
+    --r-success:#027a48;
+    --r-success-bg:#ecfdf3;
+    --r-info:#175cd3;
+    --r-info-bg:#eff8ff;
+    --r-warning:#b54708;
+    --r-warning-bg:#fffaeb;
+    --r-danger:#b42318;
+    --r-danger-bg:#fef3f2;
+    --r-shadow:0 5px 18px rgba(16,24,40,.07);
+}
+
+@media screen {
+    html[data-ui-page] body{
+        color:var(--r-text);
+    }
+
+    /* Shared remaining-page shell */
+    html[data-ui-page="cancellation-history"] body,
+    html[data-ui-page="categories"] body,
+    html[data-ui-page="cost-control"] body,
+    html[data-ui-page="ingredients"] body,
+    html[data-ui-page="inventory-report"] body,
+    html[data-ui-page="kitchen-stations"] body,
+    html[data-ui-page="marketing"] body,
+    html[data-ui-page="modifier-options"] body,
+    html[data-ui-page="products"] body,
+    html[data-ui-page="promotions"] body,
+    html[data-ui-page="recipes"] body,
+    html[data-ui-page="stock-movements"] body,
+    html[data-ui-page="tables"] body{
+        background:
+            radial-gradient(circle at 100% 0%,rgba(194,139,0,.045),transparent 26%),
+            var(--r-bg)!important;
+    }
+
+    html[data-ui-page] .page-header h1,
+    html[data-ui-page] .page-heading h1,
+    html[data-ui-page] .page-heading h2,
+    html[data-ui-page] .page-head h1,
+    html[data-ui-page] .page-head h2,
+    html[data-ui-page] .list-header h2,
+    html[data-ui-page] .section-head h2,
+    html[data-ui-page] .panel-head h2,
+    html[data-ui-page] .report-header h2{
+        color:var(--r-text)!important;
+        font-weight:900!important;
+        letter-spacing:-.25px;
+    }
+
+    html[data-ui-page] .page-header p,
+    html[data-ui-page] .page-heading p,
+    html[data-ui-page] .page-head p,
+    html[data-ui-page] .panel-head p,
+    html[data-ui-page] .report-header p{
+        color:var(--r-muted)!important;
+    }
+
+    html[data-ui-page] .summary-grid,
+    html[data-ui-page] .summary-cards{
+        gap:12px!important;
+    }
+
+    html[data-ui-page] .summary-card,
+    html[data-ui-page] .stat{
+        position:relative;
+        overflow:hidden;
+        border:1px solid var(--r-border)!important;
+        border-radius:15px!important;
+        background:#fff!important;
+        box-shadow:0 2px 10px rgba(16,24,40,.045)!important;
+    }
+
+    html[data-ui-page] .summary-card::before,
+    html[data-ui-page] .stat::before{
+        content:"";
+        position:absolute;
+        inset:0 auto 0 0;
+        width:3px;
+        background:var(--r-gold);
+    }
+
+    html[data-ui-page] .summary-card strong,
+    html[data-ui-page] .stat strong{
+        color:var(--r-text)!important;
+        font-weight:900!important;
+    }
+
+    html[data-ui-page] .summary-card span,
+    html[data-ui-page] .summary-card small,
+    html[data-ui-page] .stat span,
+    html[data-ui-page] .stat small{
+        color:var(--r-muted)!important;
+    }
+
+    html[data-ui-page] .filter-card,
+    html[data-ui-page] .filter-panel,
+    html[data-ui-page] .filters,
+    html[data-ui-page] .filter,
+    html[data-ui-page] .toolbar{
+        border:1px solid var(--r-border)!important;
+        border-radius:15px!important;
+        background:#fff!important;
+        box-shadow:0 2px 10px rgba(16,24,40,.045)!important;
+    }
+
+    html[data-ui-page] .primary-btn,
+    html[data-ui-page] .primary-button,
+    html[data-ui-page] .primary,
+    html[data-ui-page] .add-table-btn,
+    html[data-ui-page] .add-btn{
+        border-color:var(--r-navy)!important;
+        background:var(--r-navy)!important;
+        color:#fff!important;
+        font-weight:900!important;
+        box-shadow:0 3px 8px rgba(21,32,51,.12)!important;
+    }
+
+    html[data-ui-page] .primary-btn:hover,
+    html[data-ui-page] .primary-button:hover,
+    html[data-ui-page] .primary:hover,
+    html[data-ui-page] .add-table-btn:hover,
+    html[data-ui-page] .add-btn:hover{
+        background:var(--r-navy-2)!important;
+    }
+
+    html[data-ui-page] .outline-btn,
+    html[data-ui-page] .secondary,
+    html[data-ui-page] .secondary-btn,
+    html[data-ui-page] .secondary-button,
+    html[data-ui-page] .icon-btn,
+    html[data-ui-page] .back-btn,
+    html[data-ui-page] .close-btn{
+        border-color:#d0d5dd!important;
+        background:#fff!important;
+        color:#344054!important;
+        font-weight:800!important;
+        border-radius:10px!important;
+    }
+
+    html[data-ui-page] .panel,
+    html[data-ui-page] .card,
+    html[data-ui-page] .report-card,
+    html[data-ui-page] .history-card,
+    html[data-ui-page] .recipe-list-card,
+    html[data-ui-page] .product-selector-card,
+    html[data-ui-page] .add-recipe-card,
+    html[data-ui-page] .printer-section{
+        border:1px solid var(--r-border)!important;
+        border-radius:16px!important;
+        background:#fff!important;
+        box-shadow:var(--r-shadow)!important;
+    }
+
+    html[data-ui-page] .table-wrap,
+    html[data-ui-page] .table-wrapper{
+        overflow:auto;
+        background:#fff;
+    }
+
+    html[data-ui-page] table{
+        width:100%;
+        border-spacing:0;
+    }
+
+    html[data-ui-page] thead th{
+        background:#f8fafc!important;
+        color:#475467!important;
+        font-size:11px!important;
+        font-weight:900!important;
+    }
+
+    html[data-ui-page] tbody td{
+        color:#344054!important;
+        border-color:#edf0f3!important;
+    }
+
+    html[data-ui-page] tbody tr:hover{
+        background:#fafbfc!important;
+    }
+
+    html[data-ui-page] .modal{
+        background:rgba(15,23,42,.60)!important;
+        backdrop-filter:blur(4px);
+    }
+
+    html[data-ui-page] .modal-card,
+    html[data-ui-page] .modal-panel{
+        border:1px solid rgba(255,255,255,.86)!important;
+        border-radius:20px!important;
+        background:#fff!important;
+        box-shadow:0 30px 80px rgba(15,23,42,.24)!important;
+    }
+
+    html[data-ui-page] .message:not(:empty),
+    html[data-ui-page] .page-message:not(:empty),
+    html[data-ui-page] .form-message:not(:empty){
+        border:1px solid #fda29b!important;
+        border-radius:10px!important;
+        background:var(--r-danger-bg)!important;
+        color:var(--r-danger)!important;
+        font-weight:800!important;
+    }
+
+    /* =====================================================
+       LOGIN / RESET PASSWORD
+       ===================================================== */
+    html[data-ui-page="index"] body,
+    html[data-ui-page="reset-password"] body{
+        min-height:100svh;
+        background:
+            radial-gradient(circle at 20% 0%,rgba(194,139,0,.12) 0,transparent 34%),
+            linear-gradient(180deg,#f7f8fa 0%,#edf0f3 100%)!important;
+    }
+
+    html[data-ui-page="index"] .login-box,
+    html[data-ui-page="reset-password"] .login-box{
+        width:min(430px,calc(100% - 28px));
+        border:1px solid #e1e5ea!important;
+        border-radius:22px!important;
+        background:rgba(255,255,255,.98)!important;
+        box-shadow:0 28px 70px rgba(16,24,40,.14)!important;
+    }
+
+    html[data-ui-page="index"] .login-box h1,
+    html[data-ui-page="index"] .login-box h2,
+    html[data-ui-page="reset-password"] .login-box h1,
+    html[data-ui-page="reset-password"] .login-box h2{
+        color:var(--r-text)!important;
+        font-weight:900!important;
+    }
+
+    html[data-ui-page="index"] .login-box button,
+    html[data-ui-page="reset-password"] .login-box button{
+        min-height:48px;
+        border-radius:11px!important;
+        font-weight:900!important;
+    }
+
+    /* =====================================================
+       CANCELLATION HISTORY
+       ===================================================== */
+    html[data-ui-page="cancellation-history"] .page{
+        width:min(1260px,calc(100% - 32px));
+        margin:auto;
+        padding:24px 0 54px;
+    }
+
+    html[data-ui-page="cancellation-history"] .topbar{
+        min-height:76px;
+        padding:12px 24px!important;
+    }
+
+    html[data-ui-page="cancellation-history"] .filters{
+        display:grid!important;
+        grid-template-columns:repeat(2,minmax(150px,.75fr)) minmax(220px,1.3fr) auto!important;
+        gap:10px!important;
+        padding:18px!important;
+    }
+
+    html[data-ui-page="cancellation-history"] .summary{
+        gap:12px!important;
+        margin:14px 0!important;
+    }
+
+    html[data-ui-page="cancellation-history"] .stat{
+        min-height:108px;
+        padding:17px!important;
+    }
+
+    html[data-ui-page="cancellation-history"] .card{
+        overflow:hidden;
+    }
+
+    /* =====================================================
+       CATEGORIES / PRODUCTS — SIDEBAR ADMIN
+       ===================================================== */
+    html[data-ui-page="categories"] .sidebar,
+    html[data-ui-page="products"] .sidebar{
+        background:linear-gradient(180deg,#152033 0%,#101827 100%)!important;
+    }
+
+    html[data-ui-page="categories"] .brand-icon,
+    html[data-ui-page="products"] .brand-icon{
+        background:var(--r-gold)!important;
+        color:var(--r-text)!important;
+    }
+
+    html[data-ui-page="categories"] .menu-item.active,
+    html[data-ui-page="products"] .menu-item.active{
+        background:rgba(255,255,255,.11)!important;
+        color:#fff!important;
+    }
+
+    html[data-ui-page="categories"] .page,
+    html[data-ui-page="products"] .page-content{
+        background:transparent!important;
+    }
+
+    html[data-ui-page="categories"] .category-card,
+    html[data-ui-page="products"] .table-panel{
+        overflow:hidden;
+        border:1px solid var(--r-border)!important;
+        border-radius:16px!important;
+        background:#fff!important;
+        box-shadow:var(--r-shadow)!important;
+    }
+
+    html[data-ui-page="products"] .image-upload-box{
+        border:1px dashed #c9ced6!important;
+        border-radius:14px!important;
+        background:#fafbfc!important;
+    }
+
+    html[data-ui-page="products"] .image-upload-box:hover{
+        border-color:var(--r-gold)!important;
+        background:#fffaf0!important;
+    }
+
+    /* =====================================================
+       COST CONTROL / MARKETING / PROMOTIONS
+       ===================================================== */
+    html[data-ui-page="cost-control"] .page,
+    html[data-ui-page="marketing"] .page,
+    html[data-ui-page="promotions"] .page{
+        width:min(1260px,calc(100% - 32px));
+        margin:auto;
+        padding:24px 0 54px;
+    }
+
+    html[data-ui-page="cost-control"] .summary-grid,
+    html[data-ui-page="marketing"] .summary-grid{
+        grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    }
+
+    html[data-ui-page="cost-control"] .breakdown-grid{
+        gap:12px!important;
+    }
+
+    html[data-ui-page="cost-control"] .campaign-list,
+    html[data-ui-page="marketing"] .item-list,
+    html[data-ui-page="promotions"] .promotion-list{
+        display:grid;
+        gap:10px;
+    }
+
+    html[data-ui-page="marketing"] .role-badge{
+        border:1px solid #ead99f!important;
+        background:var(--r-gold-soft)!important;
+        color:#7a5200!important;
+        border-radius:999px!important;
+        font-weight:900!important;
+    }
+
+    html[data-ui-page="promotions"] .notice-card{
+        border:1px solid #ead99f!important;
+        border-left:4px solid var(--r-gold)!important;
+        border-radius:13px!important;
+        background:#fffaf0!important;
+    }
+
+    html[data-ui-page="promotions"] .pin-grid{
+        gap:10px!important;
+    }
+
+    /* =====================================================
+       INGREDIENTS / STOCK / INVENTORY
+       ===================================================== */
+    html[data-ui-page="ingredients"] .app,
+    html[data-ui-page="inventory-report"] .page,
+    html[data-ui-page="stock-movements"] .page{
+        background:transparent!important;
+    }
+
+    html[data-ui-page="ingredients"] .content{
+        max-width:1280px;
+        margin:auto;
+    }
+
+    html[data-ui-page="ingredients"] .toolbar{
+        padding:14px!important;
+        margin-bottom:14px!important;
+    }
+
+    html[data-ui-page="ingredients"] .ingredient-list{
+        display:grid;
+        gap:10px;
+    }
+
+    html[data-ui-page="ingredients"] .summary-grid,
+    html[data-ui-page="inventory-report"] .summary-grid,
+    html[data-ui-page="stock-movements"] .summary-grid{
+        gap:12px!important;
+    }
+
+    html[data-ui-page="inventory-report"] .low-stock-card{
+        border:1px solid #f9dbaf!important;
+        border-radius:15px!important;
+        background:var(--r-warning-bg)!important;
+        box-shadow:0 2px 10px rgba(16,24,40,.04)!important;
+    }
+
+    html[data-ui-page="inventory-report"] .low-stock-list{
+        display:grid;
+        gap:8px;
+    }
+
+    html[data-ui-page="stock-movements"] .stock-box{
+        border:1px solid #b2ddff!important;
+        border-radius:13px!important;
+        background:var(--r-info-bg)!important;
+    }
+
+    html[data-ui-page="stock-movements"] .history-card{
+        overflow:hidden;
+    }
+
+    /* =====================================================
+       RECIPES / MODIFIERS
+       ===================================================== */
+    html[data-ui-page="recipes"] .page,
+    html[data-ui-page="modifier-options"] .page{
+        width:min(1320px,calc(100% - 32px));
+        margin:auto;
+        padding-top:24px;
+        padding-bottom:54px;
+    }
+
+    html[data-ui-page="recipes"] .recipe-workspace{
+        gap:14px!important;
+    }
+
+    html[data-ui-page="recipes"] .product-selector-card,
+    html[data-ui-page="recipes"] .add-recipe-card,
+    html[data-ui-page="recipes"] .recipe-list-card{
+        padding:18px!important;
+    }
+
+    html[data-ui-page="recipes"] .product-summary{
+        border:1px solid #ead99f!important;
+        border-radius:13px!important;
+        background:#fffaf0!important;
+    }
+
+    html[data-ui-page="modifier-options"] .groups,
+    html[data-ui-page="modifier-options"] .templates{
+        display:grid;
+        gap:12px;
+    }
+
+    html[data-ui-page="modifier-options"] .card .head{
+        border-bottom:1px solid #edf0f3!important;
+        background:#fafbfc!important;
+    }
+
+    /* =====================================================
+       KITCHEN STATIONS
+       ===================================================== */
+    html[data-ui-page="kitchen-stations"] body{
+        background:var(--r-bg)!important;
+    }
+
+    html[data-ui-page="kitchen-stations"] .layout{
+        gap:14px!important;
+    }
+
+    html[data-ui-page="kitchen-stations"] .stats{
+        gap:10px!important;
+    }
+
+    html[data-ui-page="kitchen-stations"] .printer-section{
+        padding:18px!important;
+    }
+
+    html[data-ui-page="kitchen-stations"] .printer-list,
+    html[data-ui-page="kitchen-stations"] .mapping-list{
+        display:grid;
+        gap:9px;
+    }
+
+    html[data-ui-page="kitchen-stations"] .danger{
+        border-color:#fda29b!important;
+        background:#fff!important;
+        color:var(--r-danger)!important;
+    }
+
+    /* =====================================================
+       TABLES
+       ===================================================== */
+    html[data-ui-page="tables"] .page{
+        width:min(1260px,calc(100% - 32px));
+        margin:auto;
+        padding-top:24px;
+        padding-bottom:54px;
+    }
+
+    html[data-ui-page="tables"] .summary-cards{
+        grid-template-columns:repeat(4,minmax(0,1fr))!important;
+    }
+
+    html[data-ui-page="tables"] .toolbar{
+        padding:14px!important;
+        margin-bottom:14px!important;
+    }
+
+    html[data-ui-page="tables"] .table-grid{
+        gap:12px!important;
+    }
+
+    html[data-ui-page="tables"] .qr-card{
+        border:1px solid #b2ddff!important;
+        border-radius:15px!important;
+        background:var(--r-info-bg)!important;
+    }
+
+    html[data-ui-page="tables"] .qr-box{
+        border:1px solid #d0d5dd!important;
+        border-radius:14px!important;
+        background:#fff!important;
+    }
+
+    html[data-ui-page="tables"] .qr-token-box{
+        border:1px dashed #c9ced6!important;
+        border-radius:10px!important;
+        background:#f8fafc!important;
+    }
+
+    /* =====================================================
+       CUSTOMER ORDER
+       Keep customer flow friendlier, but same professional system.
+       ===================================================== */
+    html[data-ui-page="customer-order"] body{
+        background:#f5f6f8!important;
+    }
+
+    html[data-ui-page="customer-order"] .customer-header{
+        background:rgba(255,255,255,.98)!important;
+        border-bottom:1px solid #e3e7ec!important;
+        box-shadow:0 2px 10px rgba(16,24,40,.05)!important;
+    }
+
+    html[data-ui-page="customer-order"] .page{
+        max-width:1120px;
+    }
+
+    html[data-ui-page="customer-order"] .start-card,
+    html[data-ui-page="customer-order"] .state-card{
+        border:1px solid var(--r-border)!important;
+        border-radius:18px!important;
+        background:#fff!important;
+        box-shadow:var(--r-shadow)!important;
+    }
+
+    html[data-ui-page="customer-order"] .start-icon,
+    html[data-ui-page="customer-order"] .state-icon,
+    html[data-ui-page="customer-order"] .success-icon{
+        background:var(--r-gold-soft)!important;
+    }
+
+    html[data-ui-page="customer-order"] .category-tabs{
+        gap:8px!important;
+        scrollbar-width:none;
+    }
+
+    html[data-ui-page="customer-order"] .category-tabs::-webkit-scrollbar{
+        display:none;
+    }
+
+    html[data-ui-page="customer-order"] .product-grid{
+        gap:12px!important;
+    }
+
+    html[data-ui-page="customer-order"] .cart-button,
+    html[data-ui-page="customer-order"] .mobile-cart-bar,
+    html[data-ui-page="customer-order"] .primary-button{
+        background:var(--r-navy)!important;
+        color:#fff!important;
+        border-color:var(--r-navy)!important;
+        font-weight:900!important;
+    }
+
+    html[data-ui-page="customer-order"] .sheet,
+    html[data-ui-page="customer-order"] .cart-sheet,
+    html[data-ui-page="customer-order"] .success-sheet{
+        border-radius:20px!important;
+        box-shadow:0 30px 80px rgba(15,23,42,.24)!important;
+    }
+
+    /* =====================================================
+       RESPONSIVE
+       ===================================================== */
+    @media(max-width:900px){
+        html[data-ui-page="cost-control"] .summary-grid,
+        html[data-ui-page="marketing"] .summary-grid,
+        html[data-ui-page="tables"] .summary-cards{
+            grid-template-columns:repeat(2,minmax(0,1fr))!important;
+        }
+
+        html[data-ui-page="cancellation-history"] .filters{
+            grid-template-columns:1fr 1fr!important;
+        }
+    }
+
+    @media(max-width:720px){
+        html[data-ui-page="cancellation-history"] .page,
+        html[data-ui-page="cost-control"] .page,
+        html[data-ui-page="marketing"] .page,
+        html[data-ui-page="promotions"] .page,
+        html[data-ui-page="recipes"] .page,
+        html[data-ui-page="modifier-options"] .page,
+        html[data-ui-page="tables"] .page{
+            width:calc(100% - 18px);
+            padding-top:12px;
+            padding-bottom:28px;
+        }
+
+        html[data-ui-page="cancellation-history"] .filters,
+        html[data-ui-page="cost-control"] .filter-grid,
+        html[data-ui-page="marketing"] .form-grid,
+        html[data-ui-page="promotions"] .form-grid,
+        html[data-ui-page="inventory-report"] .filter-card,
+        html[data-ui-page="stock-movements"] .filter-card{
+            grid-template-columns:1fr!important;
+        }
+
+        html[data-ui-page="cancellation-history"] .summary,
+        html[data-ui-page="cost-control"] .summary-grid,
+        html[data-ui-page="marketing"] .summary-grid,
+        html[data-ui-page="ingredients"] .summary-grid,
+        html[data-ui-page="inventory-report"] .summary-grid,
+        html[data-ui-page="stock-movements"] .summary-grid,
+        html[data-ui-page="tables"] .summary-cards{
+            grid-template-columns:repeat(2,minmax(0,1fr))!important;
+            gap:9px!important;
+        }
+
+        html[data-ui-page="recipes"] .recipe-workspace{
+            grid-template-columns:1fr!important;
+        }
+
+        html[data-ui-page="customer-order"] .product-grid{
+            grid-template-columns:repeat(2,minmax(0,1fr))!important;
+            gap:9px!important;
+        }
+
+        html[data-ui-page="customer-order"] .sheet,
+        html[data-ui-page="customer-order"] .cart-sheet,
+        html[data-ui-page="customer-order"] .success-sheet{
+            border-radius:22px 22px 0 0!important;
+        }
+
+        html[data-ui-page] .modal{
+            align-items:end!important;
+        }
+
+        html[data-ui-page] .modal-card,
+        html[data-ui-page] .modal-panel{
+            width:100%!important;
+            max-width:100%!important;
+            max-height:92svh!important;
+            border-radius:22px 22px 0 0!important;
+        }
+    }
+
+    @media(max-width:390px){
+        html[data-ui-page="cancellation-history"] .summary,
+        html[data-ui-page="cost-control"] .summary-grid,
+        html[data-ui-page="marketing"] .summary-grid,
+        html[data-ui-page="ingredients"] .summary-grid,
+        html[data-ui-page="inventory-report"] .summary-grid,
+        html[data-ui-page="stock-movements"] .summary-grid,
+        html[data-ui-page="tables"] .summary-cards{
+            grid-template-columns:1fr!important;
+        }
+
+        html[data-ui-page="customer-order"] .product-grid{
+            grid-template-columns:1fr 1fr!important;
+        }
+    }
+}
