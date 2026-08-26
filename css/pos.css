@@ -3696,26 +3696,247 @@ and
 }
 
 /* =========================================================
-   JOKJUNG POS PAYMENT DESKTOP UI V3.0.5
-   Professional desktop payment modal
+   JOKJUNG POS PROFESSIONAL UI V3.0 — RESTORED BASE THEME
+   ========================================================= */
+
+:root {
+    --primary: #c99300;
+    --primary-dark: #a97800;
+    --primary-light: #fff7df;
+
+    --background: #f4f5f7;
+    --surface: #ffffff;
+    --surface-soft: #fafbfc;
+
+    --text: #172033;
+    --muted: #667085;
+    --border: #dfe3e8;
+
+    --danger: #b42318;
+    --danger-light: #fef3f2;
+
+    --success: #027a48;
+    --success-light: #ecfdf3;
+
+    --warning: #b54708;
+    --warning-light: #fffaeb;
+
+    --shadow-sm: 0 1px 2px rgba(16,24,40,.06);
+    --shadow-md: 0 8px 24px rgba(16,24,40,.10);
+}
+
+body {
+    background: linear-gradient(180deg,#f7f8fa 0%,var(--background) 100%);
+    color: var(--text);
+}
+
+.topbar {
+    background: rgba(255,255,255,.96);
+    border-bottom: 1px solid #e4e7ec;
+    box-shadow: 0 1px 8px rgba(16,24,40,.04);
+    backdrop-filter: blur(10px);
+}
+
+.topbar-brand strong {
+    color: #101828;
+    font-size: 17px;
+    letter-spacing: .2px;
+}
+
+.outline-btn,
+.icon-btn {
+    background: #fff;
+    color: #344054;
+    border-color: #dfe3e8;
+    box-shadow: var(--shadow-sm);
+}
+
+.toolbar input {
+    background: #fff;
+    border-color: #dfe3e8;
+    box-shadow: var(--shadow-sm);
+}
+
+.tab {
+    background: #fff;
+    color: #344054;
+    border-color: #dfe3e8;
+    box-shadow: var(--shadow-sm);
+}
+
+.tab.active {
+    border-color: #c99300;
+    background: #172033;
+    color: #fff;
+}
+
+.product-grid {
+    gap: 14px;
+}
+
+.product-card {
+    border-color: #dfe3e8;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(16,24,40,.06);
+}
+
+.product-card:hover {
+    border-color: #c9ced6;
+    box-shadow: 0 6px 18px rgba(16,24,40,.08);
+}
+
+.product-image {
+    background: linear-gradient(145deg,#fff9e7,#fff3c4);
+}
+
+.product-info h3,
+.product-info strong {
+    color: #101828;
+}
+
+.plus {
+    background: #172033;
+    color: #fff;
+}
+
+.stock-available {
+    color: #027a48 !important;
+}
+
+.stock-out {
+    color: #b42318 !important;
+}
+
+.cart {
+    border-left: 1px solid #e4e7ec;
+    box-shadow: -4px 0 18px rgba(16,24,40,.04);
+}
+
+.cart-head h2 {
+    color: #101828;
+}
+
+.primary-btn {
+    border-color: #172033;
+    background: #172033;
+    color: #fff;
+    box-shadow: 0 2px 5px rgba(16,24,40,.14);
+}
+
+.primary-btn:hover {
+    background: #263349;
+}
+
+#confirmOrderBtn,
+.confirm-order-btn {
+    width: 100%;
+    min-height: 52px;
+    padding: 10px 16px;
+    border: 1px solid #c99300;
+    border-radius: 12px;
+    background: #fff7df;
+    color: #7a5200;
+    font-weight: 900;
+}
+
+.confirm-order-help {
+    display: block;
+    margin: 7px 0 11px;
+    color: #667085;
+    font-size: 11px;
+    line-height: 1.45;
+}
+
+.order-type-btn.active,
+.table-select-btn.active {
+    border-color: #172033 !important;
+    background: #f2f4f7 !important;
+    color: #101828 !important;
+    box-shadow: 0 0 0 3px rgba(23,32,51,.08) !important;
+}
+
+.mobile-cart-bar {
+    background: #172033 !important;
+    color: #fff !important;
+    border-color: #172033 !important;
+}
+
+.modal {
+    background: rgba(16,24,40,.56);
+    backdrop-filter: blur(2px);
+}
+
+.modal-card {
+    border: 1px solid rgba(255,255,255,.8);
+    box-shadow: 0 24px 70px rgba(16,24,40,.22);
+}
+
+.method.active {
+    border: 2px solid #172033 !important;
+    background: #f2f4f7 !important;
+    color: #101828 !important;
+}
+
+.change {
+    border: 1px solid #abefc6;
+    background: #ecfdf3;
+    color: #027a48;
+}
+
+.message:not(:empty) {
+    display: block;
+    margin-top: 10px;
+    padding: 10px 12px;
+    border: 1px solid #fda29b;
+    border-radius: 10px;
+    background: #fef3f2;
+    color: #b42318;
+    font-weight: 700;
+}
+
+.message.ui-message-success:not(:empty) {
+    border-color: #abefc6;
+    background: #ecfdf3;
+    color: #027a48;
+}
+
+.message.ui-message-warning:not(:empty) {
+    border-color: #fedf89;
+    background: #fffaeb;
+    color: #b54708;
+}
+
+button:not(:disabled):active,
+.ui-pressed {
+    transform: translateY(1px) scale(.985) !important;
+}
+
+.product-card.ui-flash,
+button.ui-flash {
+    box-shadow: 0 0 0 3px rgba(201,147,0,.18) !important;
+}
+
+/* =========================================================
+   PAYMENT DESKTOP UI V3.0.5.1 — MERGED WITH PRO THEME
    ========================================================= */
 
 @media (min-width: 761px) {
 
     #paymentModal {
         padding: 28px !important;
-        background: rgba(15, 23, 42, .58) !important;
+        background: rgba(15,23,42,.58) !important;
         backdrop-filter: blur(4px);
     }
 
     #paymentModal .modal-card {
-        width: min(620px, 96vw) !important;
+        width: min(620px,96vw) !important;
         max-height: calc(100vh - 56px) !important;
         padding: 26px !important;
         border: 1px solid #e5e7eb !important;
         border-radius: 20px !important;
         background: #fff !important;
-        box-shadow: 0 28px 70px rgba(15, 23, 42, .24) !important;
+        box-shadow: 0 28px 70px rgba(15,23,42,.24) !important;
     }
 
     #paymentModal .modal-head {
@@ -3741,7 +3962,7 @@ and
         padding: 20px !important;
         border: 1px solid #e6d59d !important;
         border-radius: 16px !important;
-        background: linear-gradient(180deg, #fffaf0 0%, #fff7e6 100%) !important;
+        background: linear-gradient(180deg,#fffaf0 0%,#fff7e6 100%) !important;
     }
 
     #paymentModal #paymentTotalText {
@@ -3758,30 +3979,10 @@ and
         background: #fafbfc !important;
     }
 
-    #paymentModal .payment-discount-head {
-        display: flex !important;
-        justify-content: space-between !important;
-        gap: 14px !important;
-        margin-bottom: 14px !important;
-    }
-
-    #paymentModal .payment-discount-head strong {
-        display: block !important;
-        margin-bottom: 3px !important;
-        color: #172033 !important;
-        font-size: 15px !important;
-    }
-
-    #paymentModal .payment-discount-head small {
-        display: block !important;
-        color: #667085 !important;
-        font-size: 12px !important;
-    }
-
     #paymentModal .promotion-select-row,
     #paymentModal .coupon-redeem-row {
         display: grid !important;
-        grid-template-columns: minmax(0, 1fr) 132px !important;
+        grid-template-columns: minmax(0,1fr) 132px !important;
         gap: 10px !important;
         margin-top: 10px !important;
     }
@@ -3789,7 +3990,6 @@ and
     #paymentModal #activePromotionSelect,
     #paymentModal #couponCodeInput {
         width: 100% !important;
-        min-width: 0 !important;
         min-height: 46px !important;
         padding: 0 13px !important;
         border: 1px solid #d0d5dd !important;
@@ -3803,9 +4003,7 @@ and
     #paymentModal #applyCouponBtn {
         width: 132px !important;
         min-height: 46px !important;
-        padding: 0 14px !important;
         border-radius: 11px !important;
-        font-size: 14px !important;
         font-weight: 800 !important;
     }
 
@@ -3817,7 +4015,6 @@ and
         border-radius: 11px !important;
         background: #fffaf0 !important;
         color: #8a5b00 !important;
-        font-size: 14px !important;
         font-weight: 900 !important;
     }
 
@@ -3829,18 +4026,9 @@ and
 
     #paymentModal .method {
         min-height: 58px !important;
-        border: 1px solid #d0d5dd !important;
         border-radius: 14px !important;
-        background: #fff !important;
-        color: #344054 !important;
         font-size: 16px !important;
         font-weight: 900 !important;
-    }
-
-    #paymentModal .method.active {
-        border: 2px solid #172033 !important;
-        background: #f2f4f7 !important;
-        color: #172033 !important;
     }
 
     #paymentModal #receivedInput {
@@ -3854,7 +4042,7 @@ and
 
     #paymentModal #quickCash {
         display: grid !important;
-        grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+        grid-template-columns: repeat(4,minmax(0,1fr)) !important;
         gap: 8px !important;
         margin-top: 9px !important;
     }
@@ -3871,9 +4059,7 @@ and
     #paymentModal .change {
         margin-top: 12px !important;
         padding: 13px 14px !important;
-        border: 1px solid #abefc6 !important;
         border-radius: 12px !important;
-        background: #ecfdf3 !important;
     }
 
     #paymentModal #saleNote {
@@ -3904,11 +4090,6 @@ and
         border-color: #172033 !important;
         background: #172033 !important;
         color: #fff !important;
-    }
-
-    #paymentModal #cancelPaymentBtn {
-        background: #fff !important;
-        color: #344054 !important;
     }
 }
 
