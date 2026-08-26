@@ -154,6 +154,30 @@ export function uiTap() {
 }
 
 
+export function uiMenuTap() {
+
+    /*
+     * V3.0.1
+     * เสียงกดเมนูอาหารให้ชัดกว่าปุ่มทั่วไป
+     * แต่ยังสั้นเพื่อไม่รบกวนหน้าร้าน
+     */
+    tone({
+        frequency: 640,
+        duration: .045,
+        gain: .055,
+        type: 'sine'
+    })
+
+    tone({
+        frequency: 820,
+        duration: .035,
+        gain: .035,
+        type: 'sine',
+        delay: .028
+    })
+}
+
+
 export function uiSuccess() {
 
     tone({
@@ -585,11 +609,8 @@ function bindPressFeedback() {
             }
 
 
-            uiTap()
-
-
             /*
-             * Product card gets short visual flash
+             * เมนูอาหารใช้เสียงที่ดัง/ชัดกว่าปุ่มทั่วไป
              */
             const card =
                 target.closest(
@@ -597,6 +618,19 @@ function bindPressFeedback() {
                 )
 
 
+            if (card) {
+
+                uiMenuTap()
+
+            } else {
+
+                uiTap()
+            }
+
+
+            /*
+             * Product card gets short visual flash
+             */
             if (card) {
 
                 card.classList
@@ -750,6 +784,7 @@ function initUiFeedback() {
 
     window.JOKJUNG_UI_FEEDBACK = {
         tap: uiTap,
+        menuTap: uiMenuTap,
         success: uiSuccess,
         warning: uiWarning,
         error: uiError,
