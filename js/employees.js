@@ -697,6 +697,18 @@ function renderEmployees() {
                                             <button
                                                 type="button"
                                                 class="action-btn"
+                                                data-activity-id="${
+                                                    esc(
+                                                        employee.id
+                                                    )
+                                                }"
+                                            >
+                                                กิจกรรม
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                class="action-btn"
                                                 data-reset-password-id="${
                                                     esc(
                                                         employee.id
@@ -1887,6 +1899,23 @@ el.employeeTableBody.onclick =
             openPinModal(
                 pinButton.dataset.pinId
             )
+
+            return
+        }
+
+
+        const activityButton =
+            event.target.closest(
+                '[data-activity-id]'
+            )
+
+        if (activityButton) {
+            location.href =
+                './employee-activity.html?id='
+                +
+                encodeURIComponent(
+                    activityButton.dataset.activityId
+                )
 
             return
         }
