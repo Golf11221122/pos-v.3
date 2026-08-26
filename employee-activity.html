@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>กิจกรรมพนักงาน | JOKJUNG POS</title>
+<link rel="stylesheet" href="./css/employee-activity.css?v=2.15">
+</head>
+<body>
+<header class="topbar">
+<div class="left"><button id="backBtn">←</button><div><h1>กิจกรรมพนักงาน</h1><small id="branchText">กำลังโหลด...</small></div></div>
+<div class="right"><span id="userName">ผู้ใช้งาน</span><button id="logoutBtn">ออกจากระบบ</button></div>
+</header>
+<main class="page">
+<section class="card employee-head"><div><small>พนักงาน</small><h2 id="employeeName">กำลังโหลด...</h2><div id="employeeMeta" class="muted">-</div></div><span id="employeeStatus" class="pill">-</span></section>
+<section class="card filter"><label>ตั้งแต่วันที่<input id="dateFrom" type="date"></label><label>ถึงวันที่<input id="dateTo" type="date"></label><button id="loadBtn">โหลดข้อมูล</button><p id="message"></p></section>
+<section class="summary">
+<article><span>เข้าสู่ระบบล่าสุด</span><strong id="lastSignIn">-</strong></article>
+<article><span>จำนวนกะ</span><strong id="shiftCount">0</strong><small id="workHours">0 ชม.</small></article>
+<article><span>ยอดขาย</span><strong id="netSales">฿0.00</strong><small id="billCount">0 บิล</small></article>
+<article><span>ส่วนลด</span><strong id="discountAmount">฿0.00</strong><small id="discountCount">0 ครั้ง</small></article>
+<article><span>VOID</span><strong id="voidCount">0</strong><small id="voidAmount">฿0.00</small></article>
+<article><span>Refund</span><strong id="refundCount">0</strong><small id="refundAmount">฿0.00</small></article>
+</section>
+<section class="card"><h2>กะการทำงาน</h2><div id="shiftList" class="list"><div class="empty">กำลังโหลด...</div></div></section>
+<section class="card"><h2>กิจกรรมควบคุมล่าสุด</h2><small class="muted">ข้อมูลจาก Central Audit Log</small><div id="auditList" class="list"><div class="empty">กำลังโหลด...</div></div></section>
+</main>
+<script type="module" src="./js/employee-activity.js?v=2.15"></script>
+</body>
+</html>
