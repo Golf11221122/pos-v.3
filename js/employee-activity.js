@@ -11,7 +11,123 @@ function dates(){const d=new Date(),to=d.toISOString().slice(0,10),f=new Date(d)
 async function requireAdmin(){const{data:a,error:ae}=await supabase.auth.getSession();if(ae)throw ae;if(!a?.session){location.replace('./index.html');return false}const{data:p,error}=await supabase.from('profiles').select('id,full_name,role,branch_id,is_active').eq('id',a.session.user.id).maybeSingle();if(error)throw error;if(!p||p.is_active===false||String(p.role||'').toLowerCase()!=='admin')throw new Error('ADMIN_REQUIRED');const{data:b}=await supabase.from('branches').select('name').eq('id',p.branch_id).maybeSingle();el.userName.textContent=p.full_name||a.session.user.email?.split('@')[0]||'Admin';el.branchText.textContent=`สาขา: ${b?.name||'-'}`;return true}
 function render(d){const e=d?.employee||{},s=d?.summary||{};el.employeeName.textContent=e.full_name||'-';el.employeeMeta.textContent=`${role(e.role)} • ${e.email||'-'}${e.archived_at?' • Archived':''}`;const active=e.is_active!==false;el.employeeStatus.textContent=active?'เปิดใช้งาน':'ปิดใช้งาน';el.employeeStatus.className=`pill ${active?'active':'inactive'}`;el.lastSignIn.textContent=dt(e.last_sign_in_at);el.shiftCount.textContent=Number(s.shift_count||0).toLocaleString('th-TH');el.workHours.textContent=`${(Number(s.work_minutes||0)/60).toLocaleString('th-TH',{maximumFractionDigits:1})} ชม.`;el.netSales.textContent=money(s.net_sales);el.billCount.textContent=`${Number(s.bill_count||0).toLocaleString('th-TH')} บิล`;el.discountAmount.textContent=money(s.discount_amount);el.discountCount.textContent=`${Number(s.discount_count||0).toLocaleString('th-TH')} ครั้ง`;el.voidCount.textContent=Number(s.void_count||0).toLocaleString('th-TH');el.voidAmount.textContent=money(s.void_amount);el.refundCount.textContent=Number(s.refund_count||0).toLocaleString('th-TH');el.refundAmount.textContent=money(s.refund_amount)}
 function shifts(rows){const a=Array.isArray(rows)?rows:[];el.shiftList.innerHTML=a.map(x=>`<div class="row"><div class="time">${esc(x.business_date||'-')}</div><div class="main"><strong>${dt(x.opened_at)} → ${dt(x.closed_at)}</strong><small>${esc(x.terminal_code||'-')} • ${Number(x.bill_count||0).toLocaleString('th-TH')} บิล • Diff ${money(x.cash_difference)}</small></div><div class="amount">${money(x.total_sales)}</div></div>`).join('')||'<div class="empty">ไม่พบข้อมูลกะในช่วงวันที่นี้</div>'}
-function audits(rows){const a=Array.isArray(rows)?rows:[];el.auditList.innerHTML=a.map(x=>`<div class="row"><div class="time">${dt(x.created_at)}</div><div class="main"><strong>${esc(String(x.action_type||'-').toUpperCase())}</strong><small>${esc(x.description||x.entity_type||'-')}</small></div><div class="amount">${x.amount==null?'':money(x.amount)}</div></div>`).join('')||'<div class="empty">ไม่พบกิจกรรม Audit ในช่วงวันที่นี้</div>'}
+function auditText(row) {
+    const action =
+        String(
+            row?.action_type ||
+            ''
+        )
+            .trim()
+            .toLowerCase()
+
+    const entity =
+        String(
+            row?.entity_type ||
+            ''
+        )
+            .trim()
+            .toLowerCase()
+
+    const map = {
+        shift_open: {
+            title: 'เปิดกะ',
+            detail: 'เริ่มกะการทำงาน'
+        },
+        shift_close: {
+            title: 'ปิดกะ',
+            detail: 'สิ้นสุดกะการทำงาน'
+        },
+        void: {
+            title: 'VOID',
+            detail: 'ยกเลิกรายการ/บิล'
+        },
+        refund: {
+            title: 'Refund',
+            detail: 'คืนเงิน'
+        },
+        discount: {
+            title: 'ส่วนลด',
+            detail: 'อนุมัติหรือใช้ส่วนลด'
+        }
+    }
+
+    if (map[action]) {
+        return map[action]
+    }
+
+    if (
+        action === 'update'
+        &&
+        entity === 'restaurant_tables'
+    ) {
+        return {
+            title: 'แก้ไขโต๊ะ',
+            detail: 'อัปเดตข้อมูลโต๊ะ'
+        }
+    }
+
+    return {
+        title:
+            String(
+                row?.action_type ||
+                '-'
+            )
+                .replaceAll('_', ' ')
+                .toUpperCase(),
+
+        detail:
+            String(
+                row?.description ||
+                row?.entity_type ||
+                '-'
+            )
+    }
+}
+
+
+function audits(rows) {
+    const a =
+        Array.isArray(rows)
+            ? rows
+            : []
+
+    el.auditList.innerHTML =
+        a.map(
+            x => {
+                const label =
+                    auditText(x)
+
+                return `
+                    <div class="row">
+                        <div class="time">
+                            ${dt(x.created_at)}
+                        </div>
+
+                        <div class="main">
+                            <strong>
+                                ${esc(label.title)}
+                            </strong>
+
+                            <small>
+                                ${esc(label.detail)}
+                            </small>
+                        </div>
+
+                        <div class="amount">
+                            ${
+                                x.amount == null
+                                    ? ''
+                                    : money(x.amount)
+                            }
+                        </div>
+                    </div>
+                `
+            }
+        )
+            .join('')
+        ||
+        '<div class="empty">ไม่พบกิจกรรม Audit ในช่วงวันที่นี้</div>'
+}
 async function load(){if(!employeeId){msg('ไม่พบรหัสพนักงาน');return}const f=el.dateFrom.value,t=el.dateTo.value;if(!f||!t){msg('กรุณาเลือกช่วงวันที่');return}if(f>t){msg('วันที่เริ่มต้องไม่เกินวันที่สิ้นสุด');return}el.loadBtn.disabled=true;msg('กำลังโหลด...');try{const{data,error}=await supabase.rpc('admin_employee_activity_v215',{p_user_id:employeeId,p_date_from:f,p_date_to:t});if(error)throw error;render(data||{});shifts(data?.shifts||[]);audits(data?.audit||[]);msg('โหลดข้อมูลสำเร็จ',true)}catch(e){console.error(e);let t=e?.message||'โหลดกิจกรรมพนักงานไม่สำเร็จ';if(t.includes('ADMIN_REQUIRED'))t='เฉพาะ Admin เท่านั้นที่ดูข้อมูลนี้ได้';if(t.includes('BRANCH_NOT_ALLOWED'))t='ไม่สามารถดูพนักงานต่างสาขาได้';if(t.includes('USER_NOT_FOUND'))t='ไม่พบพนักงาน';msg(t)}finally{el.loadBtn.disabled=false}}
 async function init(){employeeId=new URLSearchParams(location.search).get('id');dates();try{if(await requireAdmin())await load()}catch(e){console.error(e);msg(e?.message||'เปิดหน้ากิจกรรมพนักงานไม่สำเร็จ')}}
 el.backBtn.onclick=()=>location.href='./employees.html'
