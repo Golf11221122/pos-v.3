@@ -534,6 +534,48 @@ function msg(
 }
 
 
+function uiFeedback(
+    type,
+    text = ''
+) {
+
+    const api =
+        window.JOKJUNG_UI_FEEDBACK
+
+
+    if (!api) {
+        return
+    }
+
+
+    if (
+        typeof api[type] ===
+        'function'
+    ) {
+        api[type]()
+    }
+
+
+    if (
+        text
+        &&
+        typeof api.toast ===
+        'function'
+    ) {
+        api.toast(
+            text,
+            type === 'error'
+                ? 'error'
+                : type === 'warning'
+                    ? 'warning'
+                    : type === 'success'
+                        ? 'success'
+                        : 'info'
+        )
+    }
+}
+
+
 /* ========================================
    PAYMENT PERMISSIONS
 ======================================== */
@@ -4791,6 +4833,11 @@ async function addConfiguredProduct(
 
     msg(el.pageMessage, '')
     renderCart()
+
+    uiFeedback(
+        'success'
+    )
+
     return true
 }
 
@@ -5338,6 +5385,11 @@ async function confirmCurrentOrder() {
             `✅ ยืนยันออเดอร์แล้ว • ส่งเข้าครัว ${sentCount.toLocaleString('th-TH')} รายการ`
         )
 
+        uiFeedback(
+            'success',
+            `ส่งเข้าครัว ${sentCount.toLocaleString('th-TH')} รายการแล้ว`
+        )
+
         setTimeout(
             () => {
                 if (
@@ -5362,6 +5414,11 @@ async function confirmCurrentOrder() {
         msg(
             el.pageMessage,
             error.message ||
+            'ส่งออเดอร์เข้าครัวไม่สำเร็จ'
+        )
+
+        uiFeedback(
+            'error',
             'ส่งออเดอร์เข้าครัวไม่สำเร็จ'
         )
 
@@ -8354,6 +8411,11 @@ async function confirmPayment() {
                 'hidden'
             )
 
+        uiFeedback(
+            'success',
+            `ชำระเงินสำเร็จ ${money(state.lastSale.total)}`
+        )
+
 
         /*
          * ปิดออเดอร์และคืนสถานะโต๊ะ
@@ -8531,6 +8593,11 @@ async function confirmPayment() {
 
         msg(
             el.paymentMessage,
+            errorMessage
+        )
+
+        uiFeedback(
+            'error',
             errorMessage
         )
 
