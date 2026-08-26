@@ -1338,3 +1338,570 @@ tbody tr:hover {
             7px 8px;
     }
 }
+
+/* =========================================================
+   JOKJUNG SALES REPORT PROFESSIONAL UX/UI V3.10
+   Visual-only reporting layer. No report calculation changes.
+   ========================================================= */
+
+:root{
+    --sr-navy:#152033;
+    --sr-navy-2:#26344a;
+    --sr-gold:#c28b00;
+    --sr-gold-soft:#fff7df;
+    --sr-bg:#f4f6f8;
+    --sr-text:#172033;
+    --sr-muted:#667085;
+    --sr-border:#dfe3e8;
+    --sr-success:#027a48;
+    --sr-success-bg:#ecfdf3;
+    --sr-info:#175cd3;
+    --sr-info-bg:#eff8ff;
+    --sr-warning:#b54708;
+    --sr-warning-bg:#fffaeb;
+    --sr-danger:#b42318;
+    --sr-danger-bg:#fef3f2;
+    --sr-shadow:0 5px 18px rgba(16,24,40,.07);
+}
+
+body{
+    background:
+        radial-gradient(circle at 100% 0%,rgba(194,139,0,.045),transparent 26%),
+        var(--sr-bg)!important;
+    color:var(--sr-text)!important;
+}
+
+.page{
+    width:min(1360px,calc(100% - 32px));
+    padding-top:24px;
+    padding-bottom:56px;
+}
+
+/* Top bar */
+.topbar{
+    min-height:76px;
+    padding:12px 24px!important;
+    background:rgba(255,255,255,.97)!important;
+    border-bottom:1px solid #e6e9ee!important;
+    box-shadow:0 2px 10px rgba(16,24,40,.04)!important;
+}
+
+.topbar h1{
+    color:var(--sr-text)!important;
+    font-size:22px!important;
+    font-weight:900!important;
+    letter-spacing:-.2px;
+}
+
+.topbar small{
+    color:var(--sr-muted)!important;
+}
+
+/* Page heading */
+.page-heading,
+.page-header,
+.page-head{
+    margin-bottom:18px!important;
+}
+
+.page-heading h1,
+.page-heading h2,
+.page-header h1,
+.page-header h2,
+.page-head h1,
+.page-head h2{
+    color:var(--sr-text)!important;
+    font-size:28px!important;
+    font-weight:900!important;
+    letter-spacing:-.35px;
+}
+
+.page-heading p,
+.page-header p,
+.page-head p{
+    margin-top:5px;
+    color:var(--sr-muted)!important;
+}
+
+/* Filters */
+.filter-card,
+.filters,
+.report-filter{
+    margin-bottom:16px!important;
+    padding:18px!important;
+    border:1px solid var(--sr-border)!important;
+    border-radius:15px!important;
+    background:#fff!important;
+    box-shadow:0 2px 10px rgba(16,24,40,.045)!important;
+}
+
+.filter-grid,
+.filters{
+    display:grid!important;
+    grid-template-columns:repeat(2,minmax(160px,.75fr)) minmax(200px,1fr) auto!important;
+    gap:10px!important;
+    align-items:end!important;
+}
+
+.filter-grid label,
+.filters label,
+.field{
+    color:#344054!important;
+    font-size:12px!important;
+    font-weight:800!important;
+}
+
+.filter-grid input,
+.filter-grid select,
+.filters input,
+.filters select{
+    min-height:44px!important;
+}
+
+.filter-actions,
+.filters .actions{
+    display:flex!important;
+    gap:8px!important;
+    align-items:center!important;
+}
+
+.filter-actions button,
+.filters button{
+    min-height:44px!important;
+}
+
+/* Main report actions */
+.primary-btn{
+    min-height:44px!important;
+    border:1px solid var(--sr-navy)!important;
+    border-radius:11px!important;
+    background:var(--sr-navy)!important;
+    color:#fff!important;
+    font-weight:900!important;
+    box-shadow:0 3px 8px rgba(21,32,51,.12)!important;
+}
+
+.primary-btn:hover{
+    background:var(--sr-navy-2)!important;
+}
+
+.outline-btn,
+.icon-btn{
+    min-height:42px!important;
+    border:1px solid #d0d5dd!important;
+    border-radius:10px!important;
+    background:#fff!important;
+    color:#344054!important;
+    font-weight:800!important;
+}
+
+/* KPI / summary */
+.summary-grid,
+.kpi-grid,
+.metrics-grid{
+    gap:12px!important;
+    margin-bottom:16px!important;
+}
+
+.summary-card,
+.kpi-card,
+.metric-card{
+    position:relative;
+    min-height:118px;
+    padding:18px!important;
+    overflow:hidden;
+    border:1px solid var(--sr-border)!important;
+    border-radius:15px!important;
+    background:#fff!important;
+    box-shadow:0 2px 10px rgba(16,24,40,.045)!important;
+}
+
+.summary-card::before,
+.kpi-card::before,
+.metric-card::before{
+    content:"";
+    position:absolute;
+    inset:0 auto 0 0;
+    width:3px;
+    background:var(--sr-gold);
+}
+
+.summary-card span,
+.summary-card small,
+.kpi-card span,
+.kpi-card small,
+.metric-card span,
+.metric-card small{
+    color:#667085!important;
+    font-weight:700!important;
+}
+
+.summary-card strong,
+.kpi-card strong,
+.metric-card strong{
+    display:block;
+    margin-top:7px;
+    color:var(--sr-text)!important;
+    font-size:24px!important;
+    font-weight:900!important;
+    letter-spacing:-.3px;
+}
+
+/* Panel */
+.panel,
+.report-card,
+.chart-card{
+    border:1px solid var(--sr-border)!important;
+    border-radius:16px!important;
+    background:#fff!important;
+    box-shadow:var(--sr-shadow)!important;
+}
+
+.panel-head,
+.panel-header,
+.report-card-header,
+.chart-card-header{
+    padding:17px 18px!important;
+    border-bottom:1px solid #edf0f3!important;
+}
+
+.panel-head h2,
+.panel-header h2,
+.report-card-header h2,
+.chart-card-header h2,
+.panel-head h3,
+.panel-header h3{
+    color:var(--sr-text)!important;
+    font-size:18px!important;
+    font-weight:900!important;
+}
+
+.panel-head p,
+.panel-header p,
+.report-card-header p{
+    color:var(--sr-muted)!important;
+}
+
+/* Tables */
+.table-wrap{
+    overflow:auto!important;
+    background:#fff;
+}
+
+table{
+    width:100%;
+    border-spacing:0;
+}
+
+thead th{
+    position:sticky;
+    top:0;
+    z-index:2;
+    padding:12px 13px!important;
+    border-bottom:1px solid #e4e7ec!important;
+    background:#f8fafc!important;
+    color:#475467!important;
+    font-size:11px!important;
+    font-weight:900!important;
+}
+
+tbody td{
+    padding:13px!important;
+    border-bottom:1px solid #edf0f3!important;
+    color:#344054!important;
+    vertical-align:middle!important;
+}
+
+tbody tr:hover{
+    background:#fafbfc!important;
+}
+
+tbody tr:last-child td{
+    border-bottom:0!important;
+}
+
+/* Numeric hierarchy */
+.money,
+.amount,
+.total,
+.revenue,
+.gross-sales,
+.net-sales{
+    color:var(--sr-text)!important;
+    font-weight:900!important;
+}
+
+.positive{
+    color:var(--sr-success)!important;
+}
+
+.negative{
+    color:var(--sr-danger)!important;
+}
+
+/* Payment badges */
+.badge,
+.status-badge,
+.payment-badge{
+    display:inline-flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    min-height:27px!important;
+    padding:5px 9px!important;
+    border-radius:999px!important;
+    font-size:10px!important;
+    font-weight:900!important;
+}
+
+.cash,
+.payment-cash{
+    border:1px solid #abefc6!important;
+    background:var(--sr-success-bg)!important;
+    color:var(--sr-success)!important;
+}
+
+.qr,
+.transfer,
+.payment-qr,
+.payment-transfer{
+    border:1px solid #b2ddff!important;
+    background:var(--sr-info-bg)!important;
+    color:var(--sr-info)!important;
+}
+
+.void,
+.refund,
+.cancelled{
+    border:1px solid #fda29b!important;
+    background:var(--sr-danger-bg)!important;
+    color:var(--sr-danger)!important;
+}
+
+/* Chart areas */
+.chart-wrap,
+.chart-area,
+.sales-chart{
+    min-height:280px;
+    padding:18px!important;
+}
+
+.chart-bar{
+    border-radius:7px 7px 3px 3px!important;
+    background:linear-gradient(180deg,#d7aa21 0%,#9f7200 100%)!important;
+}
+
+.chart-bar:hover{
+    background:linear-gradient(180deg,#26344a 0%,#152033 100%)!important;
+}
+
+.chart-label,
+.axis-label{
+    color:#667085!important;
+    font-size:11px!important;
+}
+
+.chart-value{
+    color:#344054!important;
+    font-weight:800!important;
+}
+
+/* Product / ranking lists */
+.rank-list,
+.top-list{
+    display:grid;
+    gap:8px;
+    padding:14px 18px 18px;
+}
+
+.rank-row,
+.top-row{
+    display:grid;
+    grid-template-columns:42px minmax(0,1fr) auto;
+    gap:12px;
+    align-items:center;
+    min-height:58px;
+    padding:10px 12px;
+    border:1px solid #e4e7ec;
+    border-radius:11px;
+    background:#fff;
+}
+
+.rank-no,
+.rank{
+    display:grid;
+    width:32px;
+    height:32px;
+    place-items:center;
+    border:1px solid #e4e7ec;
+    border-radius:9px;
+    background:#f8fafc;
+    color:#475467;
+    font-weight:900;
+}
+
+.rank-row:first-child .rank-no,
+.rank-row:first-child .rank,
+.top-row:first-child .rank-no,
+.top-row:first-child .rank{
+    border-color:#ead99f;
+    background:var(--sr-gold-soft);
+    color:#7a5200;
+}
+
+/* Empty / error */
+.empty,
+.empty-state{
+    padding:40px 18px!important;
+    color:#98a2b3!important;
+    text-align:center!important;
+}
+
+.message:not(:empty),
+.page-message:not(:empty){
+    margin-bottom:14px!important;
+    padding:11px 13px!important;
+    border:1px solid #fda29b!important;
+    border-radius:10px!important;
+    background:var(--sr-danger-bg)!important;
+    color:var(--sr-danger)!important;
+    font-weight:800!important;
+}
+
+/* Tablet */
+@media(max-width:980px){
+    .page{
+        width:calc(100% - 22px);
+        padding-top:14px;
+    }
+
+    .filter-grid,
+    .filters{
+        grid-template-columns:1fr 1fr!important;
+    }
+
+    .filter-actions,
+    .filters .actions{
+        grid-column:1/-1;
+    }
+
+    .summary-grid,
+    .kpi-grid,
+    .metrics-grid{
+        grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    }
+}
+
+/* Mobile */
+@media(max-width:720px){
+    .topbar{
+        min-height:68px;
+        padding:10px 12px!important;
+    }
+
+    .topbar h1{
+        font-size:19px!important;
+    }
+
+    .page{
+        width:calc(100% - 18px);
+        padding-top:12px;
+        padding-bottom:28px;
+    }
+
+    .page-heading h1,
+    .page-heading h2,
+    .page-header h1,
+    .page-header h2{
+        font-size:24px!important;
+    }
+
+    .filter-card,
+    .filters,
+    .report-filter{
+        padding:14px!important;
+    }
+
+    .filter-grid,
+    .filters{
+        grid-template-columns:1fr!important;
+    }
+
+    .filter-actions,
+    .filters .actions{
+        grid-column:auto;
+        display:grid!important;
+        grid-template-columns:1fr 1fr!important;
+    }
+
+    .summary-grid,
+    .kpi-grid,
+    .metrics-grid{
+        grid-template-columns:repeat(2,minmax(0,1fr))!important;
+        gap:9px!important;
+    }
+
+    .summary-card,
+    .kpi-card,
+    .metric-card{
+        min-height:106px!important;
+        padding:14px!important;
+    }
+
+    .summary-card strong,
+    .kpi-card strong,
+    .metric-card strong{
+        font-size:20px!important;
+    }
+
+    .panel,
+    .report-card,
+    .chart-card{
+        border-radius:14px!important;
+    }
+
+    .panel-head,
+    .panel-header,
+    .report-card-header,
+    .chart-card-header{
+        padding:14px!important;
+    }
+
+    .chart-wrap,
+    .chart-area,
+    .sales-chart{
+        min-height:230px;
+        padding:12px!important;
+        overflow:auto;
+    }
+
+    .table-wrap{
+        border-radius:0 0 14px 14px;
+    }
+
+    table{
+        min-width:760px;
+    }
+
+    .rank-row,
+    .top-row{
+        grid-template-columns:38px minmax(0,1fr);
+    }
+
+    .rank-row>:last-child,
+    .top-row>:last-child{
+        grid-column:2;
+    }
+}
+
+@media(max-width:390px){
+    .summary-grid,
+    .kpi-grid,
+    .metrics-grid,
+    .filter-actions,
+    .filters .actions{
+        grid-template-columns:1fr!important;
+    }
+}
+
+/* Print rules from original file remain authoritative. */
+
