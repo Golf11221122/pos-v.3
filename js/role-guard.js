@@ -31,7 +31,7 @@ const PAGE_PERMISSIONS = {
     'sales-history.html': [
         'admin',
         'manager',
-        'staff'
+        'cashier'
     ],
     /* เพิ่มใน PAGE_PERMISSIONS */
 
@@ -52,7 +52,8 @@ const PAGE_PERMISSIONS = {
 
     'ingredients.html': [
         'admin',
-        'manager'
+        'manager',
+        'stock'
     ],
 
     'recipes.html': [
@@ -62,12 +63,14 @@ const PAGE_PERMISSIONS = {
 
     'stock-movements.html': [
         'admin',
-        'manager'
+        'manager',
+        'stock'
     ],
 
     'inventory-report.html': [
         'admin',
-        'manager'
+        'manager',
+        'stock'
     ],
 
     'tables.html': [
@@ -87,7 +90,7 @@ const PAGE_PERMISSIONS = {
     'kitchen.html': [
         'admin',
         'manager',
-        'staff'
+        'kitchen'
     ],
 
 
@@ -146,7 +149,7 @@ const MENU_PERMISSIONS = {
     sales: [
         'admin',
         'manager',
-        'staff'
+        'cashier'
     ],
 
     salesReport: [
@@ -166,7 +169,8 @@ const MENU_PERMISSIONS = {
 
     ingredients: [
         'admin',
-        'manager'
+        'manager',
+        'stock'
     ],
 
     recipes: [
@@ -176,12 +180,14 @@ const MENU_PERMISSIONS = {
 
     stockMovements: [
         'admin',
-        'manager'
+        'manager',
+        'stock'
     ],
 
     inventoryReport: [
         'admin',
-        'manager'
+        'manager',
+        'stock'
     ],
 
     tables: [
@@ -197,10 +203,10 @@ const MENU_PERMISSIONS = {
     ],
 
     kitchen: [
-    'admin',
-    'manager',
-    'staff'
-],
+        'admin',
+        'manager',
+        'kitchen'
+    ],
 
 
     modifierOptions: [
@@ -669,31 +675,21 @@ function redirectNotAllowed(
     role
 ) {
 
-    /*
-     * Staff
-     * ให้กลับหน้าขาย POS
-     */
-    if (
-        role ===
-        'staff'
-    ) {
-
-        window.location
-            .replace(
-                './pos.html'
-            )
-
-
-        return
+    const homeByRole = {
+        staff: './pos.html',
+        cashier: './dashboard.html',
+        kitchen: './kitchen.html',
+        stock: './inventory-report.html',
+        manager: './dashboard.html',
+        admin: './dashboard.html'
     }
 
 
-    /*
-     * Manager / Admin
-     */
     window.location
         .replace(
-            './dashboard.html'
+            homeByRole[role]
+            ||
+            './index.html'
         )
 }
 
@@ -812,7 +808,10 @@ export async function applyRoleGuard() {
             ![
                 'admin',
                 'manager',
-                'staff'
+                'cashier',
+                'staff',
+                'kitchen',
+                'stock'
             ].includes(
                 role
             )
@@ -942,3 +941,52 @@ function applyShiftRoleMenuV281(role){
  if(t)t.style.display='none'
  if(m)m.style.display='none'
 }
+
+
+/* ========================================
+   V2.11.2 ROLE REFRESH
+   อ่าน Role ใหม่เมื่อกลับเข้า tab / window
+======================================== */
+
+let roleRefreshBusyV2112 = false
+
+async function refreshRoleGuardV2112() {
+
+    if (roleRefreshBusyV2112) {
+        return
+    }
+
+    roleRefreshBusyV2112 = true
+
+    try {
+        await applyRoleGuard()
+    } catch (error) {
+        console.error(
+            'V2.11.2 role refresh error:',
+            error
+        )
+    } finally {
+        roleRefreshBusyV2112 = false
+    }
+}
+
+
+document.addEventListener(
+    'visibilitychange',
+    () => {
+        if (
+            document.visibilityState ===
+            'visible'
+        ) {
+            refreshRoleGuardV2112()
+        }
+    }
+)
+
+
+window.addEventListener(
+    'focus',
+    () => {
+        refreshRoleGuardV2112()
+    }
+)
