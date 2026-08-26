@@ -625,7 +625,9 @@ function bindPressFeedback() {
 
 
             /*
-             * เมนูอาหารใช้เสียงที่ดัง/ชัดกว่าปุ่มทั่วไป
+             * V3.0.3
+             * ปุ่มสำคัญในหน้าเริ่มออเดอร์ใช้เสียงเดียวกับเมนูอาหาร
+             * เพราะเสียง Tap ปกติเบาเกินไปบน iPhone
              */
             const card =
                 target.closest(
@@ -633,7 +635,35 @@ function bindPressFeedback() {
                 )
 
 
-            if (card) {
+            const strongTapTarget =
+                card
+                ||
+                target.closest(
+                    '.order-type-btn'
+                )
+                ||
+                target.closest(
+                    '.table-select-btn'
+                )
+                ||
+                target.closest(
+                    '#guestMinusBtn'
+                )
+                ||
+                target.closest(
+                    '#guestPlusBtn'
+                )
+                ||
+                target.closest(
+                    '#startOrderBtn'
+                )
+                ||
+                target.closest(
+                    '#backToDashboardBtn'
+                )
+
+
+            if (strongTapTarget) {
 
                 uiMenuTap()
 
@@ -657,6 +687,33 @@ function bindPressFeedback() {
                 setTimeout(
                     () =>
                         card.classList
+                            .remove(
+                                'ui-flash'
+                            ),
+                    180
+                )
+            }
+
+
+            /*
+             * หน้าเริ่มออเดอร์:
+             * ให้ปุ่มที่กดมี flash สั้น ๆ เพื่อเห็นชัดว่าระบบรับการกดแล้ว
+             */
+            if (
+                strongTapTarget
+                &&
+                !card
+            ) {
+
+                strongTapTarget.classList
+                    .add(
+                        'ui-flash'
+                    )
+
+
+                setTimeout(
+                    () =>
+                        strongTapTarget.classList
                             .remove(
                                 'ui-flash'
                             ),
