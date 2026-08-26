@@ -1,5 +1,4 @@
 import { supabase } from './supabase.js'
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
 
 const state = {
@@ -329,7 +328,9 @@ async function loadEmployees() {
                     role,
                     is_active,
                     branch_id,
-                    created_at
+                    created_at,
+                    archived_at,
+                    archive_reason
                 `)
                 .eq(
                     'branch_id',
@@ -692,6 +693,36 @@ function renderEmployees() {
                                             >
                                                 แก้ไข
                                             </button>
+
+                                            ${
+                                                active
+                                                    ? `
+                                                        <button
+                                                            type="button"
+                                                            class="action-btn"
+                                                            data-archive-id="${
+                                                                esc(
+                                                                    employee.id
+                                                                )
+                                                            }"
+                                                        >
+                                                            Archive
+                                                        </button>
+                                                    `
+                                                    : `
+                                                        <button
+                                                            type="button"
+                                                            class="action-btn"
+                                                            data-restore-id="${
+                                                                esc(
+                                                                    employee.id
+                                                                )
+                                                            }"
+                                                        >
+                                                            เปิดใช้งานอีกครั้ง
+                                                        </button>
+                                                    `
+                                            }
                                         `
                                         : `
                                             <span
@@ -1315,316 +1346,92 @@ function handleAddRoleChange() {
 
 
 /* ========================================
-   CREATE EMPLOYEE V2.11.3
+   ARCHIVE / RESTORE EMPLOYEE V2.12
 ======================================== */
 
-function normalizeEmployeeEmail(value) {
-    return String(value || '')
-        .trim()
-        .toLowerCase()
-}
-
-
-function validateNewEmployeeForm() {
-    const fullName =
-        el.addFullName.value
-            .trim()
-
-    const email =
-        normalizeEmployeeEmail(
-            el.addEmail.value
+async function archiveEmployee(
+    employeeId
+) {
+    const employee =
+        state.employees.find(
+            item =>
+                item.id ===
+                employeeId
         )
 
-    const password =
-        String(
-            el.addPassword.value ||
-            ''
-        )
-
-    const role =
-        String(
-            el.addRole.value ||
-            ''
-        )
-            .trim()
-            .toLowerCase()
-
-    const managerPin =
-        String(
-            el.addManagerPin.value ||
-            ''
-        )
-            .trim()
-
-
-    if (!fullName) {
-        message(
-            el.addEmployeeMessage,
-            'กรุณากรอกชื่อพนักงาน'
-        )
-
-        el.addFullName.focus()
-        return null
-    }
-
-
-    if (
-        !email
-        ||
-        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
-            email
-        )
-    ) {
-        message(
-            el.addEmployeeMessage,
-            'กรุณากรอก Email ให้ถูกต้อง'
-        )
-
-        el.addEmail.focus()
-        return null
-    }
-
-
-    if (
-        password.length <
-        8
-    ) {
-        message(
-            el.addEmployeeMessage,
-            'Password เริ่มต้นต้องมีอย่างน้อย 8 ตัวอักษร'
-        )
-
-        el.addPassword.focus()
-        return null
-    }
-
-
-    if (
-        ![
-            'manager',
-            'cashier',
-            'staff',
-            'kitchen',
-            'stock'
-        ].includes(
-            role
-        )
-    ) {
-        message(
-            el.addEmployeeMessage,
-            'ตำแหน่งไม่ถูกต้อง'
-        )
-
-        return null
-    }
-
-
-    if (
-        role ===
-        'manager'
-        &&
-        !/^\d{6}$/.test(
-            managerPin
-        )
-    ) {
-        message(
-            el.addEmployeeMessage,
-            'Manager PIN ต้องเป็นตัวเลข 6 หลัก'
-        )
-
-        el.addManagerPin.focus()
-        return null
-    }
-
-
-    return {
-        fullName,
-        email,
-        password,
-        role,
-        managerPin
-    }
-}
-
-
-function createIsolatedEmployeeAuthClient() {
-    const url =
-        supabase.supabaseUrl
-
-    const key =
-        supabase.supabaseKey
-
-
-    if (
-        !url
-        ||
-        !key
-    ) {
-        throw new Error(
-            'SUPABASE_CLIENT_CONFIG_NOT_FOUND'
-        )
-    }
-
-
-    return createClient(
-        url,
-        key,
-        {
-            auth: {
-                persistSession: false,
-                autoRefreshToken: false,
-                detectSessionInUrl: false
-            }
-        }
-    )
-}
-
-
-async function createEmployee() {
-    const form =
-        validateNewEmployeeForm()
-
-    if (!form) {
+    if (!employee) {
         return
     }
 
 
-    el.saveNewEmployeeBtn.disabled =
-        true
+    const reason =
+        window.prompt(
+            `เหตุผลที่ Archive ${employee.full_name || 'พนักงาน'}`
+        )
 
-    el.saveNewEmployeeBtn.textContent =
-        'กำลังสร้างพนักงาน...'
 
-    message(
-        el.addEmployeeMessage,
-        ''
-    )
+    if (reason === null) {
+        return
+    }
+
+
+    const cleanReason =
+        String(reason)
+            .trim()
+
+
+    if (!cleanReason) {
+        alert(
+            'กรุณาระบุเหตุผลในการ Archive'
+        )
+
+        return
+    }
+
+
+    const confirmed =
+        window.confirm(
+            `ยืนยัน Archive ${employee.full_name || 'พนักงาน'}?\n\nบัญชีจะถูกปิดใช้งาน แต่ประวัติการขาย กะ และ Audit จะไม่ถูกลบ`
+        )
+
+
+    if (!confirmed) {
+        return
+    }
 
 
     try {
-        /*
-         * ใช้ auth client แยก
-         * เพื่อไม่ให้ session Admin ปัจจุบันถูกแทนด้วย session ของพนักงานใหม่
-         */
-        const employeeAuth =
-            createIsolatedEmployeeAuthClient()
-
-
         const {
-            data: signUpData,
-            error: signUpError
-        } =
-            await employeeAuth.auth.signUp({
-                email:
-                    form.email,
-
-                password:
-                    form.password,
-
-                options: {
-                    data: {
-                        full_name:
-                            form.fullName,
-
-                        employee_role:
-                            form.role
-                    }
-                }
-            })
-
-
-        if (signUpError) {
-            throw signUpError
-        }
-
-
-        const newUserId =
-            signUpData?.user?.id
-
-
-        if (!newUserId) {
-            throw new Error(
-                'AUTH_USER_NOT_CREATED'
-            )
-        }
-
-
-        /*
-         * ผูก Auth User ใหม่เข้ากับ profile + branch ของ Admin
-         * ใช้ RPC ที่สร้างไว้ใน Employee Create Flow V2.9.1
-         */
-        const {
-            error: onboardError
+            error
         } =
             await supabase.rpc(
-                'admin_onboard_employee_v291',
+                'admin_archive_employee_v212',
                 {
                     p_user_id:
-                        newUserId,
+                        employeeId,
 
-                    p_full_name:
-                        form.fullName,
-
-                    p_role:
-                        form.role
+                    p_reason:
+                        cleanReason
                 }
             )
 
 
-        if (onboardError) {
-            throw onboardError
+        if (error) {
+            throw error
         }
-
-
-        /*
-         * Manager ใช้ Manager PIN เดิมของระบบ
-         */
-        if (
-            form.role ===
-            'manager'
-        ) {
-            const {
-                error: pinError
-            } =
-                await supabase.rpc(
-                    'admin_set_manager_pin',
-                    {
-                        p_user_id:
-                            newUserId,
-
-                        p_manager_pin:
-                            form.managerPin
-                    }
-                )
-
-
-            if (pinError) {
-                throw pinError
-            }
-        }
-
-
-        message(
-            el.addEmployeeMessage,
-            'สร้างพนักงานสำเร็จ',
-            'success'
-        )
 
 
         await loadEmployees()
 
 
-        setTimeout(
-            () => {
-                closeAddEmployeeModal()
-            },
-            500
+        alert(
+            'Archive พนักงานสำเร็จ'
         )
 
 
     } catch (error) {
         console.error(
-            'Create employee error:',
+            'Archive employee error:',
             error
         )
 
@@ -1632,21 +1439,7 @@ async function createEmployee() {
         let text =
             error?.message
             ||
-            'สร้างพนักงานไม่สำเร็จ'
-
-
-        if (
-            text.includes(
-                'User already registered'
-            )
-            ||
-            text.includes(
-                'already been registered'
-            )
-        ) {
-            text =
-                'Email นี้มีบัญชีอยู่แล้ว'
-        }
+            'Archive พนักงานไม่สำเร็จ'
 
 
         if (
@@ -1655,66 +1448,111 @@ async function createEmployee() {
             )
         ) {
             text =
-                'เฉพาะ Admin เท่านั้นที่สร้างพนักงานได้'
+                'เฉพาะ Admin เท่านั้นที่ Archive พนักงานได้'
         }
 
 
         if (
             text.includes(
-                'INVALID_ROLE'
+                'CANNOT_ARCHIVE_SELF'
             )
         ) {
             text =
-                'ตำแหน่งไม่ถูกต้อง'
+                'ไม่สามารถ Archive บัญชีตัวเองได้'
         }
 
 
         if (
             text.includes(
-                'AUTH_USER_NOT_FOUND'
-            )
-            ||
-            text.includes(
-                'USER_NOT_FOUND'
+                'ARCHIVE_REASON_REQUIRED'
             )
         ) {
             text =
-                'สร้างบัญชี Auth แล้ว แต่ไม่พบผู้ใช้สำหรับผูกข้อมูลพนักงาน'
+                'กรุณาระบุเหตุผลในการ Archive'
         }
 
 
-        if (
-            text.includes(
-                'SUPABASE_CLIENT_CONFIG_NOT_FOUND'
-            )
-        ) {
-            text =
-                'ไม่พบค่าเชื่อมต่อ Supabase สำหรับสร้างบัญชีพนักงาน'
-        }
+        alert(text)
+    }
+}
 
 
-        if (
-            text.includes(
-                'rate limit'
-            )
-        ) {
-            text =
-                'Supabase จำกัดการสร้างบัญชีชั่วคราว กรุณารอสักครู่แล้วลองใหม่'
-        }
+async function restoreEmployee(
+    employeeId
+) {
+    const employee =
+        state.employees.find(
+            item =>
+                item.id ===
+                employeeId
+        )
+
+    if (!employee) {
+        return
+    }
 
 
-        message(
-            el.addEmployeeMessage,
-            text
+    const confirmed =
+        window.confirm(
+            `ยืนยันเปิดใช้งานบัญชี ${employee.full_name || 'พนักงาน'} อีกครั้ง?`
         )
 
 
-    } finally {
-        el.saveNewEmployeeBtn.disabled =
-            false
+    if (!confirmed) {
+        return
+    }
 
-        el.saveNewEmployeeBtn.textContent =
-            'สร้างพนักงาน'
+
+    try {
+        const {
+            error
+        } =
+            await supabase.rpc(
+                'admin_restore_employee_v212',
+                {
+                    p_user_id:
+                        employeeId
+                }
+            )
+
+
+        if (error) {
+            throw error
+        }
+
+
+        await loadEmployees()
+
+
+        alert(
+            'เปิดใช้งานบัญชีอีกครั้งสำเร็จ'
+        )
+
+
+    } catch (error) {
+        console.error(
+            'Restore employee error:',
+            error
+        )
+
+
+        let text =
+            error?.message
+            ||
+            'เปิดใช้งานบัญชีไม่สำเร็จ'
+
+
+        if (
+            text.includes(
+                'ADMIN_REQUIRED'
+            )
+        ) {
+            text =
+                'เฉพาะ Admin เท่านั้นที่เปิดใช้งานบัญชีได้'
+        }
+
+
+        alert(text)
     }
 }
 
@@ -1854,10 +1692,6 @@ el.addRole.onchange =
     handleAddRoleChange
 
 
-el.saveNewEmployeeBtn.onclick =
-    createEmployee
-
-
 el.employeeTableBody.onclick =
     event => {
 
@@ -1882,6 +1716,34 @@ el.employeeTableBody.onclick =
         if (pinButton) {
             openPinModal(
                 pinButton.dataset.pinId
+            )
+
+            return
+        }
+
+
+        const archiveButton =
+            event.target.closest(
+                '[data-archive-id]'
+            )
+
+        if (archiveButton) {
+            archiveEmployee(
+                archiveButton.dataset.archiveId
+            )
+
+            return
+        }
+
+
+        const restoreButton =
+            event.target.closest(
+                '[data-restore-id]'
+            )
+
+        if (restoreButton) {
+            restoreEmployee(
+                restoreButton.dataset.restoreId
             )
         }
     }
