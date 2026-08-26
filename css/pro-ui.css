@@ -1,0 +1,461 @@
+/* =========================================================
+   JOKJUNG GLOBAL PROFESSIONAL UX/UI V3.1
+   Shared visual foundation for the whole project.
+   Loaded AFTER each page's original CSS.
+   ========================================================= */
+
+:root {
+    --jj-navy: #152033;
+    --jj-navy-2: #26344a;
+    --jj-gold: #c28b00;
+    --jj-gold-soft: #fff7df;
+
+    --jj-bg: #f3f5f7;
+    --jj-surface: #ffffff;
+    --jj-surface-soft: #f8fafc;
+
+    --jj-text: #172033;
+    --jj-muted: #667085;
+    --jj-border: #dde2e8;
+
+    --jj-success: #027a48;
+    --jj-success-bg: #ecfdf3;
+    --jj-warning: #b54708;
+    --jj-warning-bg: #fffaeb;
+    --jj-danger: #b42318;
+    --jj-danger-bg: #fef3f2;
+    --jj-info: #175cd3;
+    --jj-info-bg: #eff8ff;
+
+    --jj-shadow-xs: 0 1px 2px rgba(16,24,40,.05);
+    --jj-shadow-sm: 0 3px 10px rgba(16,24,40,.07);
+    --jj-shadow-md: 0 14px 34px rgba(16,24,40,.12);
+
+    --jj-radius-sm: 10px;
+    --jj-radius: 14px;
+    --jj-radius-lg: 18px;
+}
+
+/* Base — do not interfere with receipt printing */
+@media screen {
+    html {
+        background: var(--jj-bg);
+    }
+
+    body {
+        color: var(--jj-text);
+        background: var(--jj-bg);
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+    }
+
+    button,
+    a,
+    input,
+    select,
+    textarea {
+        -webkit-tap-highlight-color: transparent;
+    }
+
+    button,
+    [role="button"],
+    a {
+        touch-action: manipulation;
+    }
+
+    button:not(:disabled),
+    a,
+    [role="button"] {
+        transition:
+            transform .08s ease,
+            box-shadow .14s ease,
+            border-color .14s ease,
+            background-color .14s ease,
+            color .14s ease,
+            opacity .14s ease;
+    }
+
+    button:not(:disabled):active,
+    a.jj-pressed,
+    button.jj-pressed,
+    [role="button"].jj-pressed {
+        transform: translateY(1px) scale(.985) !important;
+    }
+
+    button:disabled,
+    [aria-disabled="true"] {
+        cursor: not-allowed !important;
+        opacity: .48 !important;
+        filter: grayscale(.12);
+    }
+
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible,
+    button:focus-visible,
+    a:focus-visible {
+        outline: 3px solid rgba(194,139,0,.18) !important;
+        outline-offset: 2px !important;
+    }
+
+    /* Header / topbar families */
+    .topbar,
+    .header,
+    .customer-header {
+        background: rgba(255,255,255,.97) !important;
+        border-bottom-color: #e3e7ec !important;
+        box-shadow: 0 2px 10px rgba(16,24,40,.05) !important;
+        backdrop-filter: blur(10px);
+    }
+
+    .topbar h1,
+    .header h1,
+    .page-heading h1,
+    .page-header h1,
+    .page-head h1 {
+        color: var(--jj-text);
+        letter-spacing: -.2px;
+    }
+
+    .topbar small,
+    .header small,
+    .muted {
+        color: var(--jj-muted) !important;
+    }
+
+    /* Page widths and vertical rhythm */
+    .page,
+    .content {
+        color: var(--jj-text);
+    }
+
+    .page-heading,
+    .page-header,
+    .page-head,
+    .panel-head,
+    .section-head,
+    .employee-header {
+        gap: 12px;
+    }
+
+    /* Surfaces */
+    .card,
+    .panel,
+    .filter-card,
+    .summary-card,
+    .notice-card,
+    .employee-card,
+    .product-selector-card,
+    .add-recipe-card,
+    .recipe-list-card,
+    .state-card,
+    .printer-section {
+        border-color: var(--jj-border) !important;
+        border-radius: var(--jj-radius) !important;
+        background: var(--jj-surface) !important;
+        box-shadow: var(--jj-shadow-xs) !important;
+    }
+
+    .summary-card {
+        position: relative;
+        overflow: hidden;
+    }
+
+    .summary-card::before {
+        content: "";
+        position: absolute;
+        inset: 0 auto 0 0;
+        width: 3px;
+        background: var(--jj-gold);
+        opacity: .75;
+    }
+
+    /* Inputs */
+    input:not([type="checkbox"]):not([type="radio"]),
+    select,
+    textarea {
+        border-color: #d0d5dd !important;
+        border-radius: 11px !important;
+        background: #fff !important;
+        color: #344054 !important;
+        box-shadow: inset 0 1px 2px rgba(16,24,40,.02);
+    }
+
+    input:not([type="checkbox"]):not([type="radio"]):focus,
+    select:focus,
+    textarea:focus {
+        border-color: var(--jj-gold) !important;
+        box-shadow: 0 0 0 3px rgba(194,139,0,.11) !important;
+    }
+
+    label,
+    .field > span,
+    .field > label {
+        color: #344054;
+    }
+
+    /* Buttons */
+    .primary-btn,
+    .primary,
+    .primary-button,
+    button[type="submit"] {
+        border-color: var(--jj-navy) !important;
+        background: var(--jj-navy) !important;
+        color: #fff !important;
+        border-radius: 11px !important;
+        font-weight: 800 !important;
+        box-shadow: 0 2px 5px rgba(21,32,51,.14) !important;
+    }
+
+    .primary-btn:not(:disabled):hover,
+    .primary:not(:disabled):hover,
+    .primary-button:not(:disabled):hover,
+    button[type="submit"]:not(:disabled):hover {
+        background: var(--jj-navy-2) !important;
+    }
+
+    .outline-btn,
+    .secondary,
+    .icon-btn,
+    .back-btn,
+    .logout-btn {
+        border-color: #d0d5dd !important;
+        background: #fff !important;
+        color: #344054 !important;
+        border-radius: 11px !important;
+        box-shadow: var(--jj-shadow-xs) !important;
+    }
+
+    .outline-btn:not(:disabled):hover,
+    .secondary:not(:disabled):hover,
+    .icon-btn:not(:disabled):hover {
+        border-color: #98a2b3 !important;
+        background: #f9fafb !important;
+    }
+
+    .danger,
+    .danger-btn,
+    .delete-btn,
+    .danger-link {
+        color: var(--jj-danger) !important;
+    }
+
+    /* Tables */
+    table {
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    th {
+        background: #f8fafc !important;
+        color: #475467 !important;
+        font-size: 12px;
+        font-weight: 800;
+        letter-spacing: .15px;
+    }
+
+    th,
+    td {
+        border-color: #eaecf0 !important;
+    }
+
+    tbody tr {
+        transition: background-color .12s ease;
+    }
+
+    tbody tr:hover {
+        background: #fafbfc;
+    }
+
+    /* Modal */
+    .modal {
+        background: rgba(15,23,42,.58) !important;
+        backdrop-filter: blur(3px);
+    }
+
+    .modal-card,
+    .sheet {
+        border: 1px solid rgba(255,255,255,.85) !important;
+        border-radius: var(--jj-radius-lg) !important;
+        background: #fff !important;
+        box-shadow: 0 24px 70px rgba(15,23,42,.22) !important;
+    }
+
+    /* Status / messages */
+    .message:not(:empty),
+    .page-message:not(:empty) {
+        border-radius: 10px;
+        font-weight: 700;
+    }
+
+    .empty,
+    .empty-state,
+    .state {
+        color: var(--jj-muted);
+    }
+
+    /* Dashboard/sidebar pages */
+    .sidebar {
+        background: #172033 !important;
+        color: #fff;
+        box-shadow: 8px 0 26px rgba(16,24,40,.08);
+    }
+
+    .brand-icon {
+        background: var(--jj-gold) !important;
+        color: #172033 !important;
+    }
+
+    .menu-item {
+        color: #d0d5dd !important;
+        border-radius: 10px !important;
+    }
+
+    .menu-item:hover {
+        background: rgba(255,255,255,.08) !important;
+        color: #fff !important;
+    }
+
+    .menu-item.active {
+        position: relative;
+        background: rgba(255,255,255,.11) !important;
+        color: #fff !important;
+        font-weight: 800 !important;
+    }
+
+    .menu-item.active::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 9px;
+        bottom: 9px;
+        width: 3px;
+        border-radius: 999px;
+        background: var(--jj-gold);
+    }
+
+    /* Badges */
+    .status-badge,
+    .role-badge,
+    .pill {
+        border-radius: 999px !important;
+        font-weight: 800 !important;
+    }
+
+    /* Click feedback applied by pro-ui.js */
+    .jj-click-flash {
+        box-shadow: 0 0 0 3px rgba(194,139,0,.16) !important;
+    }
+
+    /* Global top toast */
+    #jjGlobalToastHost {
+        position: fixed;
+        top: 82px;
+        right: 18px;
+        z-index: 65000;
+        display: grid;
+        gap: 8px;
+        width: min(360px, calc(100vw - 24px));
+        pointer-events: none;
+    }
+
+    .jj-global-toast {
+        padding: 12px 14px;
+        border: 1px solid #d0d5dd;
+        border-radius: 12px;
+        background: rgba(255,255,255,.98);
+        color: #344054;
+        box-shadow: var(--jj-shadow-md);
+        font-size: 13px;
+        font-weight: 700;
+    }
+
+    /* Login / reset */
+    html[data-ui-page="index"] body,
+    html[data-ui-page="reset-password"] body {
+        background:
+            radial-gradient(circle at 20% 0%, #fff8e6 0, transparent 32%),
+            linear-gradient(180deg, #f7f8fa 0%, #eef1f4 100%) !important;
+    }
+
+    html[data-ui-page="index"] .login-box,
+    html[data-ui-page="reset-password"] .login-box {
+        border: 1px solid #e4e7ec !important;
+        border-radius: 20px !important;
+        background: rgba(255,255,255,.98) !important;
+        box-shadow: 0 24px 60px rgba(16,24,40,.12) !important;
+    }
+
+    /* Kitchen — keep operational status colors but professional shell */
+    html[data-ui-page="kitchen"] .kitchen-column {
+        border-color: var(--jj-border) !important;
+        border-radius: var(--jj-radius) !important;
+        background: #fff !important;
+        box-shadow: var(--jj-shadow-xs) !important;
+    }
+
+    /* POS already has V3.0.5.1; only generic press/focus applies there. */
+    html[data-ui-page="pos"] .tab.active,
+    html[data-ui-page="pos"] .primary-btn,
+    html[data-ui-page="pos"] .mobile-cart-bar,
+    html[data-ui-page="pos"] .order-type-btn.active,
+    html[data-ui-page="pos"] .table-select-btn.active {
+        /* Intentionally no extra overrides. */
+    }
+
+    /* Customer ordering stays customer-friendly, only polish inputs/cards/buttons. */
+    html[data-ui-page="customer-order"] .customer-header {
+        box-shadow: 0 2px 10px rgba(16,24,40,.05) !important;
+    }
+
+    /* Mobile */
+    @media (max-width: 760px) {
+        #jjGlobalToastHost {
+            top: 70px;
+            left: 10px;
+            right: 10px;
+            width: auto;
+        }
+
+        .page,
+        .content {
+            max-width: 100%;
+        }
+
+        .topbar,
+        .header {
+            padding-left: 12px !important;
+            padding-right: 12px !important;
+        }
+
+        .card,
+        .panel,
+        .filter-card,
+        .summary-card {
+            border-radius: 14px !important;
+        }
+
+        button,
+        .primary-btn,
+        .outline-btn,
+        .secondary,
+        .primary {
+            min-height: 44px;
+        }
+
+        .modal-card,
+        .sheet {
+            border-radius: 22px 22px 0 0 !important;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            scroll-behavior: auto !important;
+            transition: none !important;
+            animation: none !important;
+        }
+    }
+}
