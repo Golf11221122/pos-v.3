@@ -1,5 +1,5 @@
 import { supabase } from './supabase.js'
-import { applyRoleGuard } from './role-guard.js'
+import { applyRoleGuard } from './role-guard.js?v=3.12.0'
 
 const $=id=>document.getElementById(id)
 const el={backBtn:$('backBtn'),refreshBtn:$('refreshBtn'),branchText:$('branchText'),dateFrom:$('dateFrom'),dateTo:$('dateTo'),searchInput:$('searchInput'),statusFilter:$('statusFilter'),searchBtn:$('searchBtn'),orderCount:$('orderCount'),payableTotal:$('payableTotal'),cancelledTotal:$('cancelledTotal'),pageMessage:$('pageMessage'),orderList:$('orderList'),emptyState:$('emptyState')}

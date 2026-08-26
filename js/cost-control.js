@@ -1,5 +1,5 @@
 import { supabase } from './supabase.js'
-import { applyRoleGuard } from './role-guard.js'
+import { applyRoleGuard } from './role-guard.js?v=3.12.0'
 const $=id=>document.getElementById(id)
 const el={backBtn:$('backBtn'),logoutBtn:$('logoutBtn'),branchText:$('branchText'),userName:$('userName'),dateFrom:$('dateFrom'),dateTo:$('dateTo'),loadReportBtn:$('loadReportBtn'),grossSales:$('grossSales'),totalDiscount:$('totalDiscount'),netSales:$('netSales'),cogs:$('cogs'),grossProfit:$('grossProfit'),grossMargin:$('grossMargin'),marketingDiscount:$('marketingDiscount'),manualDiscount:$('manualDiscount'),billCount:$('billCount'),profitAfterMarketing:$('profitAfterMarketing'),campaignCostList:$('campaignCostList'),pageMessage:$('pageMessage')}
 const money=v=>new Intl.NumberFormat('th-TH',{style:'currency',currency:'THB',minimumFractionDigits:2}).format(Number(v||0))

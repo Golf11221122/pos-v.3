@@ -113,6 +113,25 @@ const PAGE_PERMISSIONS = {
         'admin'
     ],
 
+    'order-history.html': [
+        'admin',
+        'manager'
+    ],
+
+    'promotions.html': [
+        'admin',
+        'manager'
+    ],
+
+    'audit-log.html': [
+        'admin',
+        'manager'
+    ],
+
+    'employee-activity.html': [
+        'admin'
+    ],
+
     'cancellation-history.html': [
         'admin'
     ]
@@ -220,6 +239,11 @@ const MENU_PERMISSIONS = {
     ],
 
     costControl: [
+        'admin',
+        'manager'
+    ],
+
+    auditLog: [
         'admin',
         'manager'
     ],
@@ -572,7 +596,30 @@ function applySidebarPermissions(
         role,
         MENU_PERMISSIONS.modifierOptions
     )
-setMenuVisibility(
+
+
+    setMenuVisibility(
+        'a[href="./marketing.html"]',
+        role,
+        MENU_PERMISSIONS.marketing
+    )
+
+
+    setMenuVisibility(
+        'a[href="./cost-control.html"]',
+        role,
+        MENU_PERMISSIONS.costControl
+    )
+
+
+    setMenuVisibility(
+        'a[href="./audit-log.html"]',
+        role,
+        MENU_PERMISSIONS.auditLog
+    )
+
+
+    setMenuVisibility(
         'a[href="./employees.html"]',
         role,
         MENU_PERMISSIONS.employees
@@ -713,14 +760,25 @@ function checkPagePermission(
 
 
     /*
-     * ถ้ายังไม่ได้กำหนด permission
-     * จะไม่ block หน้านั้น
+     * Security hardening V3.12:
+     * guarded private pages are DENY BY DEFAULT.
+     * Every page that imports applyRoleGuard()
+     * must be explicitly listed in PAGE_PERMISSIONS.
      */
     if (
         !allowedRoles
     ) {
 
-        return true
+        console.error(
+            'PAGE_PERMISSION_NOT_CONFIGURED:',
+            pageName
+        )
+
+        redirectNotAllowed(
+            role
+        )
+
+        return false
     }
 
 

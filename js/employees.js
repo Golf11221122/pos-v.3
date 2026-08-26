@@ -1,4 +1,7 @@
-import { supabase } from './supabase.js'
+import {
+    supabase,
+    createIsolatedSupabaseClient
+} from './supabase.js?v=3.12.0'
 
 
 const state = {
@@ -1369,6 +1372,392 @@ function handleAddRoleChange() {
 }
 
 
+
+
+/* ========================================
+   CREATE EMPLOYEE V3.12
+   Restores controlled Admin onboarding
+======================================== */
+
+async function createEmployee() {
+
+    const fullName =
+        el.addFullName.value
+            .trim()
+
+    const email =
+        el.addEmail.value
+            .trim()
+            .toLowerCase()
+
+    const password =
+        el.addPassword.value
+
+    const role =
+        el.addRole.value
+
+    const managerPin =
+        el.addManagerPin.value
+            .trim()
+
+
+    if (!fullName) {
+        message(
+            el.addEmployeeMessage,
+            'กรุณากรอกชื่อพนักงาน'
+        )
+
+        el.addFullName.focus()
+        return
+    }
+
+
+    if (
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/
+            .test(email)
+    ) {
+        message(
+            el.addEmployeeMessage,
+            'กรุณากรอก Email ให้ถูกต้อง'
+        )
+
+        el.addEmail.focus()
+        return
+    }
+
+
+    if (
+        String(password || '')
+            .length
+        <
+        8
+    ) {
+        message(
+            el.addEmployeeMessage,
+            'Password ต้องมีอย่างน้อย 8 ตัวอักษร'
+        )
+
+        el.addPassword.focus()
+        return
+    }
+
+
+    if (
+        ![
+            'manager',
+            'cashier',
+            'staff',
+            'kitchen',
+            'stock'
+        ].includes(role)
+    ) {
+        message(
+            el.addEmployeeMessage,
+            'ตำแหน่งไม่ถูกต้อง'
+        )
+
+        return
+    }
+
+
+    if (
+        role === 'manager'
+        &&
+        !/^\d{6}$/.test(
+            managerPin
+        )
+    ) {
+        message(
+            el.addEmployeeMessage,
+            'Manager ต้องมี PIN ตัวเลข 6 หลัก'
+        )
+
+        el.addManagerPin.focus()
+        return
+    }
+
+
+    el.saveNewEmployeeBtn.disabled =
+        true
+
+    el.saveNewEmployeeBtn.textContent =
+        'กำลังสร้าง...'
+
+    message(
+        el.addEmployeeMessage,
+        ''
+    )
+
+
+    let isolatedClient = null
+    let newUserId = null
+
+
+    try {
+
+        isolatedClient =
+            createIsolatedSupabaseClient()
+
+
+        /*
+         * Create Auth user in an isolated client so the
+         * current Admin session is not replaced.
+         */
+        const {
+            data: signUpData,
+            error: signUpError
+        } =
+            await isolatedClient
+                .auth
+                .signUp(
+                    {
+                        email,
+                        password
+                    }
+                )
+
+
+        if (signUpError) {
+            throw signUpError
+        }
+
+
+        newUserId =
+            signUpData?.user?.id
+            ||
+            null
+
+
+        if (!newUserId) {
+            throw new Error(
+                'AUTH_USER_NOT_CREATED'
+            )
+        }
+
+
+        /*
+         * Attach the Auth user to this Admin's branch and
+         * approved restaurant role.
+         *
+         * Existing backend RPC from Employee Create Flow V2.9.1:
+         * admin_onboard_employee_v291(
+         *   p_user_id uuid,
+         *   p_full_name text,
+         *   p_role text
+         * )
+         */
+        const {
+            data: onboardData,
+            error: onboardError
+        } =
+            await supabase
+                .rpc(
+                    'admin_onboard_employee_v291',
+                    {
+                        p_user_id:
+                            newUserId,
+
+                        p_full_name:
+                            fullName,
+
+                        p_role:
+                            role
+                    }
+                )
+
+
+        if (onboardError) {
+            throw onboardError
+        }
+
+
+        console.log(
+            'Employee onboard:',
+            onboardData
+        )
+
+
+        let pinWarning = ''
+
+
+        if (
+            role === 'manager'
+        ) {
+
+            const {
+                error: pinError
+            } =
+                await supabase
+                    .rpc(
+                        'admin_set_manager_pin',
+                        {
+                            p_user_id:
+                                newUserId,
+
+                            p_manager_pin:
+                                managerPin
+                        }
+                    )
+
+
+            if (pinError) {
+                console.error(
+                    'Create employee manager PIN error:',
+                    pinError
+                )
+
+                pinWarning =
+                    '\nสร้างพนักงานสำเร็จ แต่ตั้ง PIN Manager ไม่สำเร็จ กรุณากด "ตั้ง PIN" จากรายการพนักงานอีกครั้ง'
+            }
+        }
+
+
+        try {
+            await isolatedClient
+                .auth
+                .signOut()
+        } catch (_) {
+            // isolated session is non-persistent;
+            // signOut failure must not affect Admin session
+        }
+
+
+        closeAddEmployeeModal()
+
+        await loadEmployees()
+
+
+        alert(
+            'สร้างพนักงานสำเร็จ'
+            +
+            pinWarning
+        )
+
+
+    } catch (error) {
+
+        console.error(
+            'Create employee error:',
+            error
+        )
+
+
+        let text =
+            error?.message
+            ||
+            'สร้างพนักงานไม่สำเร็จ'
+
+
+        const lower =
+            String(text)
+                .toLowerCase()
+
+
+        if (
+            lower.includes(
+                'already registered'
+            )
+            ||
+            lower.includes(
+                'already been registered'
+            )
+            ||
+            lower.includes(
+                'user already registered'
+            )
+        ) {
+            text =
+                'Email นี้มีบัญชีอยู่แล้ว'
+        }
+
+
+        if (
+            text.includes(
+                'ADMIN_REQUIRED'
+            )
+        ) {
+            text =
+                'เฉพาะ Admin เท่านั้นที่สามารถสร้างพนักงานได้'
+        }
+
+
+        if (
+            text.includes(
+                'INVALID_ROLE'
+            )
+        ) {
+            text =
+                'ตำแหน่งพนักงานไม่ถูกต้อง'
+        }
+
+
+        if (
+            text.includes(
+                'AUTH_USER_NOT_FOUND'
+            )
+        ) {
+            text =
+                'สร้างบัญชี Auth แล้ว แต่ระบบไม่พบผู้ใช้สำหรับ Onboarding'
+        }
+
+
+        if (
+            text.includes(
+                'AUTH_USER_NOT_CREATED'
+            )
+        ) {
+            text =
+                'Supabase ไม่ได้สร้างบัญชีผู้ใช้ กรุณาตรวจสอบ Auth Email Signup'
+        }
+
+
+        /*
+         * The Auth account can already exist if signUp succeeded
+         * but the backend onboarding RPC failed. Be explicit so
+         * Admin does not repeatedly create accounts blindly.
+         */
+        if (
+            newUserId
+            &&
+            (
+                text.includes(
+                    'admin_onboard_employee_v291'
+                )
+                ||
+                text.includes(
+                    'function'
+                )
+                ||
+                text.includes(
+                    'permission'
+                )
+                ||
+                text.includes(
+                    'BRANCH'
+                )
+            )
+        ) {
+            text =
+                'สร้างบัญชี Auth แล้ว แต่เพิ่มข้อมูลพนักงานไม่สำเร็จ กรุณาตรวจสอบ RPC admin_onboard_employee_v291 ก่อนลองสร้าง Email เดิมซ้ำ'
+        }
+
+
+        message(
+            el.addEmployeeMessage,
+            text
+        )
+
+    } finally {
+
+        el.saveNewEmployeeBtn.disabled =
+            false
+
+        el.saveNewEmployeeBtn.textContent =
+            'สร้างพนักงาน'
+    }
+}
+
+
 /* ========================================
    EMPLOYEE PASSWORD RESET V2.13
 ======================================== */
@@ -1872,6 +2261,10 @@ el.cancelAddEmployeeBtn.onclick =
 
 el.addRole.onchange =
     handleAddRoleChange
+
+
+el.saveNewEmployeeBtn.onclick =
+    createEmployee
 
 
 el.employeeTableBody.onclick =

@@ -1,5 +1,5 @@
 import { supabase } from './supabase.js'
-import { PROMPTPAY_PHONE } from './config.js'
+import { PROMPTPAY_PHONE } from './config.js?v=3.12.0'
 
 /* CANCELLED BILLING SYNC V3 - RPC AUTHORITATIVE STATUS */
 
