@@ -157,23 +157,38 @@ export function uiTap() {
 export function uiMenuTap() {
 
     /*
-     * V3.0.1
-     * เสียงกดเมนูอาหารให้ชัดกว่าปุ่มทั่วไป
-     * แต่ยังสั้นเพื่อไม่รบกวนหน้าร้าน
+     * V3.0.2
+     * เพิ่มความดังเชิงรับรู้สำหรับลำโพงมือถือ
+     * - ใช้ย่านกลางที่ลำโพงมือถือขับได้ชัด
+     * - เพิ่ม gain
+     * - ใช้ triangle เพื่อให้มี harmonic มากกว่า sine
+     * - คงเอกลักษณ์เสียง 2 จังหวะ
      */
     tone({
-        frequency: 640,
-        duration: .045,
-        gain: .055,
-        type: 'sine'
+        frequency: 720,
+        duration: .060,
+        gain: .120,
+        type: 'triangle'
     })
 
     tone({
-        frequency: 820,
-        duration: .035,
-        gain: .035,
-        type: 'sine',
-        delay: .028
+        frequency: 980,
+        duration: .055,
+        gain: .095,
+        type: 'triangle',
+        delay: .045
+    })
+
+    /*
+     * ชั้นเสียงเสริมสั้น ๆ ให้ punch ชัดขึ้น
+     * โดยไม่ยืดเสียงจนรบกวนการขาย
+     */
+    tone({
+        frequency: 360,
+        duration: .040,
+        gain: .060,
+        type: 'square',
+        delay: .004
     })
 }
 
