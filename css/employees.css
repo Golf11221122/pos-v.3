@@ -924,3 +924,726 @@ td {
     }
 }
 
+/* =========================================================
+   JOKJUNG EMPLOYEES PROFESSIONAL UX/UI V3.5
+   Visual-only employee management layer.
+   ========================================================= */
+
+:root {
+    --emp-navy: #152033;
+    --emp-navy-2: #26344a;
+    --emp-gold: #c28b00;
+    --emp-gold-soft: #fff7df;
+    --emp-bg: #f4f6f8;
+    --emp-surface: #ffffff;
+    --emp-text: #172033;
+    --emp-muted: #667085;
+    --emp-border: #dfe3e8;
+    --emp-success: #027a48;
+    --emp-success-bg: #ecfdf3;
+    --emp-warning: #b54708;
+    --emp-warning-bg: #fffaeb;
+    --emp-danger: #b42318;
+    --emp-danger-bg: #fef3f2;
+    --emp-shadow: 0 5px 18px rgba(16,24,40,.07);
+}
+
+/* Page */
+body {
+    background:
+        radial-gradient(circle at 100% 0%, rgba(194,139,0,.045), transparent 26%),
+        var(--emp-bg) !important;
+}
+
+.page {
+    width: min(1220px, calc(100% - 32px));
+    padding-top: 24px;
+    padding-bottom: 54px;
+}
+
+/* Top bar */
+.topbar {
+    min-height: 76px;
+    padding: 12px 24px;
+    background: rgba(255,255,255,.97) !important;
+    border-bottom: 1px solid #e6e9ee !important;
+    box-shadow: 0 2px 10px rgba(16,24,40,.04) !important;
+}
+
+.topbar-left h1,
+.topbar h1 {
+    color: var(--emp-text);
+    font-size: 22px;
+    font-weight: 900;
+    letter-spacing: -.2px;
+}
+
+.topbar-left small,
+.topbar small {
+    color: var(--emp-muted);
+}
+
+.topbar-right {
+    gap: 8px;
+}
+
+/* Heading */
+.page-heading {
+    margin-bottom: 18px;
+    padding: 0 2px;
+}
+
+.page-heading h2,
+.page-heading h1 {
+    color: var(--emp-text);
+    font-size: 28px;
+    font-weight: 900;
+    letter-spacing: -.35px;
+}
+
+.page-heading p {
+    margin-top: 5px;
+    color: var(--emp-muted);
+    line-height: 1.55;
+}
+
+/* Summary */
+.summary-grid {
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.summary-card {
+    position: relative;
+    min-height: 116px;
+    padding: 18px;
+    overflow: hidden;
+    border: 1px solid var(--emp-border) !important;
+    border-radius: 15px !important;
+    background: #fff !important;
+    box-shadow: 0 2px 10px rgba(16,24,40,.045) !important;
+}
+
+.summary-card::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 3px;
+    background: var(--emp-gold);
+}
+
+.summary-card span,
+.summary-card small {
+    color: #667085;
+    font-weight: 700;
+}
+
+.summary-card strong {
+    display: block;
+    margin-top: 7px;
+    color: var(--emp-text);
+    font-size: 24px;
+    font-weight: 900;
+    letter-spacing: -.3px;
+}
+
+/* Filter */
+.filter-card {
+    margin-bottom: 16px;
+    padding: 18px;
+    border: 1px solid var(--emp-border) !important;
+    border-radius: 15px !important;
+    background: #fff !important;
+    box-shadow: 0 2px 10px rgba(16,24,40,.045) !important;
+}
+
+.filter-grid {
+    display: grid;
+    grid-template-columns: minmax(0,1.4fr) minmax(160px,.7fr) minmax(160px,.7fr) auto;
+    gap: 10px;
+    align-items: end;
+}
+
+.filter-grid label {
+    display: grid;
+    gap: 6px;
+    color: #344054;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.filter-grid input,
+.filter-grid select {
+    min-height: 44px;
+}
+
+.filter-grid .actions,
+.filter-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-grid button {
+    min-height: 44px;
+}
+
+/* Employee card */
+.employee-card {
+    overflow: hidden;
+    border: 1px solid var(--emp-border) !important;
+    border-radius: 17px !important;
+    background: #fff !important;
+    box-shadow: var(--emp-shadow) !important;
+}
+
+.employee-header {
+    padding: 18px 20px;
+    border-bottom: 1px solid #edf0f3;
+    background:
+        linear-gradient(180deg, #fff 0%, #fbfcfd 100%);
+}
+
+.employee-header h2,
+.employee-header h3 {
+    color: var(--emp-text);
+    font-size: 19px;
+    font-weight: 900;
+}
+
+.employee-header small {
+    color: var(--emp-muted);
+}
+
+/* Table */
+.table-wrap {
+    overflow: auto;
+    background: #fff;
+}
+
+table {
+    width: 100%;
+    min-width: 880px;
+    border-spacing: 0;
+}
+
+thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 12px 14px;
+    border-bottom: 1px solid #e4e7ec !important;
+    background: #f8fafc !important;
+    color: #475467 !important;
+    font-size: 11px;
+    font-weight: 900;
+    letter-spacing: .15px;
+    text-transform: none;
+}
+
+tbody td {
+    padding: 14px;
+    border-bottom: 1px solid #edf0f3 !important;
+    color: #344054;
+    vertical-align: middle;
+}
+
+tbody tr:last-child td {
+    border-bottom: 0 !important;
+}
+
+tbody tr:hover {
+    background: #fafbfc;
+}
+
+/* Employee identity */
+.employee-name,
+.employee-main strong {
+    color: var(--emp-text);
+    font-weight: 900;
+}
+
+.employee-id,
+.employee-email,
+.employee-main small {
+    color: #98a2b3 !important;
+    font-size: 11px !important;
+}
+
+/* Role badges */
+.role-badge,
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 28px;
+    padding: 5px 9px;
+    border-radius: 999px !important;
+    font-size: 11px;
+    font-weight: 900 !important;
+}
+
+.role-admin {
+    border: 1px solid #d6bbfb;
+    background: #f4f3ff;
+    color: #6938ef;
+}
+
+.role-manager {
+    border: 1px solid #f9dbaf;
+    background: #fffaeb;
+    color: #b54708;
+}
+
+.role-cashier {
+    border: 1px solid #b2ddff;
+    background: #eff8ff;
+    color: #175cd3;
+}
+
+.role-staff {
+    border: 1px solid #c7d7fe;
+    background: #eef4ff;
+    color: #3538cd;
+}
+
+.role-kitchen {
+    border: 1px solid #fec84b;
+    background: #fffaeb;
+    color: #93370d;
+}
+
+.role-stock {
+    border: 1px solid #abefc6;
+    background: #ecfdf3;
+    color: #027a48;
+}
+
+/* Status */
+.status-active {
+    border: 1px solid #abefc6;
+    background: var(--emp-success-bg);
+    color: var(--emp-success);
+}
+
+.status-inactive {
+    border: 1px solid #fda29b;
+    background: var(--emp-danger-bg);
+    color: var(--emp-danger);
+}
+
+/* PIN state */
+.pin-status {
+    font-weight: 800;
+}
+
+.pin-status.ready,
+.pin-ready {
+    color: var(--emp-success);
+}
+
+.pin-status.missing,
+.pin-missing {
+    color: var(--emp-warning);
+}
+
+/* Row actions */
+.row-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(104px,1fr));
+    gap: 7px;
+    min-width: 226px;
+}
+
+.row-actions button,
+.action-btn {
+    min-height: 38px;
+    padding: 7px 10px;
+    border: 1px solid #d0d5dd !important;
+    border-radius: 9px !important;
+    background: #fff !important;
+    color: #344054 !important;
+    font-size: 11px !important;
+    font-weight: 800 !important;
+    box-shadow: 0 1px 3px rgba(16,24,40,.05);
+}
+
+.row-actions button:hover,
+.action-btn:hover {
+    border-color: #98a2b3 !important;
+    background: #f9fafb !important;
+}
+
+.row-actions [data-activity-id] {
+    border-color: #b2ddff !important;
+    background: #eff8ff !important;
+    color: #175cd3 !important;
+}
+
+.row-actions [data-reset-password-id] {
+    border-color: #e9d7fe !important;
+    background: #f9f5ff !important;
+    color: #7f56d9 !important;
+}
+
+.row-actions [data-pin-id] {
+    border-color: #ead99f !important;
+    background: #fffaf0 !important;
+    color: #7a5200 !important;
+}
+
+.row-actions [data-archive-id] {
+    border-color: #fda29b !important;
+    background: #fff !important;
+    color: var(--emp-danger) !important;
+}
+
+.row-actions [data-restore-id] {
+    border-color: #abefc6 !important;
+    background: var(--emp-success-bg) !important;
+    color: var(--emp-success) !important;
+}
+
+/* Main buttons */
+.primary-btn {
+    min-height: 46px;
+    border: 1px solid var(--emp-navy) !important;
+    border-radius: 11px !important;
+    background: var(--emp-navy) !important;
+    color: #fff !important;
+    font-weight: 900 !important;
+    box-shadow: 0 3px 8px rgba(21,32,51,.13) !important;
+}
+
+.primary-btn:hover {
+    background: var(--emp-navy-2) !important;
+}
+
+.outline-btn {
+    min-height: 44px;
+    border: 1px solid #d0d5dd !important;
+    border-radius: 11px !important;
+    background: #fff !important;
+    color: #344054 !important;
+    font-weight: 800 !important;
+}
+
+/* Modals */
+.modal {
+    background: rgba(15,23,42,.58) !important;
+    backdrop-filter: blur(4px);
+}
+
+.modal-card {
+    width: min(560px, calc(100vw - 24px));
+    max-height: min(88vh, 760px);
+    overflow: auto;
+    padding: 0;
+    border: 1px solid rgba(255,255,255,.85) !important;
+    border-radius: 19px !important;
+    background: #fff !important;
+    box-shadow: 0 28px 70px rgba(15,23,42,.22) !important;
+}
+
+.modal-head {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    padding: 18px 20px;
+    border-bottom: 1px solid #e9edf1;
+    background: rgba(255,255,255,.98);
+}
+
+.modal-head h2,
+.modal-head h3 {
+    color: var(--emp-text);
+    font-size: 20px;
+    font-weight: 900;
+}
+
+.modal-card form,
+.modal-body {
+    padding: 18px 20px;
+}
+
+.modal-card label {
+    color: #344054;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.modal-card input,
+.modal-card select,
+.modal-card textarea {
+    min-height: 46px;
+    margin-top: 6px;
+}
+
+.modal-card textarea {
+    min-height: 84px;
+}
+
+.modal-actions {
+    position: sticky;
+    bottom: 0;
+    display: grid;
+    grid-template-columns: 1fr 1.15fr;
+    gap: 10px;
+    padding: 14px 20px 18px;
+    border-top: 1px solid #e9edf1;
+    background: rgba(255,255,255,.98);
+}
+
+.modal-actions button {
+    width: 100%;
+    min-height: 46px;
+}
+
+/* Empty/message */
+.message:not(:empty) {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border: 1px solid #fda29b !important;
+    border-radius: 10px !important;
+    background: var(--emp-danger-bg) !important;
+    color: var(--emp-danger) !important;
+    font-weight: 800;
+}
+
+.empty {
+    padding: 34px 16px !important;
+    color: #98a2b3 !important;
+    text-align: center;
+}
+
+/* Tablet */
+@media (max-width: 900px) {
+    .page {
+        width: calc(100% - 22px);
+        padding-top: 14px;
+    }
+
+    .filter-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .filter-grid > *:first-child {
+        grid-column: 1 / -1;
+    }
+
+    .filter-grid .actions,
+    .filter-actions {
+        grid-column: 1 / -1;
+    }
+}
+
+/* Mobile employee cards */
+@media (max-width: 700px) {
+    .topbar {
+        min-height: 68px;
+        padding: 10px 12px;
+    }
+
+    .topbar-left h1,
+    .topbar h1 {
+        font-size: 19px;
+    }
+
+    .page {
+        width: calc(100% - 18px);
+        padding-top: 12px;
+        padding-bottom: 28px;
+    }
+
+    .page-heading {
+        display: grid;
+        gap: 10px;
+    }
+
+    .page-heading h2,
+    .page-heading h1 {
+        font-size: 24px;
+    }
+
+    .summary-grid {
+        grid-template-columns: repeat(2, minmax(0,1fr));
+        gap: 9px;
+    }
+
+    .summary-card {
+        min-height: 108px;
+        padding: 14px;
+    }
+
+    .summary-card strong {
+        font-size: 20px;
+    }
+
+    .filter-card {
+        padding: 14px;
+    }
+
+    .filter-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .filter-grid > *:first-child,
+    .filter-grid .actions,
+    .filter-actions {
+        grid-column: auto;
+    }
+
+    .filter-grid .actions,
+    .filter-actions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .employee-card {
+        border: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+        overflow: visible;
+    }
+
+    .employee-header {
+        margin-bottom: 9px;
+        border: 1px solid var(--emp-border);
+        border-radius: 14px;
+        background: #fff;
+        box-shadow: 0 2px 8px rgba(16,24,40,.05);
+    }
+
+    .table-wrap {
+        overflow: visible;
+        background: transparent;
+    }
+
+    table {
+        display: block;
+        min-width: 0 !important;
+    }
+
+    thead {
+        display: none;
+    }
+
+    tbody {
+        display: grid;
+        gap: 10px;
+    }
+
+    tbody tr {
+        display: grid;
+        gap: 0;
+        overflow: hidden;
+        border: 1px solid var(--emp-border);
+        border-radius: 15px;
+        background: #fff;
+        box-shadow: 0 3px 12px rgba(16,24,40,.055);
+    }
+
+    tbody tr:hover {
+        background: #fff;
+    }
+
+    tbody td {
+        display: grid;
+        grid-template-columns: 108px minmax(0,1fr);
+        gap: 10px;
+        align-items: center;
+        min-height: 48px;
+        padding: 10px 13px;
+        border-bottom: 1px solid #edf0f3 !important;
+    }
+
+    tbody td::before {
+        color: #667085;
+        font-size: 11px;
+        font-weight: 800;
+    }
+
+    tbody td:nth-child(1)::before {
+        content: "พนักงาน";
+    }
+
+    tbody td:nth-child(2)::before {
+        content: "ตำแหน่ง";
+    }
+
+    tbody td:nth-child(3)::before {
+        content: "สถานะ";
+    }
+
+    tbody td:nth-child(4)::before {
+        content: "PIN VOID";
+    }
+
+    tbody td:nth-child(5) {
+        display: block;
+        padding: 12px;
+        border-bottom: 0 !important;
+        background: #fafbfc;
+    }
+
+    tbody td:nth-child(5)::before {
+        content: none;
+    }
+
+    .employee-id {
+        display: none !important;
+    }
+
+    .row-actions {
+        grid-template-columns: repeat(2, minmax(0,1fr));
+        min-width: 0;
+        gap: 8px;
+    }
+
+    .row-actions button,
+    .action-btn {
+        min-height: 42px;
+        font-size: 11px !important;
+    }
+
+    .modal {
+        align-items: end !important;
+    }
+
+    .modal-card {
+        width: 100%;
+        max-width: 100%;
+        max-height: 92svh;
+        border-radius: 22px 22px 0 0 !important;
+    }
+
+    .modal-head {
+        padding: 15px 16px;
+    }
+
+    .modal-card form,
+    .modal-body {
+        padding: 15px 16px;
+    }
+
+    .modal-actions {
+        padding: 12px 16px max(16px, env(safe-area-inset-bottom));
+    }
+}
+
+@media (max-width: 390px) {
+    .summary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .filter-grid .actions,
+    .filter-actions,
+    .row-actions {
+        grid-template-columns: 1fr;
+    }
+
+    tbody td {
+        grid-template-columns: 92px minmax(0,1fr);
+    }
+}
+
