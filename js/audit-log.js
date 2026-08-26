@@ -36,7 +36,8 @@ const state = {
     profile: null,
     branch: null,
     rows: [],
-    profileNames: {}
+    profileNames: {},
+    ingredientNames: {}
 }
 
 function esc(v) {
@@ -171,6 +172,58 @@ async function loadProfileNames() {
         )
 }
 
+
+function ingredientNameById(ingredientId) {
+    if (!ingredientId) {
+        return '-'
+    }
+
+    return (
+        state.ingredientNames?.[String(ingredientId)]
+        ||
+        'ไม่พบชื่อวัตถุดิบ'
+    )
+}
+
+
+async function loadIngredientNames() {
+    if (!state.profile?.branch_id) {
+        state.ingredientNames = {}
+        return
+    }
+
+    const {
+        data,
+        error
+    } = await supabase
+        .from('ingredients')
+        .select('id,name')
+        .eq(
+            'branch_id',
+            state.profile.branch_id
+        )
+
+    if (error) {
+        console.warn(
+            'Load ingredient names error:',
+            error
+        )
+
+        state.ingredientNames = {}
+        return
+    }
+
+    state.ingredientNames =
+        Object.fromEntries(
+            (data || []).map(
+                row => [
+                    String(row.id),
+                    row.name || 'ไม่ระบุชื่อวัตถุดิบ'
+                ]
+            )
+        )
+}
+
 function auditTitle(row) {
     const invoice = getInvoiceNo(row)
 
@@ -201,6 +254,10 @@ function displayValue(key, value) {
 
     if (personIdKeys.has(key)) {
         return personNameById(value)
+    }
+
+    if (key === 'ingredient_id') {
+        return ingredientNameById(value)
     }
 
     const moneyKeys = new Set([
@@ -266,6 +323,13 @@ function fieldLabel(key) {
         current_stock:'สต็อกคงเหลือ',
         quantity:'จำนวน',
         movement_type:'ประเภทการเคลื่อนไหว',
+        ingredient_id:'วัตถุดิบ',
+        stock_before:'สต็อกก่อน',
+        stock_after:'สต็อกหลัง',
+        sale_id:'เลขอ้างอิงการขาย',
+        note:'หมายเหตุ',
+        created_by:'สร้างโดย',
+        updated_by:'แก้ไขโดย',
         unit_cost:'ต้นทุนต่อหน่วย',
         cost_per_unit:'ต้นทุนต่อหน่วย',
         created_at:'สร้างเมื่อ',
@@ -297,8 +361,15 @@ function importantEntries(data) {
         'name',
         'price',
         'quantity',
-        'current_stock',
         'movement_type',
+        'stock_before',
+        'stock_after',
+        'current_stock',
+        'ingredient_id',
+        'note',
+        'sale_id',
+        'created_by',
+        'updated_by',
         'unit_cost',
         'cost_per_unit',
         'created_at',
@@ -322,7 +393,14 @@ function importantEntries(data) {
                 'id',
                 'branch_id',
                 'actor_id',
-                'cashier_id'
+                'cashier_id',
+                'product_id',
+                'category_id',
+                'recipe_id',
+                'order_id',
+                'table_id',
+                'modifier_group_id',
+                'modifier_option_id'
             ].includes(key)
         ) {
             result.push([key,data[key]])
@@ -561,7 +639,10 @@ async function init() {
         const ok=await requireAccess()
         if (!ok) return
 
-        await loadProfileNames()
+        await Promise.all([
+            loadProfileNames(),
+            loadIngredientNames()
+        ])
         await loadData()
     } catch(error) {
         showError(error)
