@@ -248,6 +248,54 @@ export function uiError() {
 }
 
 
+export function uiConfirmTap() {
+
+    /*
+     * V3.0.6
+     * ปุ่มยืนยันสำคัญ:
+     * เสียงแน่นกว่าปุ่มทั่วไป แต่ไม่ใช่เสียง Success
+     */
+    tone({
+        frequency: 540,
+        duration: .055,
+        gain: .090,
+        type: 'triangle'
+    })
+
+    tone({
+        frequency: 720,
+        duration: .055,
+        gain: .070,
+        type: 'triangle',
+        delay: .045
+    })
+}
+
+
+export function uiDangerTap() {
+
+    /*
+     * V3.0.6
+     * ปุ่มลบ / ล้าง / ยกเลิก:
+     * ใช้เสียงต่ำ 2 จังหวะเพื่อเตือน
+     */
+    tone({
+        frequency: 310,
+        duration: .070,
+        gain: .080,
+        type: 'triangle'
+    })
+
+    tone({
+        frequency: 245,
+        duration: .065,
+        gain: .065,
+        type: 'triangle',
+        delay: .055
+    })
+}
+
+
 function toastHost() {
 
     let host =
@@ -638,32 +686,76 @@ function bindPressFeedback() {
             const strongTapTarget =
                 card
                 ||
-                target.closest(
-                    '.order-type-btn'
-                )
+                target.closest('.tab')
                 ||
-                target.closest(
-                    '.table-select-btn'
-                )
+                target.closest('.order-type-btn')
                 ||
-                target.closest(
-                    '#guestMinusBtn'
-                )
+                target.closest('.table-select-btn')
                 ||
-                target.closest(
-                    '#guestPlusBtn'
-                )
+                target.closest('#guestMinusBtn')
                 ||
-                target.closest(
-                    '#startOrderBtn'
-                )
+                target.closest('#guestPlusBtn')
                 ||
-                target.closest(
-                    '#backToDashboardBtn'
-                )
+                target.closest('#startOrderBtn')
+                ||
+                target.closest('#holdTableBtn')
+                ||
+                target.closest('#backToDashboardBtn')
+                ||
+                target.closest('[data-act="inc"]')
+                ||
+                target.closest('[data-act="dec"]')
+                ||
+                target.closest('[data-cash]')
+                ||
+                target.closest('.method')
 
 
-            if (strongTapTarget) {
+            const confirmTarget =
+                target.closest('#confirmOrderBtn')
+                ||
+                target.closest('#checkoutBtn')
+                ||
+                target.closest('#confirmPaymentBtn')
+                ||
+                target.closest('#confirmManualDiscountBtn')
+                ||
+                target.closest('#applyPromotionBtn')
+                ||
+                target.closest('#applyCouponBtn')
+                ||
+                target.closest('#manualDiscountBtn')
+                ||
+                target.closest('#newSaleBtn')
+                ||
+                target.closest('#printReceiptBtn')
+
+
+            const dangerTarget =
+                target.closest('[data-act="remove"]')
+                ||
+                target.closest('#clearCartBtn')
+                ||
+                target.closest('#cancelPaymentBtn')
+                ||
+                target.closest('#closePaymentBtn')
+                ||
+                target.closest('#closeManualDiscountBtn')
+                ||
+                target.closest('#cancelManualDiscountBtn')
+                ||
+                target.closest('#closeOrderStartBtn')
+
+
+            if (dangerTarget) {
+
+                uiDangerTap()
+
+            } else if (confirmTarget) {
+
+                uiConfirmTap()
+
+            } else if (strongTapTarget) {
 
                 uiMenuTap()
 
@@ -699,13 +791,23 @@ function bindPressFeedback() {
              * หน้าเริ่มออเดอร์:
              * ให้ปุ่มที่กดมี flash สั้น ๆ เพื่อเห็นชัดว่าระบบรับการกดแล้ว
              */
-            if (
-                strongTapTarget
-                &&
-                !card
-            ) {
+            const feedbackTarget =
+                dangerTarget
+                ||
+                confirmTarget
+                ||
+                (
+                    strongTapTarget
+                    &&
+                    !card
+                        ? strongTapTarget
+                        : null
+                )
 
-                strongTapTarget.classList
+
+            if (feedbackTarget) {
+
+                feedbackTarget.classList
                     .add(
                         'ui-flash'
                     )
@@ -713,7 +815,7 @@ function bindPressFeedback() {
 
                 setTimeout(
                     () =>
-                        strongTapTarget.classList
+                        feedbackTarget.classList
                             .remove(
                                 'ui-flash'
                             ),
@@ -857,6 +959,8 @@ function initUiFeedback() {
     window.JOKJUNG_UI_FEEDBACK = {
         tap: uiTap,
         menuTap: uiMenuTap,
+        confirmTap: uiConfirmTap,
+        dangerTap: uiDangerTap,
         success: uiSuccess,
         warning: uiWarning,
         error: uiError,
