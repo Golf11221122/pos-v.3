@@ -1,0 +1,4 @@
+Brand rename: JOKJUNG -> CHAIXI BAMEEKIAO
+Scope: visible/display uppercase brand text and documentation comments/text.
+Safety: technical lowercase identifiers such as Supabase RPC/function names, localStorage keys, filenames, CSS/JS technical filenames and existing paths containing "jokjung" were intentionally NOT renamed, to avoid breaking the running system.
+Replacements: 83 occurrences across 54 files.

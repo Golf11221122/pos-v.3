@@ -1,4 +1,4 @@
-JOKJUNG POS — STOCK V3.3
+CHAIXI BAMEEKIAO POS — STOCK V3.3
 
 สิ่งที่เพิ่ม
 - Checkout ใช้ RPC jokjung_create_pos_sale_v33
