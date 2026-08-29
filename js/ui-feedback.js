@@ -956,7 +956,7 @@ function initUiFeedback() {
     observeBusyButtons()
 
 
-    window.CHAIXI BAMEEKIAO_UI_FEEDBACK = {
+    window.JOKJUNG_UI_FEEDBACK = {
         tap: uiTap,
         menuTap: uiMenuTap,
         confirmTap: uiConfirmTap,

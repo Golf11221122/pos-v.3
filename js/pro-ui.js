@@ -9,12 +9,12 @@ No database logic. No auth logic. No sound.
 function initGlobalUiV313() {
 
     if (
-        window.__CHAIXI BAMEEKIAO_GLOBAL_UI_V313__
+        window.__JOKJUNG_GLOBAL_UI_V313__
     ) {
         return
     }
 
-    window.__CHAIXI BAMEEKIAO_GLOBAL_UI_V313__ =
+    window.__JOKJUNG_GLOBAL_UI_V313__ =
         true
 
 
