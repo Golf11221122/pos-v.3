@@ -793,7 +793,7 @@ function renderSelectedStationText() {
     const station = state.stations.find(row => row.id === state.selectedStation)
     const text = station?.name || 'ทุกครัว'
     if (el.selectedStationText) el.selectedStationText.textContent = text
-    document.title = state.selectedStation ? `${text} | JOKJUNG POS` : 'Kitchen | JOKJUNG POS'
+    document.title = state.selectedStation ? `${text} | CHAIXI BAMEEKIAO POS` : 'Kitchen | CHAIXI BAMEEKIAO POS'
 }
 
 
@@ -1639,7 +1639,7 @@ function renderPrintGroupTicket(items, index, total) {
                 ? 'page-break-after:always;break-after:page;margin-bottom:3mm!important;'
                 : ''}"
         >
-            <div class="print-brand">JOKJUNG</div>
+            <div class="print-brand">CHAIXI BAMEEKIAO</div>
             <div class="print-kitchen-title">ใบครัว</div>
             <div class="print-station">🍳 ${esc(stationName)}</div>
 

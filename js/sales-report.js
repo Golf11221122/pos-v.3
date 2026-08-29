@@ -1765,7 +1765,7 @@ function getReportFileName(
         sanitizeFileName(
             state.branch?.name
             ||
-            'JOKJUNG'
+            'CHAIXI BAMEEKIAO'
         )
 
 
@@ -2019,7 +2019,7 @@ function exportExcel() {
         const summaryData = [
 
             [
-                'รายงานยอดขาย JOKJUNG POS'
+                'รายงานยอดขาย CHAIXI BAMEEKIAO POS'
             ],
 
             [
@@ -2575,7 +2575,7 @@ async function sharePdf() {
                 {
 
                     title:
-                        'รายงานยอดขาย JOKJUNG POS',
+                        'รายงานยอดขาย CHAIXI BAMEEKIAO POS',
 
                     text:
                         `รายงานยอดขาย ${

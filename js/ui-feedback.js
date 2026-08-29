@@ -1,6 +1,6 @@
 /*
 =========================================================
-JOKJUNG POS MAIN
+CHAIXI BAMEEKIAO POS MAIN
 UI FEEDBACK V3.0 — PHASE 1
 =========================================================
 - Tap sound on actionable buttons
@@ -956,7 +956,7 @@ function initUiFeedback() {
     observeBusyButtons()
 
 
-    window.JOKJUNG_UI_FEEDBACK = {
+    window.CHAIXI BAMEEKIAO_UI_FEEDBACK = {
         tap: uiTap,
         menuTap: uiMenuTap,
         confirmTap: uiConfirmTap,

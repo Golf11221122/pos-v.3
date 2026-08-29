@@ -540,7 +540,7 @@ function uiFeedback(
 ) {
 
     const api =
-        window.JOKJUNG_UI_FEEDBACK
+        window.CHAIXI BAMEEKIAO_UI_FEEDBACK
 
 
     if (!api) {

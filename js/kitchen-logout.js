@@ -2,7 +2,7 @@ import { supabase } from './supabase.js'
 
 /*
 =========================================================
-JOKJUNG POS MAIN
+CHAIXI BAMEEKIAO POS MAIN
 KITCHEN LOGOUT V2.15.2
 =========================================================
 - เฉพาะ role = kitchen จะแสดงปุ่ม "ออกจากระบบ"

@@ -1,6 +1,6 @@
 /*
 =========================================================
-JOKJUNG FRONTEND CONFIG V3.12
+CHAIXI BAMEEKIAO FRONTEND CONFIG V3.12
 
 IMPORTANT:
 - Frontend config may contain PUBLIC values only.

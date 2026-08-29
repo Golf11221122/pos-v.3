@@ -1,6 +1,6 @@
 /*
 =========================================================
-JOKJUNG GLOBAL PROFESSIONAL UX/UI V3.13
+CHAIXI BAMEEKIAO GLOBAL PROFESSIONAL UX/UI V3.13
 Global visual feedback / loading polish.
 No database logic. No auth logic. No sound.
 =========================================================
@@ -9,12 +9,12 @@ No database logic. No auth logic. No sound.
 function initGlobalUiV313() {
 
     if (
-        window.__JOKJUNG_GLOBAL_UI_V313__
+        window.__CHAIXI BAMEEKIAO_GLOBAL_UI_V313__
     ) {
         return
     }
 
-    window.__JOKJUNG_GLOBAL_UI_V313__ =
+    window.__CHAIXI BAMEEKIAO_GLOBAL_UI_V313__ =
         true
 
 
