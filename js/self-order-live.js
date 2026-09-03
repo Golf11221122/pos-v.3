@@ -33,12 +33,24 @@ const el = {
     problemDrawerCount: $('problemDrawerCount'),
     problemList: $('problemList'),
     problemEmpty: $('problemEmpty'),
+    slaAlertCount: $('slaAlertCount'),
+    systemProblemCount: $('systemProblemCount'),
 
     historyBtn: $('historyBtn'),
     historyDrawer: $('historyDrawer'),
     historyDrawerCount: $('historyDrawerCount'),
     historyList: $('historyList'),
     historyEmpty: $('historyEmpty'),
+
+    slaSettingsBtn: $('slaSettingsBtn'),
+    slaSettingsDrawer: $('slaSettingsDrawer'),
+    slaPermissionNote: $('slaPermissionNote'),
+    slaPaymentMinutes: $('slaPaymentMinutes'),
+    slaKitchenMinutes: $('slaKitchenMinutes'),
+    slaReadyMinutes: $('slaReadyMinutes'),
+    slaSoundEnabled: $('slaSoundEnabled'),
+    saveSlaBtn: $('saveSlaBtn'),
+    slaSettingsMessage: $('slaSettingsMessage'),
 
     orderDrawer: $('orderDrawer'),
     orderDrawerSubtitle: $('orderDrawerSubtitle'),
@@ -52,7 +64,14 @@ const state = {
     filter: 'all',
     timer: null,
     profile: null,
-    openDrawer: null
+    openDrawer: null,
+    sla: {
+        payment_pending_minutes: 5,
+        kitchen_minutes: 15,
+        ready_minutes: 10
+    },
+    alertedOverdue: new Set(),
+    clockTimer: null
 }
 
 const esc = value => String(value ?? '')
@@ -84,7 +103,23 @@ const padQueue = value => {
     return n > 0 ? String(Math.trunc(n)).padStart(3, '0') : '-'
 }
 
-const WAIT_ALERT_MINUTES = 10
+function slaMinutesFor(row) {
+    const b = bucket(row)
+
+    if (b === 'payment_pending') {
+        return Number(state.sla.payment_pending_minutes || 5)
+    }
+
+    if (b === 'ready_for_pickup') {
+        return Number(state.sla.ready_minutes || 10)
+    }
+
+    if (b === 'kitchen') {
+        return Number(state.sla.kitchen_minutes || 15)
+    }
+
+    return 0
+}
 
 function ageMinutes(value) {
     if (!value) return 0
@@ -92,21 +127,102 @@ function ageMinutes(value) {
     return Math.max(0, Math.floor(ms / 60000))
 }
 
-function waitInfo(row) {
+function waitStart(row) {
     const b = bucket(row)
-    let from = row.created_at
 
     if (b === 'ready_for_pickup') {
-        from = row.ready_at || row.created_at
-    } else if (b === 'kitchen') {
-        from = row.paid_at || row.created_at
+        return row.ready_at || row.created_at
     }
 
-    const mins = ageMinutes(from)
+    if (b === 'kitchen') {
+        return row.paid_at || row.created_at
+    }
+
+    return row.created_at
+}
+
+function waitInfo(row) {
+    const mins = ageMinutes(waitStart(row))
+    const limit = slaMinutesFor(row)
+    const ratio = limit > 0 ? mins / limit : 0
+
     return {
         minutes: mins,
-        long: mins >= WAIT_ALERT_MINUTES,
-        label: mins <= 0 ? 'เมื่อสักครู่' : `รอ ${mins} นาที`
+        limit,
+        warning: limit > 0 && ratio >= 0.70 && ratio < 1,
+        overdue: limit > 0 && ratio >= 1,
+        overdueBy: limit > 0 ? Math.max(0, mins - limit) : 0,
+        label: mins <= 0 ? 'เมื่อสักครู่' : `รอ ${mins} นาที`,
+        limitLabel: limit > 0 ? `SLA ${limit} นาที` : ''
+    }
+}
+
+function isSlaOverdue(row) {
+    const b = bucket(row)
+    if (!['payment_pending', 'kitchen', 'ready_for_pickup'].includes(b)) return false
+    return waitInfo(row).overdue
+}
+
+function canEditSla() {
+    return ['admin', 'manager'].includes(
+        String(state.profile?.role || '').toLowerCase()
+    )
+}
+
+function soundEnabled() {
+    return localStorage.getItem('chaixi_live_sla_sound') === '1'
+}
+
+function setSoundEnabled(enabled) {
+    localStorage.setItem('chaixi_live_sla_sound', enabled ? '1' : '0')
+}
+
+function beepAlert() {
+    if (!soundEnabled()) return
+
+    try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext
+        if (!AudioCtx) return
+
+        const ctx = new AudioCtx()
+        const osc = ctx.createOscillator()
+        const gain = ctx.createGain()
+
+        osc.type = 'sine'
+        osc.frequency.setValueAtTime(880, ctx.currentTime)
+        gain.gain.setValueAtTime(0.0001, ctx.currentTime)
+        gain.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + 0.02)
+        gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.35)
+
+        osc.connect(gain)
+        gain.connect(ctx.destination)
+        osc.start()
+        osc.stop(ctx.currentTime + 0.38)
+        osc.onended = () => ctx.close()
+    } catch (error) {
+        console.warn('SLA alert sound unavailable:', error)
+    }
+}
+
+function notifyNewOverdue(rows) {
+    const currentIds = new Set()
+
+    rows.forEach(row => {
+        if (!isSlaOverdue(row)) return
+
+        const id = String(row.id)
+        currentIds.add(id)
+
+        if (!state.alertedOverdue.has(id)) {
+            state.alertedOverdue.add(id)
+            beepAlert()
+        }
+    })
+
+    for (const id of [...state.alertedOverdue]) {
+        if (!currentIds.has(id)) {
+            state.alertedOverdue.delete(id)
+        }
     }
 }
 
@@ -274,7 +390,7 @@ function makeCard(row, mode = 'active') {
     }
 
     return `
-        <article class="mini-card ${cardClass} ${wait.long && b !== 'completed' ? 'waiting-long' : ''}">
+        <article class="mini-card ${cardClass} ${wait.overdue && b !== 'completed' ? 'waiting-overdue' : wait.warning && b !== 'completed' ? 'waiting-warning' : ''}">
             <div class="mini-card-top">
                 <div class="mini-queue">
                     <small>คิว</small>
@@ -293,9 +409,14 @@ function makeCard(row, mode = 'active') {
                 </div>
             </div>
 
-            <div class="wait-line ${wait.long ? 'long' : ''}">
-                ⏱️ ${esc(wait.label)}
-                ${wait.long ? '<span>รอนาน</span>' : ''}
+            <div class="wait-line ${wait.overdue ? 'overdue' : wait.warning ? 'warning' : ''}">
+                <span>⏱️ ${esc(wait.label)}</span>
+                <small>${esc(wait.limitLabel)}</small>
+                ${wait.overdue
+                    ? `<b>เกิน ${esc(wait.overdueBy)} นาที</b>`
+                    : wait.warning
+                        ? '<b>ใกล้เกินเวลา</b>'
+                        : ''}
             </div>
 
             <div class="customer-line">
@@ -361,6 +482,7 @@ function renderMainBoard() {
     const pendingRows = rowsForBucket('payment_pending')
     const problemRows = rowsForBucket('problem')
     const completedRows = rowsForBucket('completed')
+    const slaRows = activeRows().filter(isSlaOverdue)
 
     el.ready.textContent = readyRows.length
     el.kitchen.textContent = kitchenRows.length
@@ -370,14 +492,31 @@ function renderMainBoard() {
     el.kitchenSectionCount.textContent = kitchenRows.length
     el.pendingSectionCount.textContent = pendingRows.length
 
-    el.problemBellCount.textContent = problemRows.length
-    el.problemBellCount.classList.toggle('hidden', problemRows.length === 0)
+    const alertMap = new Map()
 
-    el.problemDrawerCount.textContent = problemRows.length
+    problemRows.forEach(row => alertMap.set(String(row.id), row))
+    slaRows.forEach(row => alertMap.set(String(row.id), row))
+
+    const alertRows = [...alertMap.values()].sort((a, b) => {
+        const aProblem = bucket(a) === 'problem' ? 1 : 0
+        const bProblem = bucket(b) === 'problem' ? 1 : 0
+        if (aProblem !== bProblem) return bProblem - aProblem
+
+        return waitInfo(b).overdueBy - waitInfo(a).overdueBy
+    })
+
+    el.problemBellCount.textContent = alertRows.length
+    el.problemBellCount.classList.toggle('hidden', alertRows.length === 0)
+
+    el.problemDrawerCount.textContent = alertRows.length
+    el.slaAlertCount.textContent = slaRows.length
+    el.systemProblemCount.textContent = problemRows.length
     el.historyDrawerCount.textContent = completedRows.length
 
-    el.problemList.innerHTML = problemRows.map(row => makeCard(row, 'problem')).join('')
-    el.problemEmpty.classList.toggle('hidden', problemRows.length > 0)
+    el.problemList.innerHTML = alertRows.map(row => makeCard(row, 'problem')).join('')
+    el.problemEmpty.classList.toggle('hidden', alertRows.length > 0)
+
+    notifyNewOverdue(state.rows)
 
     el.historyList.innerHTML = completedRows.map(row => makeCard(row, 'history')).join('')
     el.historyEmpty.classList.toggle('hidden', completedRows.length > 0)
@@ -480,7 +619,9 @@ function openDrawer(name) {
             ? el.problemDrawer
             : name === 'history'
                 ? el.historyDrawer
-                : el.orderDrawer
+                : name === 'settings'
+                    ? el.slaSettingsDrawer
+                    : el.orderDrawer
 
     state.openDrawer = name
     drawer.classList.remove('hidden')
@@ -490,7 +631,7 @@ function openDrawer(name) {
 }
 
 function closeDrawer() {
-    ;[el.problemDrawer, el.historyDrawer, el.orderDrawer].forEach(drawer => {
+    ;[el.problemDrawer, el.historyDrawer, el.slaSettingsDrawer, el.orderDrawer].forEach(drawer => {
         drawer.classList.add('hidden')
         drawer.setAttribute('aria-hidden', 'true')
     })
@@ -535,7 +676,7 @@ function renderOrderDetail(row) {
             <div><span>Payment</span><strong>${esc(row.payment_status || '-')}</strong></div>
             <div><span>Kitchen</span><strong>${esc(row.kitchen_dispatch_status || row.status || '-')}</strong></div>
             <div><span>Sale/Stock</span><strong>${esc(row.sale_stock_status || 'pending')}</strong></div>
-            <div><span>เวลารอ</span><strong>${esc(wait.label)}</strong></div>
+            <div><span>เวลารอ</span><strong>${esc(wait.label)} / ${esc(wait.limitLabel)}</strong></div>
         </div>
 
         <div class="detail-actions">
@@ -560,6 +701,95 @@ function openOrderDetail(id) {
     }
 
     renderOrderDetail(row)
+}
+
+
+async function loadSlaSettings() {
+    const { data, error } = await supabase.rpc('self_order_live_get_sla_v1')
+
+    if (error) {
+        console.warn('Load SLA settings failed:', error)
+        return
+    }
+
+    const row = Array.isArray(data) ? data[0] : data
+    if (!row) return
+
+    state.sla = {
+        payment_pending_minutes: Number(row.payment_pending_minutes || 5),
+        kitchen_minutes: Number(row.kitchen_minutes || 15),
+        ready_minutes: Number(row.ready_minutes || 10)
+    }
+
+    fillSlaForm()
+}
+
+function fillSlaForm() {
+    el.slaPaymentMinutes.value = state.sla.payment_pending_minutes
+    el.slaKitchenMinutes.value = state.sla.kitchen_minutes
+    el.slaReadyMinutes.value = state.sla.ready_minutes
+    el.slaSoundEnabled.checked = soundEnabled()
+
+    const editable = canEditSla()
+    el.slaPermissionNote.classList.toggle('hidden', editable)
+
+    ;[
+        el.slaPaymentMinutes,
+        el.slaKitchenMinutes,
+        el.slaReadyMinutes
+    ].forEach(input => {
+        input.disabled = !editable
+    })
+
+    el.saveSlaBtn.classList.toggle('hidden', !editable)
+}
+
+function slaSettingsMessage(text = '', bad = false) {
+    el.slaSettingsMessage.textContent = text
+    el.slaSettingsMessage.classList.toggle('error', bad)
+}
+
+async function saveSlaSettings() {
+    if (!canEditSla()) return
+
+    const payment = Number(el.slaPaymentMinutes.value)
+    const kitchen = Number(el.slaKitchenMinutes.value)
+    const ready = Number(el.slaReadyMinutes.value)
+
+    if (
+        !Number.isInteger(payment) ||
+        !Number.isInteger(kitchen) ||
+        !Number.isInteger(ready) ||
+        [payment, kitchen, ready].some(value => value < 1 || value > 180)
+    ) {
+        slaSettingsMessage('กรุณากำหนดเวลา 1–180 นาที', true)
+        return
+    }
+
+    el.saveSlaBtn.disabled = true
+    slaSettingsMessage('กำลังบันทึก...')
+
+    const { data, error } = await supabase.rpc('self_order_live_update_sla_v1', {
+        p_payment_pending_minutes: payment,
+        p_kitchen_minutes: kitchen,
+        p_ready_minutes: ready
+    })
+
+    el.saveSlaBtn.disabled = false
+
+    if (error) {
+        slaSettingsMessage(error.message || 'บันทึกไม่สำเร็จ', true)
+        return
+    }
+
+    state.sla = {
+        payment_pending_minutes: payment,
+        kitchen_minutes: kitchen,
+        ready_minutes: ready
+    }
+
+    slaSettingsMessage('บันทึกเรียบร้อย')
+    render()
 }
 
 async function load() {
@@ -626,7 +856,19 @@ el.search.addEventListener('input', render)
 el.refresh.addEventListener('click', load)
 
 el.problemBellBtn.addEventListener('click', () => openDrawer('problem'))
+el.slaSettingsBtn.addEventListener('click', () => {
+    fillSlaForm()
+    slaSettingsMessage('')
+    openDrawer('settings')
+})
 el.historyBtn.addEventListener('click', () => openDrawer('history'))
+
+el.slaSoundEnabled.addEventListener('change', () => {
+    setSoundEnabled(el.slaSoundEnabled.checked)
+    if (el.slaSoundEnabled.checked) beepAlert()
+})
+
+el.saveSlaBtn.addEventListener('click', saveSlaSettings)
 
 el.drawerBackdrop.addEventListener('click', closeDrawer)
 
@@ -642,11 +884,16 @@ async function init() {
     try {
         if (!await requireStaff()) return
 
+        await loadSlaSettings()
         await load()
 
         state.timer = setInterval(() => {
             if (!document.hidden) load()
         }, 5000)
+
+        state.clockTimer = setInterval(() => {
+            if (!document.hidden) render()
+        }, 30000)
     } catch (error) {
         console.error(error)
         msg(error.message || 'เปิดหน้า QR Self Order Live ไม่สำเร็จ', true)
