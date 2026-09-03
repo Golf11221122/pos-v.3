@@ -3,17 +3,20 @@
 *{box-sizing:border-box}
 body{margin:0;background:#f3f6f8}
 .pickup-shell{width:min(620px,100%);margin:auto;padding:18px}
-.pickup-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}
+.pickup-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:16px}
 .pickup-head small{font-weight:900;letter-spacing:.08em;color:#667085}
-.pickup-head h1{margin:3px 0 0;font-size:24px}
-.home-btn{text-decoration:none;color:#172033;background:#fff;border:1px solid #d0d5dd;border-radius:10px;padding:9px 12px;font-weight:800}
-.pickup-card{background:#fff;border:1px solid #e4e7ec;border-radius:20px;padding:18px;box-shadow:0 12px 30px rgba(16,24,40,.06)}
-.hint{margin-top:0;color:#667085}
-.code-form{display:grid;grid-template-columns:1fr auto;gap:9px}
-.code-form input{font-size:25px;letter-spacing:.12em;padding:12px;border:1px solid #d0d5dd;border-radius:12px;text-align:center}
-.code-form button,.confirm-btn{border:0;border-radius:12px;padding:12px 16px;font-weight:900;cursor:pointer}
-.code-form button{background:#172033;color:#fff}
-.message{min-height:24px;margin:10px 0;font-weight:800}
+.pickup-head h1{margin:3px 0 0;font-size:24px;line-height:1.2}
+.home-btn{text-decoration:none;color:#172033;background:#fff;border:1px solid #d0d5dd;border-radius:12px;padding:10px 14px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;white-space:nowrap}
+.pickup-card{background:#fff;border:1px solid #e4e7ec;border-radius:20px;padding:18px;box-shadow:0 12px 30px rgba(16,24,40,.06);overflow:hidden}
+.hint{margin-top:0;color:#667085;line-height:1.5}
+.code-form{display:grid;grid-template-columns:minmax(0,1fr) 60px;gap:10px;align-items:stretch}
+.code-form input{width:100%;min-width:0;font-size:clamp(22px,6vw,28px);letter-spacing:.12em;padding:14px 12px;border:1px solid #d0d5dd;border-radius:16px;text-align:center;font-weight:800;color:#172033;background:#fff}
+.code-form input:focus{outline:none;border-color:#175cd3;box-shadow:0 0 0 4px rgba(23,92,211,.12)}
+.code-form button,.confirm-btn{border:0;border-radius:16px;padding:12px 16px;font-weight:900;cursor:pointer}
+.icon-btn{display:inline-flex;align-items:center;justify-content:center;background:#172033;color:#fff;width:60px;min-width:60px;font-size:22px;line-height:1}
+.search-icon{display:block;transform:translateY(1px)}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.message{min-height:24px;margin:12px 0 6px;font-weight:800}
 .message[data-type=error]{color:#b42318}.message[data-type=success]{color:#027a48}
 .result-card{border-top:1px solid #eaecf0;padding-top:15px}
 .hidden{display:none!important}
@@ -30,4 +33,15 @@ body{margin:0;background:#f3f6f8}
 .confirm-btn{width:100%;margin-top:15px;background:#12b76a;color:#fff;font-size:18px}
 .confirm-btn:disabled{opacity:.6}
 .result-hint{text-align:center;color:#667085;font-size:13px;line-height:1.5}
-@media(max-width:520px){.pickup-shell{padding:12px}.info-grid{grid-template-columns:1fr}.pickup-head h1{font-size:21px}}
+@media(max-width:520px){
+  .pickup-shell{padding:12px}
+  .pickup-card{padding:14px}
+  .pickup-head h1{font-size:21px}
+  .pickup-head{align-items:stretch}
+  .home-btn{margin-left:auto}
+  .info-grid{grid-template-columns:1fr}
+  .code-form{grid-template-columns:minmax(0,1fr) 56px;gap:8px}
+  .icon-btn{width:56px;min-width:56px;font-size:20px;border-radius:14px}
+  .code-form input{padding:12px 10px;border-radius:14px}
+  .queue-box strong{font-size:40px}
+}
