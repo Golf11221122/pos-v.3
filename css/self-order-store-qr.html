@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ออก QR สั่งกลับบ้าน | CHAIXI BAMEEKIAO</title>
+    <link rel="stylesheet" href="./css/self-order.css?v=4.3.2">
+</head>
+<body>
+    <main class="store-qr-page">
+        <section class="store-qr-panel">
+            <button id="closeStoreQrBtn" class="store-qr-close-btn" type="button" aria-label="กลับหน้าหลัก">×</button>
+            <small>CHAIXI BAMEEKIAO</small>
+            <h1>ออก QR สำหรับลูกค้าสั่งกลับบ้าน</h1>
+            <p>กด 1 ครั้ง = QR ใหม่ 1 ใบ อายุ 20 นาที</p>
+
+            <div id="storeQrEmpty" class="store-qr-empty">
+                กดปุ่มด้านล่างเมื่อมีลูกค้าต้องการสั่งกลับบ้าน
+            </div>
+
+            <div id="storeQrActive" class="hidden">
+                <div id="storeQrCode" class="store-qr-code"></div>
+                <div class="store-qr-timer">
+                    <small>QR ใบนี้หมดอายุใน</small>
+                    <strong id="storeQrCountdown">20:00</strong>
+                </div>
+                <div class="store-qr-note">
+                    QR ใบนี้ใช้เริ่มสั่งได้ 1 ครั้ง และหมดอายุใน 20 นาที
+                </div>
+            </div>
+
+            <div class="store-qr-actions">
+                <button id="issueAndPrintBtn" class="primary-button store-print-button" type="button">
+                    🖨️ ออก QR ใหม่และปริ้น
+                </button>
+                <button id="backDashboardBtn" class="secondary-button store-back-button" type="button">
+                    กลับหน้าหลัก
+                </button>
+            </div>
+
+            <p id="storeQrMessage" class="message"></p>
+        </section>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script type="module" src="./js/self-order-store-qr.js?v=4.3.2"></script>
+</body>
+</html>
