@@ -11,7 +11,11 @@ const state = {
     modifierProduct: null,
     modifierGroups: [],
     modifierQty: 1,
-    submittedOrder: null
+    submittedOrder: null,
+    sessionToken: null,
+    sessionExpiresAt: null,
+    sessionTimer: null,
+    sessionExpired: false
 }
 
 const $ = id => document.getElementById(id)
@@ -23,6 +27,8 @@ const el = {
     errorState: $('errorState'),
     errorText: $('errorText'),
     menuSection: $('menuSection'),
+    sessionCountdownCard: $('sessionCountdownCard'),
+    sessionCountdownText: $('sessionCountdownText'),
     searchInput: $('searchInput'),
     categoryTabs: $('categoryTabs'),
     menuLoading: $('menuLoading'),
@@ -211,9 +217,10 @@ function msg(target, text='') {
     if (target) target.textContent = text
 }
 
-function getTokenFromUrl() {
-    return new URLSearchParams(window.location.search).get('token')?.trim() || null
-}
+function getUrlParam(name){return new URLSearchParams(window.location.search).get(name)?.trim()||null}
+function getScanTokenFromUrl(){return getUrlParam('scan')}
+function getSessionTokenFromUrl(){return getUrlParam('session')}
+function replaceUrlWithSession(t){const u=new URL(location.href);u.search='';u.searchParams.set('session',t);history.replaceState({},'',u)}
 
 function cartItems() {
     return [...state.cart.values()]
@@ -234,30 +241,13 @@ function showFatalError(text) {
     msg(el.errorText, text)
 }
 
-async function loadContextAndMenu() {
-    const [ctx, cats, menu] = await Promise.all([
-        supabase.rpc('self_order_get_context_v1', { p_qr_token: state.token }),
-        supabase.rpc('self_order_get_categories_v1', { p_qr_token: state.token }),
-        supabase.rpc('self_order_get_menu_v1', { p_qr_token: state.token })
-    ])
+async function beginOrResumeSession(){const e=getSessionTokenFromUrl();if(e){const {data,error}=await supabase.rpc('self_order_get_session_v1',{p_session_token:e});if(error)throw error;const r=Array.isArray(data)?data[0]:data;state.sessionToken=r.session_token;state.sessionExpiresAt=r.expires_at;state.context=r.context||null;return}const s=getScanTokenFromUrl();if(!s)throw new Error('STORE_QR_REQUIRED');const {data,error}=await supabase.rpc('self_order_begin_session_v1',{p_scan_token:s});if(error)throw error;const r=Array.isArray(data)?data[0]:data;state.sessionToken=r.session_token;state.sessionExpiresAt=r.expires_at;state.context=r.context||null;replaceUrlWithSession(r.session_token)}
+function stopSessionCountdown(){if(state.sessionTimer){clearInterval(state.sessionTimer);state.sessionTimer=null}}
+function expireCustomerSession(){if(state.submittedOrder||state.sessionExpired)return;state.sessionExpired=true;stopSessionCountdown();state.cart.clear();renderCart();el.submitOrderBtn.disabled=true;el.mobileCartBar.classList.add('hidden');el.sessionCountdownCard.classList.add('expired');el.sessionCountdownText.textContent='00:00';showFatalError('หมดเวลาสั่งอาหารแล้ว กรุณาสแกน QR ที่หน้าร้านใหม่อีกครั้ง')}
+function startSessionCountdown(){if(!state.sessionExpiresAt||state.submittedOrder)return;stopSessionCountdown();el.sessionCountdownCard.classList.remove('hidden','expired');const tick=()=>{const r=Math.max(0,Math.ceil((new Date(state.sessionExpiresAt).getTime()-Date.now())/1000)),m=Math.floor(r/60),s=r%60;el.sessionCountdownText.textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;el.sessionCountdownCard.classList.toggle('warning',r<=300&&r>0);if(r<=0)expireCustomerSession()};tick();state.sessionTimer=setInterval(tick,1000)}
+function ensureSessionActive(){if(state.sessionExpired||!state.sessionExpiresAt||new Date(state.sessionExpiresAt).getTime()<=Date.now()){expireCustomerSession();throw new Error('SELF_ORDER_SESSION_EXPIRED')}}
 
-    if (ctx.error) throw ctx.error
-    if (cats.error) throw cats.error
-    if (menu.error) throw menu.error
-
-    state.context = Array.isArray(ctx.data) ? ctx.data[0] : ctx.data
-    state.categories = Array.isArray(cats.data) ? cats.data : []
-
-    const menuData = Array.isArray(menu.data) ? menu.data[0] : menu.data
-    state.products = Array.isArray(menuData?.products) ? menuData.products : []
-
-    el.pageTitle.textContent = state.context?.label || 'สั่งกลับบ้าน'
-    el.branchNameText.textContent = state.context?.branch_name || 'สาขามิตรภาพ บ้านไผ่'
-
-    renderCategories()
-    renderProducts()
-}
-
+async function loadContextAndMenu(){const [cats,menu]=await Promise.all([supabase.rpc('self_order_get_categories_session_v1',{p_session_token:state.sessionToken}),supabase.rpc('self_order_get_menu_session_v1',{p_session_token:state.sessionToken})]);if(cats.error)throw cats.error;if(menu.error)throw menu.error;state.categories=Array.isArray(cats.data)?cats.data:[];const md=Array.isArray(menu.data)?menu.data[0]:menu.data;state.products=Array.isArray(md?.products)?md.products:[];el.pageTitle.textContent=state.context?.label||'สั่งกลับบ้าน';el.branchNameText.textContent=state.context?.branch_name||'สาขามิตรภาพ บ้านไผ่';renderCategories();renderProducts()}
 function renderCategories() {
     el.categoryTabs.innerHTML =
         `<button type="button" class="category-tab ${!state.selectedCategory ? 'active' : ''}" data-cat="">ทั้งหมด</button>` +
@@ -323,6 +313,7 @@ function renderProducts() {
 }
 
 async function openModifier(productId) {
+    try{ensureSessionActive()}catch(_){return}
     const product = state.products.find(p => p.id === productId)
     if (!product) return
 
@@ -337,8 +328,8 @@ async function openModifier(productId) {
     el.modifierModal.classList.remove('hidden')
 
     const { data, error } = await supabase.rpc(
-        'self_order_get_product_modifiers_v1',
-        { p_qr_token: state.token, p_product_id: product.id }
+        'self_order_get_product_modifiers_session_v1',
+        { p_session_token: state.sessionToken, p_product_id: product.id }
     )
 
     if (error) {
@@ -430,6 +421,7 @@ function renderModifierTotal() {
 }
 
 function addModifierItemToCart() {
+    try{ensureSessionActive()}catch(_){return}
     const validation = validateModifierSelection()
     if (validation) {
         msg(el.modifierMessage, validation)
@@ -559,10 +551,11 @@ async function submitOrder() {
             item_note: item.item_note || null
         }))
 
+        ensureSessionActive()
         const { data, error } = await supabase.rpc(
-            'self_order_submit_cart_v1',
+            'self_order_submit_cart_session_v1',
             {
-                p_qr_token: state.token,
+                p_session_token: state.sessionToken,
                 p_cart: payloadCart,
                 p_customer_name: el.customerNameInput.value.trim() || null,
                 p_customer_phone: el.customerPhoneInput.value.trim() || null,
@@ -576,6 +569,8 @@ async function submitOrder() {
         if (!result?.self_order_id) throw new Error('สร้างออเดอร์ไม่สำเร็จ')
 
         state.submittedOrder = result
+        stopSessionCountdown()
+        el.sessionCountdownCard.classList.add('hidden')
         state.cart.clear()
         renderCart()
         el.cartModal.classList.add('hidden')
@@ -747,26 +742,5 @@ for (const modal of [el.modifierModal, el.cartModal]) {
     })
 }
 
-async function init() {
-    state.token = getTokenFromUrl()
-
-    if (!state.token) {
-        showFatalError('ลิงก์สั่งอาหารไม่ถูกต้อง')
-        return
-    }
-
-    try {
-        await loadContextAndMenu()
-    } catch (error) {
-        console.error('Self order init error:', error)
-        let text = error.message || 'เปิดเมนูไม่สำเร็จ'
-        if (text.includes('SELF_ORDER_QR_NOT_FOUND')) {
-            text = 'QR สั่งกลับบ้านนี้ไม่ถูกต้อง หรือถูกปิดใช้งานแล้ว'
-        }
-        showFatalError(text)
-    } finally {
-        el.menuLoading.classList.add('hidden')
-    }
-}
-
+async function init(){try{await beginOrResumeSession();startSessionCountdown();await loadContextAndMenu()}catch(error){console.error('Self order init error:',error);let text=error.message||'เปิดเมนูไม่สำเร็จ';if(text.includes('STORE_QR_REQUIRED'))text='กรุณาสแกน QR สั่งกลับบ้านที่หน้าร้าน';else if(text.includes('STORE_QR_EXPIRED')||text.includes('STORE_QR_NOT_FOUND')||text.includes('SELF_ORDER_SESSION_EXPIRED'))text='QR หรือเวลาสั่งอาหารหมดอายุแล้ว กรุณาสแกน QR ที่หน้าร้านใหม่';showFatalError(text)}finally{el.menuLoading.classList.add('hidden')}}
 init()
