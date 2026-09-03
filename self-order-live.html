@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>QR Self Order Live | CHAIXI BAMEEKIAO</title>
+<link rel="stylesheet" href="./css/self-order-live.css?v=4.11.0">
+</head>
+<body>
+<main class="live-shell">
+<header class="live-head">
+<div><small>CHAIXI BAMEEKIAO</small><h1>📱 QR Self Order Live</h1><p id="branchText">กำลังโหลดสาขา...</p></div>
+<div class="head-actions"><button id="refreshBtn" class="icon-btn" type="button" aria-label="รีเฟรช">↻</button><a class="home-btn" href="./dashboard.html">หน้าหลัก</a></div>
+</header>
+<section class="toolbar-card">
+<div class="search-box"><span>🔎</span><input id="searchInput" type="search" placeholder="เลขคิว / รหัส 4 หลัก / เลขออเดอร์"></div>
+<div class="filter-tabs" id="filterTabs">
+<button class="filter-tab active" data-filter="active">กำลังดำเนินการ</button>
+<button class="filter-tab" data-filter="payment_pending">รอชำระ</button>
+<button class="filter-tab" data-filter="kitchen">กำลังทำ</button>
+<button class="filter-tab" data-filter="ready_for_pickup">พร้อมรับ</button>
+<button class="filter-tab" data-filter="completed">รับแล้ว</button>
+<button class="filter-tab" data-filter="problem">มีปัญหา</button>
+<button class="filter-tab" data-filter="all">ทั้งหมด</button>
+</div>
+</section>
+<section class="kpi-grid">
+<article class="kpi-card"><span>รอชำระ</span><strong id="pendingCount">0</strong></article>
+<article class="kpi-card"><span>กำลังทำ</span><strong id="kitchenCount">0</strong></article>
+<article class="kpi-card"><span>พร้อมรับ</span><strong id="readyCount">0</strong></article>
+<article class="kpi-card"><span>มีปัญหา</span><strong id="problemCount">0</strong></article>
+</section>
+<div id="message" class="message"></div>
+<section id="orderList" class="order-list"></section>
+<section id="emptyState" class="empty-state hidden">ไม่พบออเดอร์ในรายการนี้</section>
+</main>
+<script type="module" src="./js/self-order-live.js?v=4.11.0"></script>
+</body></html>
