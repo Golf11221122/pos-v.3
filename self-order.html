@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>สั่งกลับบ้าน | CHAIXI BAMEEKIAO</title>
-    <link rel="stylesheet" href="./css/self-order.css?v=4.2.0">
+    <link rel="stylesheet" href="./css/self-order.css?v=4.3.0">
 </head>
 <body>
     <header class="customer-header">
@@ -125,22 +125,56 @@
     </div>
 
     <div id="pendingModal" class="modal hidden">
-        <div class="sheet success-sheet">
-            <div class="pending-icon">💳</div>
-            <h2>สร้างออเดอร์แล้ว</h2>
-            <p id="pendingOrderNo">-</p>
+        <div class="sheet payment-sheet">
+            <div class="payment-step-badge">ชำระเงินก่อนเข้าครัว</div>
+            <h2>สแกน PromptPay</h2>
+            <p id="pendingOrderNo" class="payment-order-no">-</p>
+
             <div class="pending-total">
                 <small>ยอดที่ต้องชำระ</small>
                 <strong id="pendingTotalText">฿0.00</strong>
             </div>
-            <div class="pending-box">
-                <strong>ขั้นต่อไป: ชำระเงิน</strong>
-                <p>Phase 4.3 จะเพิ่ม PromptPay / ระบบตรวจการชำระเงินที่หน้านี้</p>
-                <p class="danger-note">ตอนนี้ออเดอร์ยังไม่ถูกส่งเข้าครัว</p>
+
+            <div class="promptpay-card">
+                <div id="selfOrderPromptpayQr" class="self-order-promptpay-qr"></div>
+                <p>สแกนด้วยแอปธนาคาร</p>
+                <small>ตรวจชื่อผู้รับและยอดเงินก่อนยืนยันทุกครั้ง</small>
             </div>
-            <button id="closePendingBtn" class="secondary-button" type="button">
-                ปิด
-            </button>
+
+            <div class="payment-divider"><span>หลังโอนเงิน</span></div>
+
+            <div class="slip-upload-card">
+                <strong>ส่งสลิปเพื่อตรวจสอบอัตโนมัติ</strong>
+                <p>รองรับ JPG / PNG / WebP / GIF ขนาดไม่เกิน 4 MB</p>
+
+                <label class="slip-picker" for="slipInput">
+                    <span>📎 เลือกรูปสลิป</span>
+                    <input id="slipInput" type="file" accept="image/jpeg,image/png,image/webp,image/gif">
+                </label>
+
+                <div id="slipPreviewWrap" class="slip-preview-wrap hidden">
+                    <img id="slipPreview" alt="ตัวอย่างสลิป">
+                </div>
+
+                <button id="verifySlipBtn" class="primary-button" type="button" disabled>
+                    ตรวจสอบการชำระเงิน
+                </button>
+
+                <p id="paymentMessage" class="message payment-message"></p>
+            </div>
+
+            <div id="paidSuccessBox" class="paid-success-box hidden">
+                <div class="paid-success-icon">✅</div>
+                <strong>ชำระเงินสำเร็จ</strong>
+                <p>ระบบยืนยันยอดแล้ว ออเดอร์พร้อมสำหรับขั้นตอนส่งเข้าครัว</p>
+                <small>Phase 4.4 จะเปิด Auto Kitchen หลัง Paid</small>
+            </div>
+
+            <div class="payment-lock-note">
+                🔒 หากยังตรวจสลิปไม่ผ่าน ระบบจะไม่ส่งออเดอร์เข้าครัว
+            </div>
+
+            <button id="closePendingBtn" class="secondary-button" type="button">ปิด</button>
         </div>
     </div>
 
@@ -149,6 +183,7 @@
         <strong id="mobileCartTotalText">฿0.00</strong>
     </button>
 
-    <script type="module" src="./js/self-order.js?v=4.2.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script type="module" src="./js/self-order.js?v=4.3.0"></script>
 </body>
 </html>
