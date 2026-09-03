@@ -1,0 +1,33 @@
+
+:root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#172033;background:#f3f6f8}
+*{box-sizing:border-box}
+body{margin:0;background:#f3f6f8}
+.pickup-shell{width:min(620px,100%);margin:auto;padding:18px}
+.pickup-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}
+.pickup-head small{font-weight:900;letter-spacing:.08em;color:#667085}
+.pickup-head h1{margin:3px 0 0;font-size:24px}
+.home-btn{text-decoration:none;color:#172033;background:#fff;border:1px solid #d0d5dd;border-radius:10px;padding:9px 12px;font-weight:800}
+.pickup-card{background:#fff;border:1px solid #e4e7ec;border-radius:20px;padding:18px;box-shadow:0 12px 30px rgba(16,24,40,.06)}
+.hint{margin-top:0;color:#667085}
+.code-form{display:grid;grid-template-columns:1fr auto;gap:9px}
+.code-form input{font-size:25px;letter-spacing:.12em;padding:12px;border:1px solid #d0d5dd;border-radius:12px;text-align:center}
+.code-form button,.confirm-btn{border:0;border-radius:12px;padding:12px 16px;font-weight:900;cursor:pointer}
+.code-form button{background:#172033;color:#fff}
+.message{min-height:24px;margin:10px 0;font-weight:800}
+.message[data-type=error]{color:#b42318}.message[data-type=success]{color:#027a48}
+.result-card{border-top:1px solid #eaecf0;padding-top:15px}
+.hidden{display:none!important}
+.result-status{text-align:center;font-size:20px;font-weight:900;padding:11px;border-radius:12px;background:#f2f4f7}
+.result-status[data-kind=ready]{background:#ecfdf3;color:#027a48}
+.result-status[data-kind=done]{background:#eff8ff;color:#175cd3}
+.result-status[data-kind=bad]{background:#fef3f2;color:#b42318}
+.result-status[data-kind=wait]{background:#fffaeb;color:#b54708}
+.queue-box{text-align:center;margin:15px 0;padding:14px;border:2px solid #e4e7ec;border-radius:16px}
+.queue-box span{display:block;color:#667085}.queue-box strong{font-size:46px}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.info-grid>div{padding:11px;border:1px solid #e4e7ec;border-radius:12px}
+.info-grid span{display:block;font-size:11px;color:#667085}.info-grid strong{display:block;margin-top:4px;overflow-wrap:anywhere}
+.confirm-btn{width:100%;margin-top:15px;background:#12b76a;color:#fff;font-size:18px}
+.confirm-btn:disabled{opacity:.6}
+.result-hint{text-align:center;color:#667085;font-size:13px;line-height:1.5}
+@media(max-width:520px){.pickup-shell{padding:12px}.info-grid{grid-template-columns:1fr}.pickup-head h1{font-size:21px}}
