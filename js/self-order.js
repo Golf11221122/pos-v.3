@@ -15,7 +15,8 @@ const state = {
     sessionToken: null,
     sessionExpiresAt: null,
     sessionTimer: null,
-    sessionExpired: false
+    sessionExpired: false,
+    pickupPollTimer: null
 }
 
 const $ = id => document.getElementById(id)
@@ -67,6 +68,14 @@ const el = {
     verifySlipBtn: $('verifySlipBtn'),
     paymentMessage: $('paymentMessage'),
     paidSuccessBox: $('paidSuccessBox'),
+    pickupProofCard: $('pickupProofCard'),
+    pickupStatusText: $('pickupStatusText'),
+    pickupQueueText: $('pickupQueueText'),
+    pickupCodeText: $('pickupCodeText'),
+    pickupQrCode: $('pickupQrCode'),
+    pickupOrderNoText: $('pickupOrderNoText'),
+    readyForPickupBadge: $('readyForPickupBadge'),
+    pickupStatusHint: $('pickupStatusHint'),
     closePendingBtn: $('closePendingBtn'),
     mobileCartBar: $('mobileCartBar'),
     mobileCartCountText: $('mobileCartCountText'),
@@ -154,6 +163,84 @@ function renderPaymentQr(amount) {
         height: 230,
         correctLevel: window.QRCode.CorrectLevel.M
     })
+}
+
+function stopPickupPolling() {
+    if (state.pickupPollTimer) {
+        clearInterval(state.pickupPollTimer)
+        state.pickupPollTimer = null
+    }
+}
+
+function renderPickupQr(pickupToken) {
+    if (!pickupToken || !el.pickupQrCode || !window.QRCode) return
+
+    el.pickupQrCode.innerHTML = ''
+    new window.QRCode(el.pickupQrCode, {
+        text: `CHAIXI-PICKUP:${pickupToken}`,
+        width: 155,
+        height: 155,
+        correctLevel: window.QRCode.CorrectLevel.M
+    })
+}
+
+function renderPickupStatus(status) {
+    if (!status) return
+
+    const queueNo = status.queue_no
+    const pickupCode = status.pickup_code
+    const pickupToken = status.pickup_token
+    const orderNo = status.order_no || state.submittedOrder?.order_no || '-'
+
+    if (queueNo != null && pickupCode) {
+        el.pickupQueueText.textContent = String(queueNo)
+        el.pickupCodeText.textContent = String(pickupCode)
+        el.pickupOrderNoText.textContent = orderNo
+        el.pickupProofCard.classList.remove('hidden')
+        renderPickupQr(pickupToken)
+    }
+
+    if (status.status === 'paid') {
+        el.pickupStatusText.textContent =
+            status.kitchen_dispatch_status === 'blocked'
+                ? 'ชำระเงินแล้ว • กำลังรอพนักงานส่งออเดอร์เข้าครัว'
+                : 'ชำระเงินแล้ว • กำลังส่งออเดอร์เข้าครัว...'
+    } else if (status.status === 'dispatched') {
+        el.pickupStatusText.textContent = 'ออเดอร์เข้าครัวแล้ว กำลังเตรียมอาหาร'
+    } else if (status.status === 'ready_for_pickup') {
+        el.pickupStatusText.textContent = 'อาหารของคุณพร้อมรับแล้ว'
+        el.readyForPickupBadge.classList.remove('hidden')
+        el.pickupStatusHint.textContent = 'นำเลขคิวและรหัสรับอาหารมาแสดงที่จุดรับอาหาร'
+    } else if (status.status === 'picked_up' || status.status === 'completed') {
+        el.pickupStatusText.textContent = 'รับอาหารเรียบร้อยแล้ว'
+        el.readyForPickupBadge.classList.remove('hidden')
+        el.readyForPickupBadge.textContent = '✅ รับอาหารเรียบร้อย'
+        el.pickupStatusHint.textContent = 'ขอบคุณที่ใช้บริการ CHAIXI BAMEEKIAO'
+        stopPickupPolling()
+    }
+}
+
+async function refreshPickupStatus() {
+    if (!state.submittedOrder?.public_token) return
+
+    const { data, error } = await supabase.rpc(
+        'self_order_get_status_v1',
+        { p_public_token: state.submittedOrder.public_token }
+    )
+
+    if (error) {
+        console.warn('Pickup status refresh error:', error)
+        return
+    }
+
+    const status = Array.isArray(data) ? data[0] : data
+    renderPickupStatus(status)
+}
+
+function startPickupPolling() {
+    stopPickupPolling()
+    refreshPickupStatus()
+    state.pickupPollTimer = setInterval(refreshPickupStatus, 5000)
 }
 
 async function startPayment(publicToken) {
@@ -698,6 +785,7 @@ el.verifySlipBtn.addEventListener('click', async () => {
         el.slipInput.disabled = true
         el.verifySlipBtn.classList.add('hidden')
         msg(el.paymentMessage, `ตรวจสอบสำเร็จ • ยอด ${money(result.amount)}`)
+        startPickupPolling()
 
         try {
             sessionStorage.setItem(
