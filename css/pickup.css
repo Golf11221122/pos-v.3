@@ -45,3 +45,19 @@ body{margin:0;background:#f3f6f8}
   .code-form input{padding:12px 10px;border-radius:14px}
   .queue-box strong{font-size:40px}
 }
+
+
+/* CHAIXI PHASE 4.10 */
+.code-form input.locked{
+  background:#f2f4f7;
+  color:#667085;
+}
+.icon-btn:disabled{
+  opacity:.45;
+  cursor:not-allowed;
+}
+.result-status[data-kind=done]{
+  background:#ecfdf3;
+  color:#027a48;
+  border:1px solid #abefc6;
+}
