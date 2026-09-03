@@ -1,4 +1,5 @@
-import { supabase } from './supabase.js'
+import { supabase, SUPABASE_URL, SUPABASE_KEY } from './supabase.js'
+import { PROMPTPAY_PHONE } from './config.js'
 
 const state = {
     token: null,
@@ -53,6 +54,13 @@ const el = {
     pendingModal: $('pendingModal'),
     pendingOrderNo: $('pendingOrderNo'),
     pendingTotalText: $('pendingTotalText'),
+    selfOrderPromptpayQr: $('selfOrderPromptpayQr'),
+    slipInput: $('slipInput'),
+    slipPreviewWrap: $('slipPreviewWrap'),
+    slipPreview: $('slipPreview'),
+    verifySlipBtn: $('verifySlipBtn'),
+    paymentMessage: $('paymentMessage'),
+    paidSuccessBox: $('paidSuccessBox'),
     closePendingBtn: $('closePendingBtn'),
     mobileCartBar: $('mobileCartBar'),
     mobileCartCountText: $('mobileCartCountText'),
@@ -74,6 +82,129 @@ function money(value) {
         currency: 'THB',
         minimumFractionDigits: 2
     }).format(Number(value || 0))
+}
+
+function formatTLV(id, value) {
+    const text = String(value)
+    return `${id}${String(text.length).padStart(2, '0')}${text}`
+}
+
+function crc16(text) {
+    let crc = 0xFFFF
+    for (let i = 0; i < text.length; i++) {
+        crc ^= text.charCodeAt(i) << 8
+        for (let bit = 0; bit < 8; bit++) {
+            crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) : (crc << 1)
+            crc &= 0xFFFF
+        }
+    }
+    return crc.toString(16).toUpperCase().padStart(4, '0')
+}
+
+function normalizePromptPayPhone(phone) {
+    const cleaned = String(phone || '').replace(/\D/g, '')
+    if (!/^0\d{9}$/.test(cleaned)) {
+        throw new Error('ตั้งค่าเบอร์ PromptPay ไม่ถูกต้อง')
+    }
+    return `0066${cleaned.substring(1)}`
+}
+
+function generatePromptPayPayload(phone, amount) {
+    const numericAmount = Number(amount)
+    if (!Number.isFinite(numericAmount) || numericAmount <= 0) {
+        throw new Error('ยอดชำระเงินไม่ถูกต้อง')
+    }
+
+    const merchantAccount =
+        formatTLV('00', 'A000000677010111') +
+        formatTLV('01', normalizePromptPayPhone(phone))
+
+    let payload = ''
+    payload += formatTLV('00', '01')
+    payload += formatTLV('01', '12')
+    payload += formatTLV('29', merchantAccount)
+    payload += formatTLV('53', '764')
+    payload += formatTLV('54', numericAmount.toFixed(2))
+    payload += formatTLV('58', 'TH')
+    payload += formatTLV('59', 'PROMPTPAY')
+    payload += formatTLV('60', 'BANGKOK')
+    payload += '6304'
+    return payload + crc16(payload)
+}
+
+function renderPaymentQr(amount) {
+    if (!el.selfOrderPromptpayQr) return
+    el.selfOrderPromptpayQr.innerHTML = ''
+
+    if (!window.QRCode) {
+        throw new Error('ไม่พบ QRCode library')
+    }
+
+    const payload = generatePromptPayPayload(PROMPTPAY_PHONE, amount)
+
+    new window.QRCode(el.selfOrderPromptpayQr, {
+        text: payload,
+        width: 230,
+        height: 230,
+        correctLevel: window.QRCode.CorrectLevel.M
+    })
+}
+
+async function startPayment(publicToken) {
+    const { data, error } = await supabase.rpc(
+        'self_order_start_payment_v1',
+        { p_public_token: publicToken }
+    )
+    if (error) throw error
+    return Array.isArray(data) ? data[0] : data
+}
+
+async function verifySlip(file) {
+    if (!state.submittedOrder?.public_token) {
+        throw new Error('ไม่พบข้อมูลออเดอร์')
+    }
+
+    const form = new FormData()
+    form.append('public_token', state.submittedOrder.public_token)
+    form.append('image', file)
+
+    const response = await fetch(`${SUPABASE_URL}/functions/v1/self-order-payment`, {
+        method: 'POST',
+        headers: {
+            apikey: SUPABASE_KEY
+        },
+        body: form
+    })
+
+    let body = {}
+    try { body = await response.json() } catch (_) {}
+
+    if (!response.ok || body?.ok !== true) {
+        const error = new Error(body?.message || body?.error || 'ตรวจสอบสลิปไม่สำเร็จ')
+        error.code = body?.code
+        throw error
+    }
+
+    return body
+}
+
+async function openPaymentForOrder(order) {
+    state.submittedOrder = { ...state.submittedOrder, ...order }
+    el.pendingOrderNo.textContent = `เลขออเดอร์ ${order.order_no}`
+    el.pendingTotalText.textContent = money(order.total)
+    el.slipInput.value = ''
+    el.slipPreviewWrap.classList.add('hidden')
+    el.verifySlipBtn.disabled = true
+    el.paidSuccessBox.classList.add('hidden')
+    msg(el.paymentMessage, 'กำลังเตรียมรายการชำระเงิน...')
+
+    const payment = await startPayment(order.public_token)
+    state.submittedOrder.payment_id = payment.payment_id
+    state.submittedOrder.payment_status = payment.payment_status
+
+    renderPaymentQr(payment.amount)
+    msg(el.paymentMessage, '')
+    el.pendingModal.classList.remove('hidden')
 }
 
 function msg(target, text='') {
@@ -449,9 +580,7 @@ async function submitOrder() {
         renderCart()
         el.cartModal.classList.add('hidden')
 
-        el.pendingOrderNo.textContent = `เลขออเดอร์ ${result.order_no}`
-        el.pendingTotalText.textContent = money(result.total)
-        el.pendingModal.classList.remove('hidden')
+        await openPaymentForOrder(result)
 
         try {
             sessionStorage.setItem(
@@ -526,6 +655,90 @@ el.cartItems.addEventListener('click', event => {
 })
 
 el.submitOrderBtn.addEventListener('click', submitOrder)
+
+el.slipInput.addEventListener('change', () => {
+    const file = el.slipInput.files?.[0]
+    msg(el.paymentMessage, '')
+    el.verifySlipBtn.disabled = !file
+
+    if (!file) {
+        el.slipPreviewWrap.classList.add('hidden')
+        return
+    }
+
+    if (file.size > 4 * 1024 * 1024) {
+        el.slipInput.value = ''
+        el.verifySlipBtn.disabled = true
+        el.slipPreviewWrap.classList.add('hidden')
+        msg(el.paymentMessage, 'รูปสลิปต้องมีขนาดไม่เกิน 4 MB')
+        return
+    }
+
+    const allowed = ['image/jpeg','image/png','image/webp','image/gif']
+    if (!allowed.includes(file.type)) {
+        el.slipInput.value = ''
+        el.verifySlipBtn.disabled = true
+        el.slipPreviewWrap.classList.add('hidden')
+        msg(el.paymentMessage, 'รองรับเฉพาะ JPG / PNG / WebP / GIF')
+        return
+    }
+
+    el.slipPreview.src = URL.createObjectURL(file)
+    el.slipPreviewWrap.classList.remove('hidden')
+})
+
+el.verifySlipBtn.addEventListener('click', async () => {
+    const file = el.slipInput.files?.[0]
+    if (!file) return
+
+    el.verifySlipBtn.disabled = true
+    el.verifySlipBtn.textContent = 'กำลังตรวจสอบสลิป...'
+    msg(el.paymentMessage, '')
+
+    try {
+        const result = await verifySlip(file)
+
+        state.submittedOrder.payment_status = 'paid'
+        el.paidSuccessBox.classList.remove('hidden')
+        el.slipInput.disabled = true
+        el.verifySlipBtn.classList.add('hidden')
+        msg(el.paymentMessage, `ตรวจสอบสำเร็จ • ยอด ${money(result.amount)}`)
+
+        try {
+            sessionStorage.setItem(
+                'chaixi_self_order_last',
+                JSON.stringify({
+                    public_token: state.submittedOrder.public_token,
+                    order_no: state.submittedOrder.order_no,
+                    total: state.submittedOrder.total,
+                    payment_status: 'paid'
+                })
+            )
+        } catch (_) {}
+
+    } catch (error) {
+        console.error('Verify slip error:', error)
+        let text = error.message || 'ตรวจสอบสลิปไม่สำเร็จ'
+
+        if (error.code === 'PAYMENT_AMOUNT_MISMATCH') {
+            text = 'ยอดเงินในสลิปไม่ตรงกับยอดออเดอร์'
+        } else if (error.code === 'PAYMENT_RECEIVER_MISMATCH') {
+            text = 'บัญชีผู้รับในสลิปไม่ตรงกับบัญชีของร้าน'
+        } else if (error.code === 'SLIP_ALREADY_USED') {
+            text = 'สลิปนี้ถูกใช้กับออเดอร์อื่นแล้ว'
+        } else if (error.code === 'EASYSLIP_NOT_CONFIGURED') {
+            text = 'ระบบตรวจสลิปยังไม่ได้ตั้งค่า EasySlip API Key'
+        }
+
+        msg(el.paymentMessage, text)
+        el.verifySlipBtn.disabled = false
+    } finally {
+        if (!el.verifySlipBtn.classList.contains('hidden')) {
+            el.verifySlipBtn.textContent = 'ตรวจสอบการชำระเงิน'
+        }
+    }
+})
+
 el.closePendingBtn.addEventListener('click', () => el.pendingModal.classList.add('hidden'))
 
 for (const modal of [el.modifierModal, el.cartModal]) {
