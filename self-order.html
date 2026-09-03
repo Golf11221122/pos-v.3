@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>สั่งกลับบ้าน | CHAIXI BAMEEKIAO</title>
-    <link rel="stylesheet" href="./css/self-order.css?v=4.3.0">
+    <link rel="stylesheet" href="./css/self-order.css?v=4.3.1">
 </head>
 <body>
     <header class="customer-header">
@@ -33,6 +33,7 @@
                     <p>เลือกอาหารและชำระเงินก่อน จากนั้นระบบจึงส่งออเดอร์เข้าครัว</p>
                 </div>
             </div>
+            <div id="sessionCountdownCard" class="session-countdown-card hidden"><div><small>เวลาที่เหลือสำหรับเลือกอาหาร</small><strong id="sessionCountdownText">20:00</strong></div><p>เมื่อหมดเวลา ต้องสแกน QR หน้าร้านใหม่อีกครั้ง</p></div>
 
             <div class="menu-toolbar">
                 <input id="searchInput" type="search" placeholder="ค้นหาเมนู" autocomplete="off">
@@ -184,6 +185,6 @@
     </button>
 
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-    <script type="module" src="./js/self-order.js?v=4.3.0"></script>
+    <script type="module" src="./js/self-order.js?v=4.3.1"></script>
 </body>
 </html>
