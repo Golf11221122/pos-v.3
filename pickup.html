@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <title>รับอาหาร | CHAIXI BAMEEKIAO</title>
+  <link rel="stylesheet" href="./css/pickup.css?v=4.8.0">
+</head>
+<body>
+  <main class="pickup-shell">
+    <header class="pickup-head">
+      <div>
+        <small>CHAIXI BAMEEKIAO</small>
+        <h1>🛍️ ตรวจรับอาหาร</h1>
+      </div>
+      <a class="home-btn" href="./dashboard.html">หน้าหลัก</a>
+    </header>
+
+    <section class="pickup-card">
+      <p class="hint">สแกน QR จากหน้าลูกค้า หรือกรอกรหัสรับอาหาร 4 หลัก</p>
+
+      <div class="code-form">
+        <input id="pickupCodeInput" inputmode="numeric" maxlength="4" placeholder="เช่น 1008">
+        <button id="lookupCodeBtn" type="button">ค้นหา</button>
+      </div>
+
+      <div id="message" class="message"></div>
+
+      <section id="resultCard" class="result-card hidden">
+        <div class="result-status" id="resultStatus">-</div>
+
+        <div class="queue-box">
+          <span>เลขคิว</span>
+          <strong id="queueText">-</strong>
+        </div>
+
+        <div class="info-grid">
+          <div><span>เลขออเดอร์</span><strong id="orderNoText">-</strong></div>
+          <div><span>รหัสรับอาหาร</span><strong id="pickupCodeText">-</strong></div>
+          <div><span>ยอด</span><strong id="totalText">-</strong></div>
+          <div><span>Payment</span><strong id="paymentText">-</strong></div>
+        </div>
+
+        <button id="confirmPickupBtn" class="confirm-btn hidden" type="button">
+          ✅ ยืนยันส่งมอบอาหาร
+        </button>
+
+        <p id="resultHint" class="result-hint"></p>
+      </section>
+    </section>
+  </main>
+
+  <script type="module" src="./js/pickup.js?v=4.9.0"></script>
+</body>
+</html>
