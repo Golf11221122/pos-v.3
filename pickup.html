@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>รับอาหาร | CHAIXI BAMEEKIAO</title>
-  <link rel="stylesheet" href="./css/pickup.css?v=4.8.0">
+  <link rel="stylesheet" href="./css/pickup.css?v=4.9.4">
 </head>
 <body>
   <main class="pickup-shell">
@@ -20,8 +20,11 @@
       <p class="hint">สแกน QR จากหน้าลูกค้า หรือกรอกรหัสรับอาหาร 4 หลัก</p>
 
       <div class="code-form">
-        <input id="pickupCodeInput" inputmode="numeric" maxlength="4" placeholder="เช่น 1008">
-        <button id="lookupCodeBtn" type="button">ค้นหา</button>
+        <input id="pickupCodeInput" inputmode="numeric" maxlength="4" placeholder="เช่น 1008" aria-label="รหัสรับอาหาร 4 หลัก">
+        <button id="lookupCodeBtn" type="button" class="icon-btn" aria-label="ค้นหา">
+          <span class="search-icon" aria-hidden="true">🔍</span>
+          <span class="sr-only">ค้นหา</span>
+        </button>
       </div>
 
       <div id="message" class="message"></div>
