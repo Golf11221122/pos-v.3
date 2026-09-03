@@ -40,6 +40,10 @@ const el = {
     historyList: $('historyList'),
     historyEmpty: $('historyEmpty'),
 
+    orderDrawer: $('orderDrawer'),
+    orderDrawerSubtitle: $('orderDrawerSubtitle'),
+    orderDetail: $('orderDetail'),
+
     drawerBackdrop: $('drawerBackdrop')
 }
 
@@ -78,6 +82,52 @@ const time = value => {
 const padQueue = value => {
     const n = Number(value || 0)
     return n > 0 ? String(Math.trunc(n)).padStart(3, '0') : '-'
+}
+
+const WAIT_ALERT_MINUTES = 10
+
+function ageMinutes(value) {
+    if (!value) return 0
+    const ms = Date.now() - new Date(value).getTime()
+    return Math.max(0, Math.floor(ms / 60000))
+}
+
+function waitInfo(row) {
+    const b = bucket(row)
+    let from = row.created_at
+
+    if (b === 'ready_for_pickup') {
+        from = row.ready_at || row.created_at
+    } else if (b === 'kitchen') {
+        from = row.paid_at || row.created_at
+    }
+
+    const mins = ageMinutes(from)
+    return {
+        minutes: mins,
+        long: mins >= WAIT_ALERT_MINUTES,
+        label: mins <= 0 ? 'เมื่อสักครู่' : `รอ ${mins} นาที`
+    }
+}
+
+function problemReason(row) {
+    if (row.sale_stock_status === 'blocked') {
+        return row.sale_stock_error || 'Sale/Stock ถูกบล็อก'
+    }
+
+    if (row.kitchen_dispatch_status === 'blocked') {
+        return row.kitchen_dispatch_error || 'ส่งเข้าครัวไม่สำเร็จ'
+    }
+
+    if (row.cancellation_status === 'requested') {
+        return 'มีคำขอยกเลิกออเดอร์'
+    }
+
+    if (['pending', 'pending_approval'].includes(row.refund_status)) {
+        return 'มีรายการคืนเงินที่รอดำเนินการ'
+    }
+
+    return 'ต้องตรวจสอบออเดอร์'
 }
 
 function msg(text = '', bad = false) {
@@ -183,6 +233,7 @@ function makeCard(row, mode = 'active') {
     const b = bucket(row)
     const canPickup = b === 'ready_for_pickup' && row.pickup_code
     const saleLabel = row.sale_stock_status || 'pending'
+    const wait = waitInfo(row)
 
     const paymentClass = row.payment_status === 'paid' ? 'green' : 'orange'
     const kitchenClass =
@@ -203,12 +254,27 @@ function makeCard(row, mode = 'active') {
         ? '<span class="badge red">⚠️ ต้องตรวจสอบ</span>'
         : ''
 
-    const pickupAction = canPickup
-        ? `<a class="mini-action pickup" href="./pickup.html?code=${encodeURIComponent(row.pickup_code)}">🛍️ ตรวจรับอาหาร</a>`
-        : ''
+    let primaryAction = ''
+
+    if (canPickup) {
+        primaryAction =
+            `<a class="mini-action pickup" href="./pickup.html?code=${encodeURIComponent(row.pickup_code)}">🛍️ ตรวจรับอาหาร</a>`
+    } else if (b === 'kitchen') {
+        primaryAction =
+            '<a class="mini-action kitchen-action" href="./kitchen.html">👨‍🍳 เปิดจอครัว</a>'
+    } else if (b === 'payment_pending') {
+        primaryAction =
+            `<button class="mini-action pending-action" type="button" data-detail-id="${esc(row.id)}">💳 ดูออเดอร์</button>`
+    } else if (b === 'problem') {
+        primaryAction =
+            `<button class="mini-action problem-action" type="button" data-detail-id="${esc(row.id)}">⚠️ ดูสาเหตุ</button>`
+    } else {
+        primaryAction =
+            `<button class="mini-action secondary" type="button" data-detail-id="${esc(row.id)}">ดูรายละเอียด</button>`
+    }
 
     return `
-        <article class="mini-card ${cardClass}">
+        <article class="mini-card ${cardClass} ${wait.long && b !== 'completed' ? 'waiting-long' : ''}">
             <div class="mini-card-top">
                 <div class="mini-queue">
                     <small>คิว</small>
@@ -227,6 +293,11 @@ function makeCard(row, mode = 'active') {
                 </div>
             </div>
 
+            <div class="wait-line ${wait.long ? 'long' : ''}">
+                ⏱️ ${esc(wait.label)}
+                ${wait.long ? '<span>รอนาน</span>' : ''}
+            </div>
+
             <div class="customer-line">
                 <span>ลูกค้า: ${esc(row.customer_name || '-')}</span>
                 <strong>${esc(money(row.total))}</strong>
@@ -242,7 +313,7 @@ function makeCard(row, mode = 'active') {
             </div>
 
             <div class="mini-actions">
-                ${pickupAction}
+                ${primaryAction}
                 <button class="mini-action secondary" type="button" data-copy="${esc(row.order_no || '')}">
                     คัดลอกเลขออเดอร์
                 </button>
@@ -404,9 +475,12 @@ function render() {
 function openDrawer(name) {
     closeDrawer()
 
-    const drawer = name === 'problem'
-        ? el.problemDrawer
-        : el.historyDrawer
+    const drawer =
+        name === 'problem'
+            ? el.problemDrawer
+            : name === 'history'
+                ? el.historyDrawer
+                : el.orderDrawer
 
     state.openDrawer = name
     drawer.classList.remove('hidden')
@@ -416,7 +490,7 @@ function openDrawer(name) {
 }
 
 function closeDrawer() {
-    ;[el.problemDrawer, el.historyDrawer].forEach(drawer => {
+    ;[el.problemDrawer, el.historyDrawer, el.orderDrawer].forEach(drawer => {
         drawer.classList.add('hidden')
         drawer.setAttribute('aria-hidden', 'true')
     })
@@ -424,6 +498,68 @@ function closeDrawer() {
     el.drawerBackdrop.classList.add('hidden')
     document.body.classList.remove('drawer-open')
     state.openDrawer = null
+}
+
+
+function renderOrderDetail(row) {
+    if (!row) return
+
+    const b = bucket(row)
+    const reason = b === 'problem' ? problemReason(row) : ''
+    const wait = waitInfo(row)
+
+    el.orderDrawerSubtitle.textContent =
+        `${row.order_no || '-'} • คิว ${padQueue(row.queue_no)}`
+
+    el.orderDetail.innerHTML = `
+        <div class="detail-hero">
+            <div>
+                <span>คิว</span>
+                <strong>${esc(padQueue(row.queue_no))}</strong>
+            </div>
+            <div>
+                <span>ยอด</span>
+                <strong>${esc(money(row.total))}</strong>
+            </div>
+        </div>
+
+        ${reason
+            ? `<div class="detail-alert"><strong>สาเหตุที่ต้องตรวจสอบ</strong><p>${esc(reason)}</p></div>`
+            : ''}
+
+        <div class="detail-grid">
+            <div><span>เลขออเดอร์</span><strong>${esc(row.order_no || '-')}</strong></div>
+            <div><span>รหัสรับอาหาร</span><strong>${esc(row.pickup_code || '-')}</strong></div>
+            <div><span>ลูกค้า</span><strong>${esc(row.customer_name || '-')}</strong></div>
+            <div><span>โทรศัพท์</span><strong>${esc(row.customer_phone || '-')}</strong></div>
+            <div><span>Payment</span><strong>${esc(row.payment_status || '-')}</strong></div>
+            <div><span>Kitchen</span><strong>${esc(row.kitchen_dispatch_status || row.status || '-')}</strong></div>
+            <div><span>Sale/Stock</span><strong>${esc(row.sale_stock_status || 'pending')}</strong></div>
+            <div><span>เวลารอ</span><strong>${esc(wait.label)}</strong></div>
+        </div>
+
+        <div class="detail-actions">
+            ${b === 'ready_for_pickup' && row.pickup_code
+                ? `<a class="detail-action primary" href="./pickup.html?code=${encodeURIComponent(row.pickup_code)}">🛍️ เปิดหน้าตรวจรับอาหาร</a>`
+                : ''}
+            ${b === 'kitchen'
+                ? '<a class="detail-action primary" href="./kitchen.html">👨‍🍳 เปิดจอครัว</a>'
+                : ''}
+            <button class="detail-action" type="button" data-copy="${esc(row.order_no || '')}">คัดลอกเลขออเดอร์</button>
+        </div>
+    `
+
+    openDrawer('order')
+}
+
+function openOrderDetail(id) {
+    const row = state.rows.find(item => String(item.id) === String(id))
+    if (!row) {
+        msg('ไม่พบออเดอร์นี้แล้ว กรุณารีเฟรช', true)
+        return
+    }
+
+    renderOrderDetail(row)
 }
 
 async function load() {
@@ -455,6 +591,12 @@ el.board.addEventListener('click', event => {
         return
     }
 
+    const detailButton = event.target.closest('[data-detail-id]')
+    if (detailButton) {
+        openOrderDetail(detailButton.dataset.detailId)
+        return
+    }
+
     const copyButton = event.target.closest('[data-copy]')
     if (!copyButton) return
 
@@ -465,6 +607,12 @@ el.board.addEventListener('click', event => {
 })
 
 document.addEventListener('click', event => {
+    const detailButton = event.target.closest('.side-drawer [data-detail-id]')
+    if (detailButton) {
+        openOrderDetail(detailButton.dataset.detailId)
+        return
+    }
+
     const copyButton = event.target.closest('.side-drawer [data-copy]')
     if (!copyButton) return
 
