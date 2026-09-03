@@ -21,6 +21,13 @@ const PAGE_PERMISSIONS = {
         'staff'
     ],
 
+    'self-order-live.html': [
+        'admin',
+        'manager',
+        'cashier',
+        'staff'
+    ],
+
     'shift.html': [
         'admin',
         'manager',
@@ -159,6 +166,13 @@ const MENU_PERMISSIONS = {
     ],
 
     selfOrderQr: [
+        'admin',
+        'manager',
+        'cashier',
+        'staff'
+    ],
+
+    selfOrderLive: [
         'admin',
         'manager',
         'cashier',
@@ -520,6 +534,12 @@ function applySidebarPermissions(
         'a[href="./self-order-store-qr.html"]',
         role,
         MENU_PERMISSIONS.selfOrderQr
+    )
+
+    setMenuVisibility(
+        'a[href="./self-order-live.html"]',
+        role,
+        MENU_PERMISSIONS.selfOrderLive
     )
 
     setMenuVisibility(
@@ -995,22 +1015,51 @@ supabase.auth
             }
         }
     )
-/* V2.8.1 Staff/Cashier menu hardening */
+/* V2.8.2 Staff/Cashier sidebar restore + hardening
+   IMPORTANT:
+   - Explicitly SHOW allowed menus.
+   - Explicitly HIDE disallowed menus.
+   This fixes menus staying hidden after an earlier permission pass.
+*/
 function applyShiftRoleMenuV281(role){
- const r=String(role||'').trim().toLowerCase()
- const allow={
-  staff:new Set(['./dashboard.html','./pos.html','./self-order-store-qr.html','./shift.html','./tables.html']),
-  cashier:new Set(['./dashboard.html','./pos.html','./self-order-store-qr.html','./shift.html','./sales-history.html','./tables.html'])
- }[r]
- if(!allow)return
- document.querySelectorAll('.sidebar a[href]').forEach(a=>{
-  const href=a.getAttribute('href')||''
-  if(!allow.has(href))a.style.display='none'
- })
- const t=document.getElementById('managementToggle')
- const m=document.getElementById('managementMenu')
- if(t)t.style.display='none'
- if(m)m.style.display='none'
+    const r=String(role||'').trim().toLowerCase()
+
+    const allow={
+        staff:new Set([
+            './dashboard.html',
+            './pos.html',
+            './self-order-store-qr.html',
+            './self-order-live.html',
+            './pickup.html',
+            './shift.html',
+            './tables.html'
+        ]),
+        cashier:new Set([
+            './dashboard.html',
+            './pos.html',
+            './self-order-store-qr.html',
+            './self-order-live.html',
+            './pickup.html',
+            './shift.html',
+            './sales-history.html',
+            './tables.html'
+        ])
+    }[r]
+
+    if(!allow)return
+
+    document
+        .querySelectorAll('.sidebar a[href]')
+        .forEach(a=>{
+            const href=a.getAttribute('href')||''
+            a.style.display=allow.has(href) ? '' : 'none'
+        })
+
+    const t=document.getElementById('managementToggle')
+    const m=document.getElementById('managementMenu')
+
+    if(t)t.style.display='none'
+    if(m)m.style.display='none'
 }
 
 
