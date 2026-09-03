@@ -16,7 +16,11 @@ const state = {
     sessionExpiresAt: null,
     sessionTimer: null,
     sessionExpired: false,
-    pickupPollTimer: null
+    pickupPollTimer: null,
+    lastPickupStatus: null,
+    readyAlertShown: false,
+    audioUnlocked: false,
+    audioContext: null
 }
 
 const $ = id => document.getElementById(id)
@@ -76,6 +80,10 @@ const el = {
     pickupOrderNoText: $('pickupOrderNoText'),
     readyForPickupBadge: $('readyForPickupBadge'),
     pickupStatusHint: $('pickupStatusHint'),
+    readyAlertModal: $('readyAlertModal'),
+    readyAlertQueueText: $('readyAlertQueueText'),
+    readyAlertCodeText: $('readyAlertCodeText'),
+    ackReadyAlertBtn: $('ackReadyAlertBtn'),
     closePendingBtn: $('closePendingBtn'),
     mobileCartBar: $('mobileCartBar'),
     mobileCartCountText: $('mobileCartCountText'),
@@ -184,6 +192,91 @@ function renderPickupQr(pickupToken) {
     })
 }
 
+
+function ensureAudioContext() {
+    if (!state.audioContext) {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext
+        if (AudioCtx) state.audioContext = new AudioCtx()
+    }
+    return state.audioContext
+}
+
+async function unlockReadyAlertAudio() {
+    try {
+        const ctx = ensureAudioContext()
+        if (ctx?.state === 'suspended') await ctx.resume()
+        state.audioUnlocked = Boolean(ctx && ctx.state === 'running')
+    } catch (_) {}
+}
+
+function playReadyAlertSound() {
+    try {
+        const ctx = ensureAudioContext()
+        if (!ctx || ctx.state !== 'running') return false
+
+        const now = ctx.currentTime
+        const sequence = [
+            { at: 0.00, freq: 880, duration: 0.16 },
+            { at: 0.22, freq: 1174, duration: 0.18 },
+            { at: 0.48, freq: 880, duration: 0.22 }
+        ]
+
+        for (const tone of sequence) {
+            const osc = ctx.createOscillator()
+            const gain = ctx.createGain()
+
+            osc.type = 'sine'
+            osc.frequency.setValueAtTime(tone.freq, now + tone.at)
+
+            gain.gain.setValueAtTime(0.0001, now + tone.at)
+            gain.gain.exponentialRampToValueAtTime(0.22, now + tone.at + 0.02)
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + tone.at + tone.duration)
+
+            osc.connect(gain)
+            gain.connect(ctx.destination)
+            osc.start(now + tone.at)
+            osc.stop(now + tone.at + tone.duration + 0.03)
+        }
+        return true
+    } catch (error) {
+        console.warn('Ready sound error:', error)
+        return false
+    }
+}
+
+function vibrateReadyAlert() {
+    try {
+        if (navigator.vibrate) {
+            navigator.vibrate([350, 120, 350, 120, 700])
+            return true
+        }
+    } catch (_) {}
+    return false
+}
+
+async function fireReadyAlert(status) {
+    if (state.readyAlertShown) return
+    state.readyAlertShown = true
+
+    el.readyAlertQueueText.textContent =
+        status.queue_no != null ? `คิว ${status.queue_no}` : 'อาหารพร้อมรับ'
+    el.readyAlertCodeText.textContent = status.pickup_code || '----'
+    el.readyAlertModal.classList.remove('hidden')
+
+    try {
+        const ctx = ensureAudioContext()
+        if (ctx?.state === 'suspended') {
+            await ctx.resume().catch(() => {})
+        }
+    } catch (_) {}
+
+    playReadyAlertSound()
+    vibrateReadyAlert()
+
+    // If the browser blocks autoplay, the modal remains the fallback.
+    // A user tap on "รับทราบ" is also a gesture that unlocks future audio.
+}
+
 function renderPickupStatus(status) {
     if (!status) return
 
@@ -198,6 +291,17 @@ function renderPickupStatus(status) {
         el.pickupOrderNoText.textContent = orderNo
         el.pickupProofCard.classList.remove('hidden')
         renderPickupQr(pickupToken)
+    }
+
+    const previousStatus = state.lastPickupStatus
+    const becameReady =
+        status.status === 'ready_for_pickup' &&
+        previousStatus !== 'ready_for_pickup'
+
+    state.lastPickupStatus = status.status
+
+    if (becameReady) {
+        fireReadyAlert(status)
     }
 
     if (status.status === 'paid') {
@@ -823,6 +927,23 @@ el.verifySlipBtn.addEventListener('click', async () => {
 })
 
 el.closePendingBtn.addEventListener('click', () => el.pendingModal.classList.add('hidden'))
+
+el.ackReadyAlertBtn?.addEventListener('click', async () => {
+    await unlockReadyAlertAudio()
+    el.readyAlertModal.classList.add('hidden')
+})
+
+const unlockOnce = async () => {
+    await unlockReadyAlertAudio()
+    document.removeEventListener('pointerdown', unlockOnce)
+    document.removeEventListener('touchstart', unlockOnce)
+    document.removeEventListener('keydown', unlockOnce)
+}
+
+document.addEventListener('pointerdown', unlockOnce, { passive: true })
+document.addEventListener('touchstart', unlockOnce, { passive: true })
+document.addEventListener('keydown', unlockOnce)
+
 
 for (const modal of [el.modifierModal, el.cartModal]) {
     modal.addEventListener('click', event => {
