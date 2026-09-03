@@ -158,6 +158,13 @@ const MENU_PERMISSIONS = {
         'staff'
     ],
 
+    selfOrderQr: [
+        'admin',
+        'manager',
+        'cashier',
+        'staff'
+    ],
+
     shift: [
         'admin',
         'manager',
@@ -507,6 +514,12 @@ function applySidebarPermissions(
         'a[href="./pos.html"]',
         role,
         MENU_PERMISSIONS.pos
+    )
+
+    setMenuVisibility(
+        'a[href="./self-order-store-qr.html"]',
+        role,
+        MENU_PERMISSIONS.selfOrderQr
     )
 
     setMenuVisibility(
@@ -986,8 +999,8 @@ supabase.auth
 function applyShiftRoleMenuV281(role){
  const r=String(role||'').trim().toLowerCase()
  const allow={
-  staff:new Set(['./dashboard.html','./pos.html','./shift.html','./tables.html']),
-  cashier:new Set(['./dashboard.html','./pos.html','./shift.html','./sales-history.html','./tables.html'])
+  staff:new Set(['./dashboard.html','./pos.html','./self-order-store-qr.html','./shift.html','./tables.html']),
+  cashier:new Set(['./dashboard.html','./pos.html','./self-order-store-qr.html','./shift.html','./sales-history.html','./tables.html'])
  }[r]
  if(!allow)return
  document.querySelectorAll('.sidebar a[href]').forEach(a=>{
