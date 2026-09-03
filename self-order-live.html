@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>QR Self Order Live | CHAIXI BAMEEKIAO</title>
-<link rel="stylesheet" href="./css/self-order-live.css?v=4.12.0">
+<link rel="stylesheet" href="./css/self-order-live.css?v=4.13.0">
 </head>
 <body>
 <main class="live-shell">
@@ -16,10 +16,11 @@
         </div>
 
         <div class="head-actions">
-            <button id="problemBellBtn" class="icon-btn alert-btn" type="button" aria-label="รายการที่มีปัญหา">
+            <button id="problemBellBtn" class="icon-btn alert-btn" type="button" aria-label="รายการแจ้งเตือน">
                 🔔
                 <span id="problemBellCount" class="notification-count hidden">0</span>
             </button>
+            <button id="slaSettingsBtn" class="icon-btn" type="button" aria-label="ตั้งค่าเวลา SLA">⚙️</button>
             <button id="refreshBtn" class="icon-btn" type="button" aria-label="รีเฟรช">↻</button>
             <a class="home-btn" href="./dashboard.html">🏠 หน้าหลัก</a>
         </div>
@@ -104,13 +105,17 @@
 <aside id="problemDrawer" class="side-drawer hidden" aria-hidden="true">
     <div class="drawer-head">
         <div>
-            <h2>⚠️ รายการที่มีปัญหา</h2>
+            <h2>🔔 ศูนย์แจ้งเตือน</h2>
             <p><span id="problemDrawerCount">0</span> รายการที่ต้องตรวจสอบ</p>
         </div>
         <button class="drawer-close" type="button" data-close-drawer>✕</button>
     </div>
+    <div class="alert-summary">
+        <div><span>เกินเวลา</span><strong id="slaAlertCount">0</strong></div>
+        <div><span>ระบบมีปัญหา</span><strong id="systemProblemCount">0</strong></div>
+    </div>
     <div id="problemList" class="drawer-list"></div>
-    <div id="problemEmpty" class="drawer-empty hidden">ไม่มีรายการที่มีปัญหา</div>
+    <div id="problemEmpty" class="drawer-empty hidden">ไม่มีรายการแจ้งเตือน</div>
 </aside>
 
 <aside id="historyDrawer" class="side-drawer hidden" aria-hidden="true">
@@ -125,6 +130,57 @@
     <div id="historyEmpty" class="drawer-empty hidden">ยังไม่มีรายการรับแล้ว</div>
 </aside>
 
+
+<aside id="slaSettingsDrawer" class="side-drawer hidden" aria-hidden="true">
+    <div class="drawer-head">
+        <div>
+            <h2>⏱️ ตั้งเวลาแจ้งเตือน SLA</h2>
+            <p>กำหนดเวลาสูงสุดของแต่ละขั้นตอน</p>
+        </div>
+        <button class="drawer-close" type="button" data-close-drawer>✕</button>
+    </div>
+
+    <div class="settings-body">
+        <div id="slaPermissionNote" class="settings-note hidden">
+            บัญชีนี้ดูค่า SLA ได้ แต่แก้ไขได้เฉพาะ Admin / Manager
+        </div>
+
+        <label class="setting-field">
+            <span>💳 รอชำระ</span>
+            <div><input id="slaPaymentMinutes" type="number" min="1" max="180" step="1"><b>นาที</b></div>
+            <small>เริ่มจับเวลาตั้งแต่สร้างออเดอร์จนชำระสำเร็จ</small>
+        </label>
+
+        <label class="setting-field">
+            <span>👨‍🍳 กำลังทำ</span>
+            <div><input id="slaKitchenMinutes" type="number" min="1" max="180" step="1"><b>นาที</b></div>
+            <small>เริ่มจับเวลาหลัง Paid จนอาหารพร้อมรับ</small>
+        </label>
+
+        <label class="setting-field">
+            <span>🛍️ พร้อมรับ</span>
+            <div><input id="slaReadyMinutes" type="number" min="1" max="180" step="1"><b>นาที</b></div>
+            <small>เริ่มจับเวลาหลังอาหารพร้อมจนลูกค้ารับ</small>
+        </label>
+
+        <label class="toggle-field">
+            <div>
+                <strong>🔊 เสียงเตือนบนอุปกรณ์นี้</strong>
+                <small>ดังครั้งเดียวเมื่อพบรายการเกินเวลาใหม่</small>
+            </div>
+            <input id="slaSoundEnabled" type="checkbox">
+        </label>
+
+        <div class="sla-legend">
+            <div><span class="legend-dot warning"></span><b>ใกล้เกินเวลา</b><small>ตั้งแต่ 70% ของ SLA</small></div>
+            <div><span class="legend-dot overdue"></span><b>เกินเวลา</b><small>ถึงหรือเกิน SLA</small></div>
+        </div>
+
+        <button id="saveSlaBtn" class="settings-save" type="button">บันทึกการตั้งค่า</button>
+        <div id="slaSettingsMessage" class="settings-message"></div>
+    </div>
+</aside>
+
 <aside id="orderDrawer" class="side-drawer hidden" aria-hidden="true">
     <div class="drawer-head">
         <div>
@@ -136,6 +192,6 @@
     <div id="orderDetail" class="order-detail"></div>
 </aside>
 
-<script type="module" src="./js/self-order-live.js?v=4.12.0"></script>
+<script type="module" src="./js/self-order-live.js?v=4.13.0"></script>
 </body>
 </html>
