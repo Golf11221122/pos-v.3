@@ -37,3 +37,26 @@ button,input,textarea{font:inherit}button{cursor:pointer}button:disabled{cursor:
 .mobile-cart-bar{position:fixed;left:14px;right:14px;bottom:max(14px,env(safe-area-inset-bottom));z-index:60;display:flex;align-items:center;justify-content:space-between;min-height:56px;padding:0 18px;border:0;border-radius:16px;background:#202124;color:#fff;box-shadow:0 12px 30px rgba(0,0,0,.25)}.mobile-cart-bar span{display:flex;gap:8px;align-items:center}
 .success-sheet{text-align:center}.pending-icon{font-size:52px}.success-sheet h2{margin-top:8px}.success-sheet>p{margin-top:8px;color:var(--muted)}.pending-total{margin:18px 0;padding:14px;border-radius:14px;background:var(--primary-light)}.pending-total small{display:block;color:var(--muted)}.pending-total strong{display:block;margin-top:4px;font-size:26px}.pending-box{padding:14px;border:1px solid var(--border);border-radius:14px;text-align:left}.pending-box p{margin-top:6px;color:var(--muted);font-size:13px;line-height:1.5}.pending-box .danger-note{color:var(--danger);font-weight:700}
 @media(min-width:720px){.product-grid{grid-template-columns:repeat(4,minmax(0,1fr))}.modal{align-items:center}.sheet{border-radius:22px}}
+
+
+/* =========================================================
+   PHASE 4.3 — PROMPTPAY / SLIP VERIFY
+   ========================================================= */
+.payment-sheet{text-align:center}
+.payment-step-badge{display:inline-flex;padding:6px 10px;border-radius:999px;background:var(--primary-light);font-size:11px;font-weight:800}
+.payment-sheet>h2{margin-top:9px}
+.payment-order-no{margin-top:5px;color:var(--muted);font-size:12px}
+.promptpay-card{margin:12px 0;padding:16px;border:1px solid var(--border);border-radius:16px;background:#fff}
+.self-order-promptpay-qr{display:grid;width:250px;min-height:250px;margin:0 auto 10px;place-items:center;padding:10px;border:1px solid var(--border);border-radius:14px;background:#fff}
+.self-order-promptpay-qr img,.self-order-promptpay-qr canvas{max-width:100%;height:auto}
+.promptpay-card p{font-weight:800}.promptpay-card small{display:block;margin-top:4px;color:var(--muted)}
+.payment-divider{display:flex;align-items:center;gap:10px;margin:14px 0;color:var(--muted);font-size:12px}
+.payment-divider::before,.payment-divider::after{content:"";flex:1;height:1px;background:var(--border)}
+.slip-upload-card{padding:15px;border:1px solid var(--border);border-radius:16px;background:#fafbfc;text-align:left}
+.slip-upload-card>p{margin-top:5px;color:var(--muted);font-size:12px}
+.slip-picker{display:flex;align-items:center;justify-content:center;min-height:48px;margin-top:12px;padding:10px;border:1px dashed #bcc2c9;border-radius:12px;background:#fff;font-weight:800;cursor:pointer}
+.slip-picker input{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.slip-preview-wrap{margin-top:12px;text-align:center}.slip-preview-wrap img{max-width:100%;max-height:320px;border:1px solid var(--border);border-radius:12px;object-fit:contain}
+.payment-message{text-align:center}
+.paid-success-box{margin:14px 0;padding:16px;border:1px solid #b7dfc2;border-radius:16px;background:#eef9f1;color:#176b32;text-align:center}
+.paid-success-icon{font-size:36px}.paid-success-box strong{display:block;margin-top:5px;font-size:18px}.paid-success-box p{margin-top:5px}.paid-success-box small{display:block;margin-top:6px;color:#4e775a}
