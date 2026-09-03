@@ -9,15 +9,20 @@ const state = {
     items: [],
     soundEnabled: false,
     knownItemIds: new Set(),
-    addOnItemIds: new Set(),
     realtimeChannel: null,
     timerInterval: null,
-    realtimePollTimer: null,
-    autoPrintIds: new Set(),
-    autoPrintTimer: null
+    realtimePollTimer: null
 }
 
 const $ = id => document.getElementById(id)
+
+// เวลามาตรฐานครัว (วินาที)
+// ปรับตัวเลขตรงนี้ได้ภายหลัง
+const KITCHEN_TIME_LIMITS = {
+    pending: 5 * 60,      // รอรับออเดอร์เกิน 5 นาที = แดง
+    preparing: 15 * 60,  // กำลังทำเกิน 15 นาที = แดง
+    ready: 5 * 60        // พร้อมเสิร์ฟเกิน 5 นาที = แดง
+}
 
 const el = {
     branchText: $('branchText'),
@@ -113,24 +118,6 @@ function orderName(item) {
 }
 
 
-function itemIsAddOn(item) {
-    if (!item) return false
-
-    // ค่าหลักจาก RPC: ตรวจ history ของ order_id เดิม
-    if (item.is_add_on === true) return true
-
-    // รองรับกรณี Supabase/JSON คืนค่าเป็น string
-    if (String(item.is_add_on).toLowerCase() === 'true') return true
-
-    // fallback: ถ้ามีรายการก่อนหน้าของ order เดิมแล้ว
-    if (Number(item.previous_item_count || 0) > 0) return true
-
-    // fallback ฝั่ง browser สำหรับรายการที่เพิ่งเข้า realtime
-    if (state?.addOnItemIds?.has?.(item.item_id)) return true
-
-    return false
-}
-
 function statusText(
     status,
     item = null
@@ -139,12 +126,6 @@ function statusText(
     const takeaway =
         item?.order_type ===
         'takeaway'
-
-    // รายการ pending ของ order เดิมที่เคยมีรายการมาก่อน
-    // ให้แสดงเป็น "สั่งเพิ่ม" แทน "ออเดอร์ใหม่"
-    if (status === 'pending' && itemIsAddOn(item)) {
-        return '🆕 สั่งเพิ่ม'
-    }
 
     return {
         pending:
@@ -350,7 +331,7 @@ function refreshLiveTimers() {
             ) {
 
                 limitSeconds =
-                    5 * 60
+                    KITCHEN_TIME_LIMITS.pending
             }
 
 
@@ -360,7 +341,7 @@ function refreshLiveTimers() {
             ) {
 
                 limitSeconds =
-                    15 * 60
+                    KITCHEN_TIME_LIMITS.preparing
             }
 
 
@@ -370,7 +351,7 @@ function refreshLiveTimers() {
             ) {
 
                 limitSeconds =
-                    5 * 60
+                    KITCHEN_TIME_LIMITS.ready
             }
 
 
@@ -529,6 +510,38 @@ function renderModifierBadges(modifiers) {
             }).join('')}
         </div>
     `
+}
+
+
+function ensureQrPickupWaitStyle() {
+    if (document.getElementById('chaixiQrPickupWaitStyle')) {
+        return
+    }
+
+    const style = document.createElement('style')
+    style.id = 'chaixiQrPickupWaitStyle'
+    style.textContent = `
+        .qr-pickup-wait {
+            width: 100%;
+            padding: 12px 14px;
+            border: 2px solid #12b76a;
+            border-radius: 12px;
+            background: #ecfdf3;
+            color: #027a48;
+            text-align: center;
+            font-size: 17px;
+            font-weight: 900;
+            line-height: 1.35;
+        }
+
+        .qr-pickup-wait small {
+            display: block;
+            margin-top: 4px;
+            font-size: 12px;
+            font-weight: 800;
+        }
+    `
+    document.head.appendChild(style)
 }
 
 function ensureKitchenModifierStyle() {
@@ -793,7 +806,7 @@ function renderSelectedStationText() {
     const station = state.stations.find(row => row.id === state.selectedStation)
     const text = station?.name || 'ทุกครัว'
     if (el.selectedStationText) el.selectedStationText.textContent = text
-    document.title = state.selectedStation ? `${text} | CHAIXI BAMEEKIAO POS` : 'Kitchen | CHAIXI BAMEEKIAO POS'
+    document.title = state.selectedStation ? `${text} | JOKJUNG POS` : 'Kitchen | JOKJUNG POS'
 }
 
 
@@ -879,116 +892,163 @@ async function enrichKitchenContext(
 }
 
 
-
-/* ========================================
-   GROUP ORDER BY TABLE / QUEUE + STATUS
-   โต๊ะ/คิวเดียวกันรวมกันเฉพาะรายการที่มีสถานะเดียวกัน
-   จึงสามารถแสดงโต๊ะเดียวกันคนละคอลัมน์พร้อมกันได้
-   การพิมพ์ยังใช้ระบบรวมตามโต๊ะ/คิว + ครัว
-======================================== */
-
-function kitchenGroupKey(item) {
-    if (!item) return ''
-
-    // ใช้ order_id เป็นตัวหลักเสมอ
-    // ทำให้โต๊ะเดิมแต่คนละบิลไม่ถูกนำมารวมกัน
-    // และรายการสั่งเพิ่มในบิลเดิมยังผูกกับออเดอร์เดิมได้แม่นยำ
-    const orderId = String(item.order_id || '').trim()
-    if (orderId) {
-        return `order:${orderId}`
-    }
-
-    // fallback สำหรับข้อมูลเก่าที่ไม่มี order_id
-    if (item.order_type === 'takeaway') {
-        const queue = String(item.queue_no ?? '').trim()
-        return queue
-            ? `takeaway:${queue}`
-            : `takeaway:item:${item.item_id}`
-    }
-
-    const table = String(
-        item.table_name
-        || item.table_no
-        || ''
-    ).trim()
-
-    return table
-        ? `dinein:${table}`
-        : `dinein:item:${item.item_id}`
-}
-
-function groupKitchenItems(list) {
-    const map = new Map()
-
-    for (const item of list) {
-        // สำคัญ: รวมตามโต๊ะ/คิว "และสถานะ"
-        // โต๊ะเดียวกันจึงสามารถมีรายการอยู่คนละคอลัมน์พร้อมกันได้
-        // เช่น บะหมี่กำลังทำ แต่ข้าวที่สั่งเพิ่มยังอยู่ออเดอร์ใหม่
-        const baseKey = kitchenGroupKey(item)
-        const status = item.item_status || 'pending'
-        const key = `${baseKey}|status:${status}`
-
-        if (!map.has(key)) {
-            map.set(key, {
-                key,
-                baseKey,
-                status,
-                items: []
-            })
+async function loadKitchenItems({
+    notifyNew = false
+} = {}) {
+    const {
+        data,
+        error
+    } = await supabase.rpc(
+        'get_kitchen_active_items_by_station',
+        {
+            p_kitchen_station_id: state.selectedStation || null
         }
+    )
 
-        map.get(key).items.push(item)
-    }
+    if (error) throw error
 
-    const groups = [...map.values()]
+    const rawList =
+        Array.isArray(data)
+            ? data
+            : []
 
-    for (const group of groups) {
-        group.items.sort((a, b) =>
-            new Date(a.created_at).getTime()
-            - new Date(b.created_at).getTime()
+
+    const list =
+        await enrichKitchenContext(
+            rawList
         )
 
-        group.firstItem = group.items[0]
 
-        // สถานะการ์ดมาจากรายการในกลุ่มนี้โดยตรง
-        // ไม่ดึงสถานะของเมนูอื่นในโต๊ะเดียวกันมาบังคับทั้งบิล
-        group.status = group.firstItem?.item_status || group.status || 'pending'
+    const newPending =
+        list.filter(item =>
+            item.item_status === 'pending'
+            && !state.knownItemIds.has(item.item_id)
+        )
+
+    state.items = list
+
+    for (const item of list) {
+        state.knownItemIds.add(item.item_id)
     }
 
-    return groups.sort((a, b) =>
-        new Date(a.firstItem?.created_at).getTime()
-        - new Date(b.firstItem?.created_at).getTime()
+    renderBoard()
+
+    if (notifyNew && newPending.length > 0) {
+        playAlertSound()
+
+        const toPrint =
+            newPending.filter(
+                item => !item.kitchen_printed_at
+            )
+
+        for (const item of toPrint) {
+            await printKitchenItem(
+                item,
+                { auto: true }
+            )
+
+            await new Promise(resolve =>
+                setTimeout(resolve, 400)
+            )
+        }
+    }
+}
+
+function setCount(target, value) {
+    if (target) {
+        target.textContent =
+            Number(value).toLocaleString('th-TH')
+    }
+}
+
+function renderBoard() {
+    const pending =
+        state.items.filter(
+            item => item.item_status === 'pending'
+        )
+
+    const preparing =
+        state.items.filter(
+            item => item.item_status === 'preparing'
+        )
+
+    const ready =
+        state.items.filter(
+            item => item.item_status === 'ready'
+        )
+
+    setCount(el.pendingCount, pending.length)
+    setCount(el.preparingCount, preparing.length)
+    setCount(el.readyCount, ready.length)
+
+    setCount(el.pendingBadge, pending.length)
+    setCount(el.preparingBadge, preparing.length)
+    setCount(el.readyBadge, ready.length)
+
+    const selectedStation = state.stations.find(
+        station => station.id === state.selectedStation
     )
+    const stationName = selectedStation?.name || 'ทุกครัว'
+
+    el.statusText.textContent =
+        state.items.length
+            ? `${stationName} • ${state.items.length.toLocaleString('th-TH')} รายการ`
+            : `${stationName} • รอออเดอร์ใหม่...`
+
+    renderColumn(
+        el.pendingGrid,
+        el.pendingEmpty,
+        pending
+    )
+
+    renderColumn(
+        el.preparingGrid,
+        el.preparingEmpty,
+        preparing
+    )
+
+    renderColumn(
+        el.readyGrid,
+        el.readyEmpty,
+        ready
+    )
+
+
+    refreshLiveTimers()
 }
 
-function isLikelyAddOn(item, groupItems) {
-    // ใช้ helper เดียวกับข้อความสถานะ เพื่อให้ป้ายและสถานะตรงกันเสมอ
-    if (itemIsAddOn(item)) {
-        return true
-    }
+function renderColumn(grid, empty, list) {
+    if (!grid || !empty) return
 
-    if (!Array.isArray(groupItems) || groupItems.length <= 1) {
-        return false
-    }
+    empty.classList.toggle(
+        'hidden',
+        list.length > 0
+    )
 
-    const times = groupItems
-        .map(row => new Date(row.created_at).getTime())
-        .filter(Number.isFinite)
+    grid.classList.toggle(
+        'hidden',
+        list.length === 0
+    )
 
-    const itemTime = new Date(item.created_at).getTime()
-
-    if (!Number.isFinite(itemTime) || !times.length) {
-        return false
-    }
-
-    const firstTime = Math.min(...times)
-
-    return itemTime - firstTime > 15 * 1000
+    grid.innerHTML =
+        list.map(renderTicket).join('')
 }
 
-function renderItemActions(item) {
+function renderTicket(item) {
+    const modifiers =
+        Array.isArray(item.modifiers)
+            ? item.modifiers
+            : []
+
+    const modifierHtml =
+        renderModifierBadges(
+            modifiers
+        )
+
+    let actions = ''
+
     if (item.item_status === 'pending') {
-        return `
+        actions = `
             <div class="ticket-actions three-actions">
                 <button
                     type="button"
@@ -1021,7 +1081,7 @@ function renderItemActions(item) {
     }
 
     if (item.item_status === 'preparing') {
-        return `
+        actions = `
             <div class="ticket-actions three-actions">
                 <button
                     type="button"
@@ -1039,8 +1099,9 @@ function renderItemActions(item) {
                     data-id="${esc(item.item_id)}"
                 >
                     ${item.order_type === 'takeaway'
-                        ? '✅ พร้อมรับ'
-                        : '✅ พร้อมเสิร์ฟ'}
+                ? '✅ พร้อมรับ'
+                : '✅ พร้อมเสิร์ฟ'
+            }
                 </button>
 
                 <button
@@ -1056,453 +1117,99 @@ function renderItemActions(item) {
     }
 
     if (item.item_status === 'ready') {
-        return `
-            <div class="ticket-actions single-action">
-                <button
-                    type="button"
-                    class="served-btn"
-                    data-act="served"
-                    data-id="${esc(item.item_id)}"
-                >
-                    ${item.order_type === 'takeaway'
-                        ? '🛍️ รับแล้ว'
-                        : '🍽️ เสิร์ฟแล้ว'}
-                </button>
-            </div>
-        `
+        const qrSelfOrder =
+            item.order_type === 'takeaway'
+            && item.order_source === 'qr'
+
+        actions = qrSelfOrder
+            ? `
+                <div class="ticket-actions single-action">
+                    <div
+                        class="qr-pickup-wait"
+                        role="status"
+                    >
+                        📱 รอลูกค้ามารับ<br>
+                        <small>ยืนยันส่งมอบที่หน้าตรวจรับอาหาร</small>
+                    </div>
+                </div>
+            `
+            : `
+                <div class="ticket-actions single-action">
+                    <button
+                        type="button"
+                        class="served-btn"
+                        data-act="served"
+                        data-id="${esc(item.item_id)}"
+                    >
+                        ${item.order_type === 'takeaway'
+                    ? '🛍️ รับแล้ว'
+                    : '🍽️ เสิร์ฟแล้ว'
+                }
+                    </button>
+                </div>
+            `
     }
 
-    return ''
-}
-
-function renderGroupedItem(item, groupItems) {
-    const modifiers =
-        Array.isArray(item.modifiers)
-            ? item.modifiers
-            : []
-
-    const modifierHtml = renderModifierBadges(modifiers)
     const timer = timerInfo(item)
-    const addOn = isLikelyAddOn(item, groupItems)
 
     return `
-        <section class="group-ticket-item status-${esc(item.item_status)}">
-            <div class="group-item-head">
-                <div class="group-item-title-row">
-                    <div class="product-name">
-                        ${esc(item.product_name)}
+        <article
+            class="ticket-card status-${esc(item.item_status)}"
+        >
+            <div class="ticket-head">
+                <div>
+                    <h2>${esc(orderName(item))}</h2>
+
+                    <div class="ticket-time">
+                        ${formatTime(item.created_at)}
                     </div>
 
-                    <div class="quantity">
-                        × ${Number(item.quantity || 0).toLocaleString('th-TH')}
+                    <div
+                        class="kitchen-live-timer"
+                        data-kitchen-timer="${esc(item.item_id)}"
+                    >
+                        ${esc(
+        `${timer.label} ${elapsedText(timer.startedAt)}`
+    )}
                     </div>
+
+                    ${item.kitchen_station_name
+            ? `<div class="ticket-time">🍳 ${esc(item.kitchen_station_name)}</div>`
+            : ''
+        }
                 </div>
 
-                <div class="group-item-badges">
-                    <span class="status-badge ${esc(item.item_status)} ${addOn ? 'addon-status-badge' : ''}">
-                        ${esc(statusText(item.item_status, item))}
-                    </span>
-                </div>
-            </div>
-
-            <div class="group-item-meta">
-                <span>${formatTime(item.created_at)}</span>
                 <span
-                    class="ticket-time"
-                    data-kitchen-timer="${esc(item.item_id)}"
+                    class="status-badge ${esc(item.item_status)}"
                 >
-                    ${esc(`${timer.label} ${elapsedText(timer.startedAt)}`)}
+                    ${esc(statusText(item.item_status, item))}
                 </span>
             </div>
 
-            ${modifierHtml}
-
-            ${item.item_note
-                ? `
-                    <div class="note">
-                        ⚠️ ${esc(item.item_note)}
-                    </div>
-                `
-                : ''}
-
-            ${renderItemActions(item)}
-        </section>
-    `
-}
-
-function renderGroupTicket(group) {
-    const firstItem = group.firstItem || group.items[0]
-    const stationNames = [
-        ...new Set(
-            group.items
-                .map(item => item.kitchen_station_name)
-                .filter(Boolean)
-        )
-    ]
-
-    return `
-        <article class="ticket-card grouped-ticket status-${esc(group.status)}">
-            <div class="ticket-head grouped-ticket-head">
-                <div>
-                    <h2>${esc(orderName(firstItem))}</h2>
-
-                    <div class="ticket-time">
-                        เริ่ม ${formatTime(firstItem.created_at)}
-                    </div>
-
-                    ${stationNames.length
-                        ? `<div class="ticket-time">🍳 ${esc(stationNames.join(' • '))}</div>`
-                        : ''}
+            <div class="ticket-body">
+                <div class="product-name">
+                    ${esc(item.product_name)}
                 </div>
 
-                <div class="group-summary">
-                    <span class="group-count">
-                        ${group.items.length.toLocaleString('th-TH')} รายการ
-                    </span>
-
-                    <span class="status-badge ${esc(group.status)}">
-                        ${esc(statusText(group.status, firstItem))}
-                    </span>
+                <div class="quantity">
+                    × ${Number(item.quantity || 0).toLocaleString('th-TH')}
                 </div>
+
+                ${modifierHtml}
+
+                ${item.item_note
+            ? `
+                            <div class="note">
+                                ⚠️ ${esc(item.item_note)}
+                            </div>
+                        `
+            : ''
+        }
             </div>
 
-            <div class="ticket-body grouped-ticket-body">
-                ${group.items
-                    .map(item => renderGroupedItem(item, group.items))
-                    .join('')}
-            </div>
+            ${actions}
         </article>
     `
-}
-
-function ensureKitchenGroupStyle() {
-    if (document.getElementById('kitchenGroupStyle')) return
-
-    const style = document.createElement('style')
-    style.id = 'kitchenGroupStyle'
-    style.textContent = `
-        .grouped-ticket-head {
-            align-items: flex-start;
-        }
-
-        .group-summary {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 6px;
-        }
-
-        .group-count {
-            padding: 5px 9px;
-            border-radius: 999px;
-            background: #f1f3f4;
-            color: #5f6368;
-            font-size: 11px;
-            font-weight: 900;
-        }
-
-        .grouped-ticket-body {
-            padding: 0;
-        }
-
-        .group-ticket-item {
-            padding: 14px 13px;
-            border-bottom: 2px dashed #e1e4e8;
-        }
-
-        .group-ticket-item:last-child {
-            border-bottom: 0;
-        }
-
-        .group-ticket-item.status-pending {
-            background: #fffdf7;
-        }
-
-        .group-ticket-item.status-preparing {
-            background: #f8fbff;
-        }
-
-        .group-ticket-item.status-ready {
-            background: #f8fff9;
-        }
-
-        .group-item-head {
-            display: flex;
-            align-items: flex-start;
-            justify-content: space-between;
-            gap: 12px;
-        }
-
-        .group-item-title-row {
-            min-width: 0;
-            flex: 1 1 auto;
-        }
-
-        .group-item-title-row .quantity {
-            margin-top: 7px;
-        }
-
-        .group-item-badges {
-            display: flex;
-            flex: 0 0 auto;
-            flex-direction: column;
-            align-items: flex-end;
-            gap: 6px;
-        }
-
-        .status-badge.addon-status-badge {
-            border: 2px solid #f5b400;
-            background: #fff4c7;
-            color: #7a5600;
-            font-weight: 900;
-        }
-
-        .addon-badge {
-            display: inline-flex;
-            align-items: center;
-            padding: 6px 10px;
-            border: 2px solid #f5b400;
-            border-radius: 999px;
-            background: #fff4c7;
-            color: #7a5600;
-            font-size: 12px;
-            font-weight: 900;
-            white-space: nowrap;
-        }
-
-        .group-item-meta {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-top: 9px;
-            color: #70757a;
-            font-size: 11px;
-        }
-
-        .group-ticket-item .ticket-time {
-            display: inline-flex;
-            width: fit-content;
-        }
-
-        .group-ticket-item .ticket-actions {
-            padding: 12px 0 0;
-        }
-
-        @media (max-width: 720px) {
-            .group-item-head {
-                gap: 8px;
-            }
-
-            .group-item-badges {
-                gap: 5px;
-            }
-
-            .addon-badge {
-                font-size: 11px;
-                padding: 5px 8px;
-            }
-        }
-    `
-
-    document.head.appendChild(style)
-}
-
-async function enrichOrderAddOnFlags(list) {
-    if (!Array.isArray(list) || !list.length) {
-        return list || []
-    }
-
-    /*
-     * FIX:
-     * is_add_on มาจาก get_kitchen_display_context() ที่คำนวณจาก
-     * history ของ order_id ทั้งหมดในฐานข้อมูล รวม served แล้ว
-     *
-     * จึงไม่ query restaurant_order_items ซ้ำจาก Browser อีก
-     * และไม่เสีย flag เมื่อรายการเก่าหายออกจาก active board
-     */
-    return list.map(item => ({
-        ...item,
-        is_add_on:
-            item.is_add_on === true
-            || item.is_add_on === 'true'
-    }))
-}
-
-
-async function loadKitchenItems({
-    notifyNew = false
-} = {}) {
-    const {
-        data,
-        error
-    } = await supabase.rpc(
-        'get_kitchen_active_items_by_station',
-        {
-            p_kitchen_station_id: state.selectedStation || null
-        }
-    )
-
-    if (error) throw error
-
-    const rawList =
-        Array.isArray(data)
-            ? data
-            : []
-
-
-    const contextList =
-        await enrichKitchenContext(
-            rawList
-        )
-
-    // เติม flag สั่งเพิ่มจากประวัติของ order เดิม
-    // จึงยังรู้ว่าเป็นสั่งเพิ่ม แม้รายการเก่าจะ served และหายจาก active board แล้ว
-    const list =
-        await enrichOrderAddOnFlags(
-            contextList
-        )
-
-
-    const newPending =
-        list.filter(item =>
-            item.item_status === 'pending'
-            && !state.knownItemIds.has(item.item_id)
-        )
-
-    // เก็บ add-on flag ของรายการ active ไว้สำหรับ render/realtime fallback
-    const existingGroupKeys = new Set(
-        state.items.map(kitchenGroupKey)
-    )
-
-    for (const item of newPending) {
-        if (
-            item.is_add_on === true
-            || existingGroupKeys.has(kitchenGroupKey(item))
-        ) {
-            state.addOnItemIds.add(item.item_id)
-        }
-    }
-
-    // รายการที่โหลดมาพร้อม flag จาก history ให้ลง set ด้วย
-    for (const item of list) {
-        if (item.is_add_on === true) {
-            state.addOnItemIds.add(item.item_id)
-        }
-    }
-
-    // ล้าง id ที่ไม่อยู่บนบอร์ดแล้ว ป้องกัน set โตขึ้นเรื่อย ๆ
-    const activeIds = new Set(list.map(item => item.item_id))
-    state.addOnItemIds = new Set(
-        [...state.addOnItemIds].filter(id => activeIds.has(id))
-    )
-
-    state.items = list
-
-    for (const item of list) {
-        state.knownItemIds.add(item.item_id)
-    }
-
-    renderBoard()
-
-    if (notifyNew && newPending.length > 0) {
-        playAlertSound()
-
-        const toPrint =
-            newPending.filter(
-                item => !item.kitchen_printed_at
-            )
-
-        // รวมรายการใหม่ช่วงเดียวกันก่อนพิมพ์
-        // แล้วแยกใบตาม โต๊ะ/คิว + ครัว เพื่อไม่พิมพ์ทีละเมนู
-        queueAutoKitchenPrint(toPrint)
-    }
-}
-
-function setCount(target, value) {
-    if (target) {
-        target.textContent =
-            Number(value).toLocaleString('th-TH')
-    }
-}
-
-function renderBoard() {
-    const pendingItems =
-        state.items.filter(
-            item => item.item_status === 'pending'
-        )
-
-    const preparingItems =
-        state.items.filter(
-            item => item.item_status === 'preparing'
-        )
-
-    const readyItems =
-        state.items.filter(
-            item => item.item_status === 'ready'
-        )
-
-    // ตัวเลขสรุปยังนับเป็น "จำนวนรายการอาหาร" ไม่ใช่จำนวนโต๊ะ
-    setCount(el.pendingCount, pendingItems.length)
-    setCount(el.preparingCount, preparingItems.length)
-    setCount(el.readyCount, readyItems.length)
-
-    setCount(el.pendingBadge, pendingItems.length)
-    setCount(el.preparingBadge, preparingItems.length)
-    setCount(el.readyBadge, readyItems.length)
-
-    const groups = groupKitchenItems(state.items)
-
-    const pendingGroups = groups.filter(group => group.status === 'pending')
-    const preparingGroups = groups.filter(group => group.status === 'preparing')
-    const readyGroups = groups.filter(group => group.status === 'ready')
-
-    const selectedStation = state.stations.find(
-        station => station.id === state.selectedStation
-    )
-    const stationName = selectedStation?.name || 'ทุกครัว'
-
-    el.statusText.textContent =
-        state.items.length
-            ? `${stationName} • ${groups.length.toLocaleString('th-TH')} โต๊ะ/คิว • ${state.items.length.toLocaleString('th-TH')} รายการ`
-            : `${stationName} • รอออเดอร์ใหม่...`
-
-    renderColumn(
-        el.pendingGrid,
-        el.pendingEmpty,
-        pendingGroups
-    )
-
-    renderColumn(
-        el.preparingGrid,
-        el.preparingEmpty,
-        preparingGroups
-    )
-
-    renderColumn(
-        el.readyGrid,
-        el.readyEmpty,
-        readyGroups
-    )
-
-    refreshLiveTimers()
-}
-
-function renderColumn(grid, empty, groups) {
-    if (!grid || !empty) return
-
-    empty.classList.toggle(
-        'hidden',
-        groups.length > 0
-    )
-
-    grid.classList.toggle(
-        'hidden',
-        groups.length === 0
-    )
-
-    grid.innerHTML =
-        groups.map(renderGroupTicket).join('')
 }
 
 
@@ -1510,209 +1217,143 @@ function renderColumn(grid, empty, groups) {
    PRINT
 ======================================== */
 
-function printStationKey(item) {
-    const stationId = String(
-        item?.kitchen_station_id
-        || item?.station_id
-        || ''
-    ).trim()
-
-    if (stationId) return `id:${stationId}`
-
-    const stationName = String(
-        item?.kitchen_station_name
-        || 'ไม่ระบุครัว'
-    ).trim()
-
-    return `name:${stationName}`
-}
-
-function printGroupKey(item) {
-    // 1 ใบ = 1 โต๊ะ/คิว + 1 ครัว
-    // รายการที่เข้ามาในรอบใหม่จะถูก queue แยกจากของเดิมอยู่แล้ว
-    return `${kitchenGroupKey(item)}|${printStationKey(item)}`
-}
-
-function groupItemsForKitchenPrint(items) {
-    const map = new Map()
-
-    for (const item of items || []) {
-        if (!item) continue
-
-        const key = printGroupKey(item)
-
-        if (!map.has(key)) {
-            map.set(key, [])
-        }
-
-        map.get(key).push(item)
-    }
-
-    return [...map.values()]
-        .map(group => group.sort((a, b) =>
-            new Date(a.created_at).getTime()
-            - new Date(b.created_at).getTime()
-        ))
-        .sort((a, b) =>
-            new Date(a[0]?.created_at).getTime()
-            - new Date(b[0]?.created_at).getTime()
-        )
-}
-
-function renderPrintModifierRows(item) {
+function renderPrintTicket(item) {
     const modifiers =
         Array.isArray(item.modifiers)
             ? item.modifiers
             : []
 
-    return modifiers
-        .map(modifier => {
-            const group = String(
-                modifier.group_name || ''
-            ).trim()
+    const modifierHtml =
+        modifiers
+            .map(modifier => {
+                const group =
+                    String(
+                        modifier.group_name
+                        ||
+                        ''
+                    ).trim()
 
-            const option = String(
-                modifier.option_name || ''
-            ).trim()
+                const option =
+                    String(
+                        modifier.option_name
+                        ||
+                        ''
+                    ).trim()
 
-            if (!option) return ''
+                if (!option) {
+                    return ''
+                }
 
-            return `
-                <div class="print-modifier-row">
-                    <span>${group ? esc(group) : 'ตัวเลือก'}</span>
-                    <strong class="print-modifier-value">
-                        ${modifierIcon(modifier)} ${esc(option)}
-                    </strong>
-                </div>
-            `
-        })
-        .join('')
-}
-
-function renderPrintGroupTicket(items, index, total) {
-    const firstItem = items[0]
-    if (!firstItem) return ''
-
-    const stationName =
-        firstItem.kitchen_station_name
-        || 'ไม่ระบุครัว'
-
-    const isAddOnRound = items.some(item =>
-        state.addOnItemIds.has(item.item_id)
-    )
-
-    const itemHtml = items
-        .map(item => {
-            const modifierHtml = renderPrintModifierRows(item)
-
-            return `
-                <div class="print-divider"></div>
-
-                <div class="print-item-row">
-                    <div class="print-product">
-                        ${esc(item.product_name)}
+                return `
+                    <div
+                        style="
+                            font-size:17px;
+                            font-weight:800;
+                            margin:5px 0;
+                        "
+                    >
+                        ${modifierIcon(modifier)}
+                        ${group ? `${esc(group)}: ` : ''}
+                        <strong>
+                            ${esc(option)}
+                        </strong>
                     </div>
-                    <div class="print-qty-big">
-                        ×${Number(item.quantity || 0).toLocaleString('th-TH')}
-                    </div>
-                </div>
+                `
+            })
+            .join('')
 
-                ${modifierHtml
-                    ? `<div class="print-options">${modifierHtml}</div>`
-                    : ''}
+    const timer =
+        timerInfo(item)
 
-                ${item.item_note
-                    ? `
-                        <div class="print-note">
-                            ⚠️ หมายเหตุ: ${esc(item.item_note)}
-                        </div>
-                    `
-                    : ''}
-            `
-        })
-        .join('')
-
-    return `
-        <div
-            class="print-ticket"
-            style="${index < total - 1
-                ? 'page-break-after:always;break-after:page;margin-bottom:3mm!important;'
-                : ''}"
-        >
-            <div class="print-brand">CHAIXI BAMEEKIAO</div>
-            <div class="print-kitchen-title">ใบครัว</div>
-            <div class="print-station">🍳 ${esc(stationName)}</div>
-
-            <div class="print-order-box">
-                <div class="print-order-name">
-                    ${esc(orderName(firstItem))}
-                </div>
-                <div class="print-order-time">
-                    ${formatTime(firstItem.created_at)}
-                </div>
-                ${isAddOnRound
-                    ? '<div class="print-wait-time">🆕 รายการสั่งเพิ่ม</div>'
-                    : ''}
+    el.kitchenPrintArea.innerHTML = `
+        <div class="print-ticket">
+            <div class="print-center">
+                <strong>JOKJUNG - ใบครัว</strong>
             </div>
 
-            ${itemHtml}
+            ${item.kitchen_station_name
+            ? `<div class="print-center">${esc(item.kitchen_station_name)}</div>`
+            : ''
+        }
 
-            <div class="print-divider"></div>
-            <div class="print-footer">
-                ${firstItem.order_source === 'qr'
-                    ? 'QR ORDER'
-                    : 'POS ORDER'}
-                • ${items.length.toLocaleString('th-TH')} รายการ
+            <div class="print-table">
+                ${esc(orderName(item))}
+            </div>
+
+            <div class="print-center">
+                ${formatTime(item.created_at)}
+            </div>
+
+            <div class="print-center">
+                ${esc(
+            `${timer.label} ${elapsedText(timer.startedAt)}`
+        )}
+            </div>
+
+            <div class="print-line"></div>
+
+            <div class="print-product">
+                ${esc(item.product_name)}
+            </div>
+
+            <div class="print-qty">
+                จำนวน:
+                ${Number(item.quantity || 0).toLocaleString('th-TH')}
+            </div>
+
+            ${modifierHtml
+            ? `
+                        <div class="print-detail">
+                            ${modifierHtml}
+                        </div>
+                    `
+            : ''
+        }
+
+            ${item.item_note
+            ? `
+                        <div
+                            class="print-note"
+                            style="
+                                font-size:18px;
+                                font-weight:900;
+                            "
+                        >
+                            ⚠️ หมายเหตุ:
+                            ${esc(item.item_note)}
+                        </div>
+                    `
+            : ''
+        }
+
+            <div class="print-line"></div>
+
+            <div class="print-center">
+                ${item.order_source === 'qr'
+            ? 'QR ORDER'
+            : 'POS ORDER'
+        }
             </div>
         </div>
     `
 }
 
-function renderPrintGroups(groups) {
-    const safeGroups = (groups || []).filter(group => group?.length)
-
-    el.kitchenPrintArea.innerHTML = safeGroups
-        .map((group, index) =>
-            renderPrintGroupTicket(
-                group,
-                index,
-                safeGroups.length
-            )
-        )
-        .join('')
-}
-
 async function markPrinted(itemId) {
-    const { error } = await supabase.rpc(
+    const {
+        error
+    } = await supabase.rpc(
         'mark_kitchen_item_printed',
-        { p_item_id: itemId }
+        {
+            p_item_id: itemId
+        }
     )
 
     if (error) {
-        console.error('Mark printed error:', error)
+        console.error(
+            'Mark printed error:',
+            error
+        )
     }
-}
-
-async function printKitchenGroups(
-    groups,
-    { auto = false } = {}
-) {
-    const safeGroups = (groups || []).filter(group => group?.length)
-    if (!safeGroups.length) return
-
-    renderPrintGroups(safeGroups)
-
-    const printedItems = safeGroups.flat()
-
-    for (const item of printedItems) {
-        await markPrinted(item.item_id)
-        item.kitchen_printed_at = new Date().toISOString()
-    }
-
-    setTimeout(
-        () => window.print(),
-        auto ? 150 : 50
-    )
 }
 
 async function printKitchenItem(
@@ -1721,63 +1362,18 @@ async function printKitchenItem(
 ) {
     if (!item) return
 
-    await printKitchenGroups(
-        [[item]],
-        { auto }
+    renderPrintTicket(item)
+
+    await markPrinted(
+        item.item_id
     )
-}
 
-function queueAutoKitchenPrint(items) {
-    for (const item of items || []) {
-        if (item?.item_id && !item.kitchen_printed_at) {
-            state.autoPrintIds.add(item.item_id)
-        }
-    }
+    item.kitchen_printed_at =
+        new Date().toISOString()
 
-    if (!state.autoPrintIds.size) return
-
-    if (state.autoPrintTimer) {
-        clearTimeout(state.autoPrintTimer)
-    }
-
-    // หน่วงสั้น ๆ เพื่อรวมหลาย INSERT ในบิลเดียวกัน
-    // ไม่ให้ Realtime สั่งพิมพ์ทีละเมนู
-    state.autoPrintTimer = setTimeout(
-        async () => {
-            state.autoPrintTimer = null
-
-            const ids = new Set(state.autoPrintIds)
-            state.autoPrintIds.clear()
-
-            const candidates = state.items.filter(item =>
-                ids.has(item.item_id)
-                && !item.kitchen_printed_at
-            )
-
-            if (!candidates.length) return
-
-            const groups = groupItemsForKitchenPrint(candidates)
-
-            try {
-                await printKitchenGroups(
-                    groups,
-                    { auto: true }
-                )
-            } catch (error) {
-                // ถ้าพิมพ์ไม่สำเร็จ คืนรายการเข้าคิวเพื่อไม่ให้หาย
-                for (const item of candidates) {
-                    if (!item.kitchen_printed_at) {
-                        state.autoPrintIds.add(item.item_id)
-                    }
-                }
-
-                console.error(
-                    'Grouped kitchen auto print error:',
-                    error
-                )
-            }
-        },
-        900
+    setTimeout(
+        () => window.print(),
+        auto ? 150 : 50
     )
 }
 
@@ -1788,16 +1384,14 @@ function queueAutoKitchenPrint(items) {
 
 async function callStatusRpc(
     rpcName,
-    itemId,
-    extraParams = {}
+    itemId
 ) {
     const {
         error
     } = await supabase.rpc(
         rpcName,
         {
-            p_item_id: itemId,
-            ...extraParams
+            p_item_id: itemId
         }
     )
 
@@ -1830,97 +1424,16 @@ async function markServed(itemId) {
 }
 
 async function cancelItem(itemId) {
-
-    const reasonChoices = [
-        'ลูกค้าเปลี่ยนใจ',
-        'พนักงานกดผิด',
-        'สินค้าหมด',
-        'ครัวทำผิด',
-        'อื่นๆ'
-    ]
-
-    const choiceText =
-        reasonChoices
-            .map(
-                (reason, index) =>
-                    `${index + 1}. ${reason}`
-            )
-            .join('\n')
-
-    const selected =
-        prompt(
-            `เหตุผลที่ยกเลิกรายการ\n\n${choiceText}\n\nพิมพ์เลข 1-5`,
-            '1'
-        )
-
-    if (selected === null) {
-        return
-    }
-
-    const choice =
-        Number(
-            String(selected).trim()
-        )
-
-    if (
-        !Number.isInteger(choice)
-        ||
-        choice < 1
-        ||
-        choice > reasonChoices.length
-    ) {
-        alert(
-            'กรุณาเลือกเหตุผลเป็นเลข 1-5'
-        )
-        return
-    }
-
-    let cancelReason =
-        reasonChoices[
-            choice - 1
-        ]
-
-    if (
-        cancelReason ===
-        'อื่นๆ'
-    ) {
-
-        const customReason =
-            prompt(
-                'ระบุเหตุผลที่ยกเลิก'
-            )
-
-        if (customReason === null) {
-            return
-        }
-
-        cancelReason =
-            String(
-                customReason
-            ).trim()
-
-        if (!cancelReason) {
-            alert(
-                'กรุณาระบุเหตุผลที่ยกเลิก'
-            )
-            return
-        }
-    }
-
     const confirmed =
         confirm(
-            `ยืนยันยกเลิกรายการนี้หรือไม่?\n\nเหตุผล: ${cancelReason}`
+            'ยกเลิกรายการอาหารนี้หรือไม่?'
         )
 
     if (!confirmed) return
 
     await callStatusRpc(
         'kitchen_cancel_item',
-        itemId,
-        {
-            p_cancel_reason:
-                cancelReason
-        }
+        itemId
     )
 }
 
@@ -2025,7 +1538,7 @@ function subscribeRealtime() {
 async function init() {
     try {
         ensureKitchenModifierStyle()
-        ensureKitchenGroupStyle()
+        ensureQrPickupWaitStyle()
 
         const session =
             await requireSession()
@@ -2227,12 +1740,6 @@ window.addEventListener(
         if (state.realtimePollTimer) {
             clearInterval(
                 state.realtimePollTimer
-            )
-        }
-
-        if (state.autoPrintTimer) {
-            clearTimeout(
-                state.autoPrintTimer
             )
         }
     }

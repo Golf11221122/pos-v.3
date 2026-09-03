@@ -10,6 +10,14 @@ const el={
 }
 const state={order:null}
 
+
+function setLookupLocked(locked){
+  el.code.readOnly=Boolean(locked)
+  el.lookup.disabled=Boolean(locked)
+  el.code.classList.toggle('locked',Boolean(locked))
+}
+
+
 const money=v=>new Intl.NumberFormat('th-TH',{
   style:'currency',currency:'THB',minimumFractionDigits:2
 }).format(Number(v||0))
@@ -44,6 +52,7 @@ function pickupCodeFromUrl(){
 
 function render(order){
   state.order=order
+  setLookupLocked(false)
   el.card.classList.remove('hidden')
   el.queue.textContent=order.queue_no??'-'
   el.orderNo.textContent=order.order_no||'-'
@@ -60,9 +69,10 @@ function render(order){
     el.confirm.classList.add('hidden')
 
     if(['picked_up','completed'].includes(order.status)){
-      el.status.textContent='✅ รับอาหารแล้ว'
+      el.status.textContent='✅ ส่งมอบอาหารเรียบร้อย'
       el.status.dataset.kind='done'
-      el.hint.textContent='ออเดอร์นี้ถูกยืนยันรับอาหารไปแล้ว'
+      el.hint.textContent='รายการนี้จบแล้ว • ไม่ต้องกดรับแล้วที่จอครัว'
+      setLookupLocked(true)
     }else if(order.status==='cancelled'){
       el.status.textContent='⛔ ออเดอร์ถูกยกเลิก'
       el.status.dataset.kind='bad'
@@ -90,7 +100,7 @@ async function lookup({token=null,code=null}={}){
 }
 
 async function confirmPickup(){
-  if(!state.order?.id) return
+  if(!state.order?.id || el.confirm.disabled) return
   if(!confirm(`ยืนยันส่งมอบอาหาร\nคิว ${state.order.queue_no??'-'}\nรหัส ${state.order.pickup_code||'-'} ?`)) return
 
   el.confirm.disabled=true
