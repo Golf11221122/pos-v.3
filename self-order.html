@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>สั่งกลับบ้าน | CHAIXI BAMEEKIAO</title>
-    <link rel="stylesheet" href="./css/self-order.css?v=4.3.1">
+    <link rel="stylesheet" href="./css/self-order.css?v=4.4.0">
 </head>
 <body>
     <header class="customer-header">
@@ -167,8 +167,39 @@
             <div id="paidSuccessBox" class="paid-success-box hidden">
                 <div class="paid-success-icon">✅</div>
                 <strong>ชำระเงินสำเร็จ</strong>
-                <p>ระบบยืนยันยอดแล้ว ออเดอร์พร้อมสำหรับขั้นตอนส่งเข้าครัว</p>
-                <small>Phase 4.4 จะเปิด Auto Kitchen หลัง Paid</small>
+                <p id="pickupStatusText">กำลังส่งออเดอร์เข้าครัว...</p>
+
+                <div id="pickupProofCard" class="pickup-proof-card hidden">
+                    <small>หลักฐานสำหรับรับอาหาร</small>
+
+                    <div class="pickup-queue-row">
+                        <div>
+                            <span>เลขคิว</span>
+                            <strong id="pickupQueueText">-</strong>
+                        </div>
+                        <div>
+                            <span>รหัสรับอาหาร</span>
+                            <strong id="pickupCodeText">----</strong>
+                        </div>
+                    </div>
+
+                    <div id="pickupQrCode" class="pickup-qr-code"></div>
+
+                    <div class="pickup-order-row">
+                        <span>เลขออเดอร์</span>
+                        <strong id="pickupOrderNoText">-</strong>
+                    </div>
+
+                    <p class="pickup-instruction">
+                        กรุณาเก็บหน้านี้ไว้ และแสดงเลขคิว/รหัสรับอาหารให้พนักงานตอนมารับ
+                    </p>
+                </div>
+
+                <div id="readyForPickupBadge" class="ready-pickup-badge hidden">
+                    🛍️ อาหารพร้อมรับแล้ว
+                </div>
+
+                <small id="pickupStatusHint">ระบบจะแจ้งสถานะในหน้านี้อัตโนมัติ</small>
             </div>
 
             <div class="payment-lock-note">
@@ -185,6 +216,6 @@
     </button>
 
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-    <script type="module" src="./js/self-order.js?v=4.3.1"></script>
+    <script type="module" src="./js/self-order.js?v=4.4.0"></script>
 </body>
 </html>
