@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>QR Self Order Live | CHAIXI BAMEEKIAO</title>
-<link rel="stylesheet" href="./css/self-order-live.css?v=4.11.6">
+<link rel="stylesheet" href="./css/self-order-live.css?v=4.12.0">
 </head>
 <body>
 <main class="live-shell">
@@ -125,6 +125,17 @@
     <div id="historyEmpty" class="drawer-empty hidden">ยังไม่มีรายการรับแล้ว</div>
 </aside>
 
-<script type="module" src="./js/self-order-live.js?v=4.11.6"></script>
+<aside id="orderDrawer" class="side-drawer hidden" aria-hidden="true">
+    <div class="drawer-head">
+        <div>
+            <h2>📋 รายละเอียดออเดอร์</h2>
+            <p id="orderDrawerSubtitle">-</p>
+        </div>
+        <button class="drawer-close" type="button" data-close-drawer>✕</button>
+    </div>
+    <div id="orderDetail" class="order-detail"></div>
+</aside>
+
+<script type="module" src="./js/self-order-live.js?v=4.12.0"></script>
 </body>
 </html>
