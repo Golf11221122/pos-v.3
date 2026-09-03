@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>สั่งกลับบ้าน | CHAIXI BAMEEKIAO</title>
-    <link rel="stylesheet" href="./css/self-order.css?v=4.4.0">
+    <link rel="stylesheet" href="./css/self-order.css?v=4.4.1">
 </head>
 <body>
     <header class="customer-header">
@@ -210,12 +210,27 @@
         </div>
     </div>
 
+
+    <div id="readyAlertModal" class="modal ready-alert-modal hidden">
+        <div class="ready-alert-card">
+            <div class="ready-alert-icon">🔔</div>
+            <small>CHAIXI BAMEEKIAO</small>
+            <h2>อาหารพร้อมรับแล้ว</h2>
+            <p id="readyAlertQueueText">คิว -</p>
+            <div class="ready-alert-code">
+                รหัสรับอาหาร <strong id="readyAlertCodeText">----</strong>
+            </div>
+            <p>กรุณามารับอาหารที่จุดรับอาหาร</p>
+            <button id="ackReadyAlertBtn" class="primary-button" type="button">รับทราบ</button>
+        </div>
+    </div>
+
     <button id="mobileCartBar" class="mobile-cart-bar hidden" type="button">
         <span>🛒 <strong id="mobileCartCountText">0 รายการ</strong></span>
         <strong id="mobileCartTotalText">฿0.00</strong>
     </button>
 
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-    <script type="module" src="./js/self-order.js?v=4.4.0"></script>
+    <script type="module" src="./js/self-order.js?v=4.4.1"></script>
 </body>
 </html>
