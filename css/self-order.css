@@ -61,130 +61,85 @@ button,input,textarea{font:inherit}button{cursor:pointer}button:disabled{cursor:
 .paid-success-box{margin:14px 0;padding:16px;border:1px solid #b7dfc2;border-radius:16px;background:#eef9f1;color:#176b32;text-align:center}
 .paid-success-icon{font-size:36px}.paid-success-box strong{display:block;margin-top:5px;font-size:18px}.paid-success-box p{margin-top:5px}.paid-success-box small{display:block;margin-top:6px;color:#4e775a}
 
+.session-countdown-card{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:14px;padding:12px 14px;border:1px solid #c9d8ff;border-radius:15px;background:#f4f7ff}.session-countdown-card small{display:block;color:var(--muted);font-size:11px}.session-countdown-card strong{display:block;margin-top:2px;font-size:25px}.session-countdown-card p{max-width:240px;color:var(--muted);font-size:11px;text-align:right}.session-countdown-card.warning{border-color:#f2c35a;background:#fff8df}.session-countdown-card.warning strong{color:#a55b00}.session-countdown-card.expired{border-color:#f0b8b4;background:#fff1f0}.store-qr-page{min-height:100vh;display:grid;place-items:center;padding:20px;background:#f4f5f7}.store-qr-panel{width:min(720px,100%);padding:24px;border:1px solid var(--border);border-radius:24px;background:#fff;text-align:center}.store-qr-code{display:grid;width:330px;min-height:330px;margin:22px auto 15px;place-items:center;padding:15px;border:2px solid #111;border-radius:20px;background:#fff}.store-qr-code img,.store-qr-code canvas{max-width:100%;height:auto}.store-qr-timer{display:inline-flex;align-items:baseline;gap:8px;padding:10px 16px;border-radius:999px;background:var(--primary-light)}.store-qr-timer strong{font-size:25px}.store-qr-note{margin-top:15px;padding:12px;border-radius:13px;background:#f5f7fa;color:#4d5156;font-size:12px;line-height:1.5}
+
 
 /* =========================================================
-   PHASE 4.3.2 — ONE-TIME PRINT QR PAGE
+   PHASE 4.4 — PAID -> KITCHEN + PICKUP PROOF
    ========================================================= */
-.store-qr-page{
-    min-height:100vh;
-    display:grid;
-    place-items:center;
-    padding:20px;
-    background:var(--background);
+.pickup-proof-card{
+    margin-top:14px;
+    padding:15px;
+    border:1px solid #cfe3d4;
+    border-radius:16px;
+    background:#fff;
+    color:var(--text);
 }
-.store-qr-panel{
-    position:relative;
-    width:min(720px,100%);
-    padding:28px 24px 24px;
-    border:1px solid var(--border);
-    border-radius:24px;
-    background:var(--white);
-    text-align:center;
-    box-shadow:0 18px 50px rgba(0,0,0,.08);
-}
-.store-qr-panel>small{
+.pickup-proof-card>small{
+    display:block;
     color:var(--muted);
-    font-size:12px;
     font-weight:800;
 }
-.store-qr-panel h1{
-    margin-top:8px;
-    font-size:27px;
-}
-.store-qr-panel>p{
-    margin-top:7px;
-    color:var(--muted);
-    font-size:13px;
-}
-.store-qr-empty{
-    margin:22px 0 6px;
-    padding:24px 16px;
-    border:1px dashed #c8cdd3;
-    border-radius:16px;
-    background:#fafbfc;
-    color:var(--muted);
-    font-size:14px;
-}
-.store-qr-code{
+.pickup-queue-row{
     display:grid;
-    width:330px;
-    min-height:330px;
-    margin:22px auto 14px;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    margin-top:12px;
+}
+.pickup-queue-row>div{
+    padding:12px;
+    border:1px solid var(--border);
+    border-radius:13px;
+    background:#fafbfc;
+}
+.pickup-queue-row span,
+.pickup-order-row span{
+    display:block;
+    color:var(--muted);
+    font-size:11px;
+}
+.pickup-queue-row strong{
+    display:block;
+    margin-top:4px;
+    font-size:29px;
+    letter-spacing:1px;
+}
+.pickup-qr-code{
+    display:grid;
+    width:175px;
+    min-height:175px;
+    margin:14px auto 10px;
     place-items:center;
-    padding:15px;
-    border:2px solid #111;
-    border-radius:20px;
+    padding:10px;
+    border:1px solid var(--border);
+    border-radius:14px;
     background:#fff;
 }
-.store-qr-code img,
-.store-qr-code canvas{
+.pickup-qr-code img,
+.pickup-qr-code canvas{
     max-width:100%;
     height:auto;
 }
-.store-qr-timer{
-    display:inline-flex;
-    align-items:baseline;
-    gap:8px;
-    padding:10px 16px;
-    border-radius:999px;
-    background:var(--primary-light);
+.pickup-order-row{
+    padding-top:10px;
+    border-top:1px solid var(--border);
 }
-.store-qr-timer small{
+.pickup-order-row strong{
+    display:block;
+    margin-top:3px;
+}
+.pickup-instruction{
+    margin-top:10px;
     color:var(--muted);
-}
-.store-qr-timer strong{
-    font-size:25px;
-}
-.store-qr-note{
-    margin-top:15px;
-    padding:12px;
-    border-radius:13px;
-    background:#f5f7fa;
-    color:#4d5156;
     font-size:12px;
     line-height:1.5;
 }
-.store-qr-actions{
-    display:grid;
-    gap:10px;
-    justify-items:center;
-    margin-top:14px;
-}
-.store-print-button,
-.store-back-button{
-    width:min(360px,100%);
-    margin-top:0;
-}
-.store-qr-close-btn{
-    position:absolute;
-    top:12px;
-    right:12px;
-    z-index:2;
-    display:grid;
-    width:40px;
-    height:40px;
-    place-items:center;
-    border:1px solid var(--border);
-    border-radius:50%;
-    background:#fff;
-    color:var(--text);
-    font-size:26px;
-    line-height:1;
-    font-weight:700;
-    box-shadow:0 4px 14px rgba(0,0,0,.08);
-}
-@media(max-width:480px){
-    .store-qr-page{padding:12px}
-    .store-qr-panel{
-        padding:24px 14px 18px;
-        border-radius:18px;
-    }
-    .store-qr-panel h1{
-        padding:0 30px;
-        font-size:22px;
-    }
-    .store-qr-code{
-        width:280px;
-        min-height:280px;
-    }
+.ready-pickup-badge{
+    margin-top:12px;
+    padding:12px;
+    border-radius:13px;
+    background:#e8f5ec;
+    color:#147333;
+    font-size:17px;
+    font-weight:900;
 }
