@@ -4,35 +4,127 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>QR Self Order Live | CHAIXI BAMEEKIAO</title>
-<link rel="stylesheet" href="./css/self-order-live.css?v=4.11.0">
+<link rel="stylesheet" href="./css/self-order-live.css?v=4.11.6">
 </head>
 <body>
 <main class="live-shell">
-<header class="live-head">
-<div><small>CHAIXI BAMEEKIAO</small><h1>📱 QR Self Order Live</h1><p id="branchText">กำลังโหลดสาขา...</p></div>
-<div class="head-actions"><button id="refreshBtn" class="icon-btn" type="button" aria-label="รีเฟรช">↻</button><a class="home-btn" href="./dashboard.html">หน้าหลัก</a></div>
-</header>
-<section class="toolbar-card">
-<div class="search-box"><span>🔎</span><input id="searchInput" type="search" placeholder="เลขคิว / รหัส 4 หลัก / เลขออเดอร์"></div>
-<div class="filter-tabs" id="filterTabs">
-<button class="filter-tab active" data-filter="active">กำลังดำเนินการ</button>
-<button class="filter-tab" data-filter="payment_pending">รอชำระ</button>
-<button class="filter-tab" data-filter="kitchen">กำลังทำ</button>
-<button class="filter-tab" data-filter="ready_for_pickup">พร้อมรับ</button>
-<button class="filter-tab" data-filter="completed">รับแล้ว</button>
-<button class="filter-tab" data-filter="problem">มีปัญหา</button>
-<button class="filter-tab" data-filter="all">ทั้งหมด</button>
-</div>
-</section>
-<section class="kpi-grid">
-<article class="kpi-card"><span>รอชำระ</span><strong id="pendingCount">0</strong></article>
-<article class="kpi-card"><span>กำลังทำ</span><strong id="kitchenCount">0</strong></article>
-<article class="kpi-card"><span>พร้อมรับ</span><strong id="readyCount">0</strong></article>
-<article class="kpi-card"><span>มีปัญหา</span><strong id="problemCount">0</strong></article>
-</section>
-<div id="message" class="message"></div>
-<section id="orderList" class="order-list"></section>
-<section id="emptyState" class="empty-state hidden">ไม่พบออเดอร์ในรายการนี้</section>
+    <header class="live-head">
+        <div class="brand-block">
+            <small>CHAIXI BAMEEKIAO</small>
+            <h1>📱 QR Self Order Live</h1>
+            <p id="branchText">กำลังโหลดสาขา...</p>
+        </div>
+
+        <div class="head-actions">
+            <button id="problemBellBtn" class="icon-btn alert-btn" type="button" aria-label="รายการที่มีปัญหา">
+                🔔
+                <span id="problemBellCount" class="notification-count hidden">0</span>
+            </button>
+            <button id="refreshBtn" class="icon-btn" type="button" aria-label="รีเฟรช">↻</button>
+            <a class="home-btn" href="./dashboard.html">🏠 หน้าหลัก</a>
+        </div>
+    </header>
+
+    <section class="toolbar-card">
+        <div class="search-box">
+            <span>🔎</span>
+            <input id="searchInput" type="search" placeholder="ค้นหาด้วย คิว / รหัส 4 หลัก / เลขออเดอร์ / ชื่อลูกค้า">
+        </div>
+
+        <div class="filter-tabs" id="filterTabs">
+            <button class="filter-tab active" data-filter="all">ทั้งหมด</button>
+            <button class="filter-tab" data-filter="today">วันนี้</button>
+            <button class="filter-tab" data-filter="ready_for_pickup">พร้อมรับ</button>
+            <button class="filter-tab" data-filter="kitchen">กำลังทำ</button>
+            <button class="filter-tab" data-filter="payment_pending">รอชำระ</button>
+        </div>
+    </section>
+
+    <section class="kpi-grid">
+        <article class="kpi-card ready-kpi">
+            <div class="kpi-icon">🛍️</div>
+            <div><span>พร้อมรับ</span><strong id="readyCount">0</strong></div>
+        </article>
+        <article class="kpi-card kitchen-kpi">
+            <div class="kpi-icon">👨‍🍳</div>
+            <div><span>กำลังทำ</span><strong id="kitchenCount">0</strong></div>
+        </article>
+        <article class="kpi-card pending-kpi">
+            <div class="kpi-icon">💳</div>
+            <div><span>รอชำระ</span><strong id="pendingCount">0</strong></div>
+        </article>
+    </section>
+
+    <div id="message" class="message"></div>
+
+    <section id="board" class="board">
+        <section class="status-section ready-section" data-section="ready_for_pickup">
+            <div class="section-head">
+                <h2>🛍️ พร้อมรับ <span id="readySectionCount" class="count-pill">0</span></h2>
+                <button class="section-filter-btn" type="button" data-show-filter="ready_for_pickup">ดูทั้งหมด ›</button>
+            </div>
+            <div id="readyList" class="card-grid"></div>
+        </section>
+
+        <section class="status-section kitchen-section" data-section="kitchen">
+            <div class="section-head">
+                <h2>👨‍🍳 กำลังทำ <span id="kitchenSectionCount" class="count-pill">0</span></h2>
+                <button class="section-filter-btn" type="button" data-show-filter="kitchen">ดูทั้งหมด ›</button>
+            </div>
+            <div id="kitchenList" class="card-grid"></div>
+        </section>
+
+        <section class="status-section pending-section" data-section="payment_pending">
+            <div class="section-head">
+                <h2>💳 รอชำระ <span id="pendingSectionCount" class="count-pill">0</span></h2>
+                <button class="section-filter-btn" type="button" data-show-filter="payment_pending">ดูทั้งหมด ›</button>
+            </div>
+            <div id="pendingList" class="card-grid"></div>
+        </section>
+
+        <section id="searchResultsSection" class="status-section search-section hidden">
+            <div class="section-head">
+                <h2>🔎 ผลการค้นหา <span id="searchResultCount" class="count-pill">0</span></h2>
+            </div>
+            <div id="searchResultsList" class="card-grid"></div>
+        </section>
+
+        <section id="emptyState" class="empty-state hidden">ไม่พบออเดอร์ที่กำลังดำเนินการ</section>
+
+        <button id="historyBtn" class="history-btn" type="button">
+            <span class="history-icon">☑️</span>
+            <span><strong>ดูประวัติรับแล้ว</strong><small>รายการที่ส่งมอบอาหารเรียบร้อย</small></span>
+            <span>›</span>
+        </button>
+    </section>
 </main>
-<script type="module" src="./js/self-order-live.js?v=4.11.0"></script>
-</body></html>
+
+<div id="drawerBackdrop" class="drawer-backdrop hidden"></div>
+
+<aside id="problemDrawer" class="side-drawer hidden" aria-hidden="true">
+    <div class="drawer-head">
+        <div>
+            <h2>⚠️ รายการที่มีปัญหา</h2>
+            <p><span id="problemDrawerCount">0</span> รายการที่ต้องตรวจสอบ</p>
+        </div>
+        <button class="drawer-close" type="button" data-close-drawer>✕</button>
+    </div>
+    <div id="problemList" class="drawer-list"></div>
+    <div id="problemEmpty" class="drawer-empty hidden">ไม่มีรายการที่มีปัญหา</div>
+</aside>
+
+<aside id="historyDrawer" class="side-drawer hidden" aria-hidden="true">
+    <div class="drawer-head">
+        <div>
+            <h2>☑️ ประวัติรับแล้ว</h2>
+            <p><span id="historyDrawerCount">0</span> รายการ</p>
+        </div>
+        <button class="drawer-close" type="button" data-close-drawer>✕</button>
+    </div>
+    <div id="historyList" class="drawer-list"></div>
+    <div id="historyEmpty" class="drawer-empty hidden">ยังไม่มีรายการรับแล้ว</div>
+</aside>
+
+<script type="module" src="./js/self-order-live.js?v=4.11.6"></script>
+</body>
+</html>
