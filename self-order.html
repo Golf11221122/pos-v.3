@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="th" data-ui-page="self-order">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>สั่งกลับบ้าน | CHAIXI BAMEEKIAO</title>
+    <link rel="stylesheet" href="./css/self-order.css?v=4.2.0">
+</head>
+<body>
+    <header class="customer-header">
+        <div>
+            <small>CHAIXI BAMEEKIAO</small>
+            <h1 id="pageTitle">สั่งกลับบ้าน</h1>
+            <p id="branchNameText">กำลังโหลด...</p>
+        </div>
+        <button id="cartButton" class="cart-button" type="button" aria-label="ตะกร้า">
+            🛒 <span id="cartCountText">0</span>
+        </button>
+    </header>
+
+    <main class="page">
+        <section id="errorState" class="state-card hidden">
+            <div class="state-icon">⚠️</div>
+            <h2>เปิดเมนูไม่ได้</h2>
+            <p id="errorText">QR Code ไม่ถูกต้อง</p>
+        </section>
+
+        <section id="menuSection">
+            <div class="takeaway-banner">
+                <div class="takeaway-icon">🥡</div>
+                <div>
+                    <strong>สั่งล่วงหน้า • รับกลับบ้าน</strong>
+                    <p>เลือกอาหารและชำระเงินก่อน จากนั้นระบบจึงส่งออเดอร์เข้าครัว</p>
+                </div>
+            </div>
+
+            <div class="menu-toolbar">
+                <input id="searchInput" type="search" placeholder="ค้นหาเมนู" autocomplete="off">
+            </div>
+
+            <div id="categoryTabs" class="category-tabs"></div>
+            <div id="menuLoading" class="state">กำลังโหลดเมนู...</div>
+            <div id="menuEmpty" class="state hidden">ไม่พบเมนู</div>
+            <section id="productGrid" class="product-grid hidden"></section>
+        </section>
+    </main>
+
+    <div id="modifierModal" class="modal hidden">
+        <div class="sheet">
+            <div class="sheet-head">
+                <div>
+                    <h2 id="modifierProductName">ตัวเลือก</h2>
+                    <small id="modifierBasePrice">-</small>
+                </div>
+                <button id="closeModifierBtn" class="close-button" type="button">×</button>
+            </div>
+
+            <div id="modifierGroups" class="modifier-groups"></div>
+
+            <label for="itemNoteInput">หมายเหตุ</label>
+            <textarea id="itemNoteInput" rows="2" placeholder="เช่น ไม่ใส่ผัก"></textarea>
+
+            <div class="modifier-footer">
+                <div>
+                    <small>จำนวน</small>
+                    <div class="qty-control">
+                        <button id="modifierQtyMinus" type="button">−</button>
+                        <strong id="modifierQtyText">1</strong>
+                        <button id="modifierQtyPlus" type="button">＋</button>
+                    </div>
+                </div>
+                <div class="modifier-total">
+                    <small>ราคารวม</small>
+                    <strong id="modifierTotalText">฿0.00</strong>
+                </div>
+            </div>
+
+            <p id="modifierMessage" class="message"></p>
+            <button id="addToCartBtn" class="primary-button" type="button">เพิ่มลงตะกร้า</button>
+        </div>
+    </div>
+
+    <div id="cartModal" class="modal hidden">
+        <div class="sheet cart-sheet">
+            <div class="sheet-head">
+                <div>
+                    <h2>ออเดอร์กลับบ้าน</h2>
+                    <small id="cartSummaryText">0 รายการ</small>
+                </div>
+                <button id="closeCartBtn" class="close-button" type="button">×</button>
+            </div>
+
+            <div id="emptyCart" class="state">ยังไม่มีรายการ</div>
+            <div id="cartItems" class="cart-items hidden"></div>
+
+            <div class="customer-fields">
+                <label>
+                    ชื่อลูกค้า <span>ไม่บังคับ</span>
+                    <input id="customerNameInput" type="text" maxlength="80" placeholder="เช่น คุณกอล์ฟ">
+                </label>
+                <label>
+                    เบอร์โทร <span>ไม่บังคับ</span>
+                    <input id="customerPhoneInput" type="tel" maxlength="30" inputmode="tel" placeholder="08x-xxx-xxxx">
+                </label>
+                <label>
+                    หมายเหตุรวม <span>ไม่บังคับ</span>
+                    <textarea id="customerNoteInput" rows="2" maxlength="250" placeholder="เช่น มารับประมาณ 12:30"></textarea>
+                </label>
+            </div>
+
+            <div class="cart-total-row">
+                <span>ยอดที่ต้องชำระ</span>
+                <strong id="cartTotalText">฿0.00</strong>
+            </div>
+
+            <div class="payment-lock-note">
+                🔒 ออเดอร์จะยังไม่เข้าครัวจนกว่าระบบจะยืนยันการชำระเงินสำเร็จ
+            </div>
+
+            <p id="cartMessage" class="message"></p>
+            <button id="submitOrderBtn" class="primary-button" type="button" disabled>
+                ไปชำระเงิน
+            </button>
+        </div>
+    </div>
+
+    <div id="pendingModal" class="modal hidden">
+        <div class="sheet success-sheet">
+            <div class="pending-icon">💳</div>
+            <h2>สร้างออเดอร์แล้ว</h2>
+            <p id="pendingOrderNo">-</p>
+            <div class="pending-total">
+                <small>ยอดที่ต้องชำระ</small>
+                <strong id="pendingTotalText">฿0.00</strong>
+            </div>
+            <div class="pending-box">
+                <strong>ขั้นต่อไป: ชำระเงิน</strong>
+                <p>Phase 4.3 จะเพิ่ม PromptPay / ระบบตรวจการชำระเงินที่หน้านี้</p>
+                <p class="danger-note">ตอนนี้ออเดอร์ยังไม่ถูกส่งเข้าครัว</p>
+            </div>
+            <button id="closePendingBtn" class="secondary-button" type="button">
+                ปิด
+            </button>
+        </div>
+    </div>
+
+    <button id="mobileCartBar" class="mobile-cart-bar hidden" type="button">
+        <span>🛒 <strong id="mobileCartCountText">0 รายการ</strong></span>
+        <strong id="mobileCartTotalText">฿0.00</strong>
+    </button>
+
+    <script type="module" src="./js/self-order.js?v=4.2.0"></script>
+</body>
+</html>
