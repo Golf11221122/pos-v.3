@@ -8,6 +8,8 @@ const messageEl = document.getElementById('storeQrMessage')
 const issueAndPrintBtn = document.getElementById('issueAndPrintBtn')
 const emptyEl = document.getElementById('storeQrEmpty')
 const activeEl = document.getElementById('storeQrActive')
+const closeStoreQrBtn = document.getElementById('closeStoreQrBtn')
+const backDashboardBtn = document.getElementById('backDashboardBtn')
 
 let current = null
 let timer = null
@@ -144,3 +146,11 @@ async function issueNewQr() {
 }
 
 issueAndPrintBtn.addEventListener('click', issueNewQr)
+
+
+function goDashboard() {
+    window.location.href = './dashboard.html'
+}
+
+closeStoreQrBtn?.addEventListener('click', goDashboard)
+backDashboardBtn?.addEventListener('click', goDashboard)
