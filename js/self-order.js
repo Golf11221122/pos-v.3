@@ -20,7 +20,9 @@ const state = {
     lastPickupStatus: null,
     readyAlertShown: false,
     audioUnlocked: false,
-    audioContext: null
+    audioContext: null,
+    recoveredOrder: null,
+    draftSaveTimer: null
 }
 
 const $ = id => document.getElementById(id)
@@ -180,16 +182,25 @@ function stopPickupPolling() {
     }
 }
 
-function renderPickupQr(pickupToken) {
-    if (!pickupToken || !el.pickupQrCode || !window.QRCode) return
+function renderPickupQr(pickupCode) {
+    if (!pickupCode || !el.pickupQrCode || !window.QRCode) return
+
+    const code = String(pickupCode).trim()
+    if (!/^\d{4}$/.test(code)) return
+
+    const pickupUrl = new URL('./pickup.html', window.location.href)
+    pickupUrl.search = ''
+    pickupUrl.searchParams.set('code', code)
 
     el.pickupQrCode.innerHTML = ''
     new window.QRCode(el.pickupQrCode, {
-        text: `CHAIXI-PICKUP:${pickupToken}`,
+        text: pickupUrl.href,
         width: 155,
         height: 155,
         correctLevel: window.QRCode.CorrectLevel.M
     })
+
+    el.pickupQrCode.dataset.pickupUrl = pickupUrl.href
 }
 
 
@@ -290,7 +301,7 @@ function renderPickupStatus(status) {
         el.pickupCodeText.textContent = String(pickupCode)
         el.pickupOrderNoText.textContent = orderNo
         el.pickupProofCard.classList.remove('hidden')
-        renderPickupQr(pickupToken)
+        renderPickupQr(pickupCode)
     }
 
     const previousStatus = state.lastPickupStatus
@@ -413,6 +424,209 @@ function getScanTokenFromUrl(){return getUrlParam('scan')}
 function getSessionTokenFromUrl(){return getUrlParam('session')}
 function replaceUrlWithSession(t){const u=new URL(location.href);u.search='';u.searchParams.set('session',t);history.replaceState({},'',u)}
 
+
+function sessionDraftKey() {
+    return state.sessionToken
+        ? `chaixi_self_order_draft_${state.sessionToken}`
+        : null
+}
+
+function buildDraftPayload() {
+    return {
+        cart: [...state.cart.values()],
+        customer_name: el.customerNameInput?.value || '',
+        customer_phone: el.customerPhoneInput?.value || '',
+        customer_note: el.customerNoteInput?.value || ''
+    }
+}
+
+function saveDraftLocal(payload) {
+    const key = sessionDraftKey()
+    if (!key) return
+
+    try {
+        localStorage.setItem(key, JSON.stringify({
+            ...payload,
+            saved_at: new Date().toISOString()
+        }))
+    } catch (_) {}
+}
+
+async function saveDraftServer(payload) {
+    if (!state.sessionToken || state.submittedOrder) return false
+
+    const { data, error } = await supabase.rpc(
+        'self_order_save_session_draft_v2',
+        {
+            p_session_token: state.sessionToken,
+            p_draft: payload
+        }
+    )
+
+    if (error) {
+        console.error('Save session draft V2 error:', error)
+        return false
+    }
+
+    return data?.ok === true
+}
+
+function saveSessionDraft() {
+    if (!state.sessionToken || state.submittedOrder) return
+
+    const payload = buildDraftPayload()
+    saveDraftLocal(payload)
+
+    if (state.draftSaveTimer) {
+        clearTimeout(state.draftSaveTimer)
+    }
+
+    state.draftSaveTimer = setTimeout(async () => {
+        const ok = await saveDraftServer(payload)
+        if (!ok) {
+            console.warn('Cart draft was not saved to server')
+        }
+    }, 100)
+}
+
+async function flushSessionDraft() {
+    if (!state.sessionToken || state.submittedOrder) return true
+
+    if (state.draftSaveTimer) {
+        clearTimeout(state.draftSaveTimer)
+        state.draftSaveTimer = null
+    }
+
+    const payload = buildDraftPayload()
+    saveDraftLocal(payload)
+    return await saveDraftServer(payload)
+}
+
+function applyDraft(draft) {
+    const items = Array.isArray(draft?.cart) ? draft.cart : []
+
+    state.cart.clear()
+
+    for (const item of items) {
+        if (!item?.key || !item?.product_id) continue
+        state.cart.set(item.key, item)
+    }
+
+    if (el.customerNameInput) el.customerNameInput.value = draft?.customer_name || ''
+    if (el.customerPhoneInput) el.customerPhoneInput.value = draft?.customer_phone || ''
+    if (el.customerNoteInput) el.customerNoteInput.value = draft?.customer_note || ''
+
+    renderCart()
+}
+
+async function restoreSessionDraft() {
+    if (!state.sessionToken || state.submittedOrder) return
+
+    // DB is authoritative so recovery works even after closing browser
+    // or scanning the same QR from another browser/device.
+    try {
+        const { data, error } = await supabase.rpc(
+            'self_order_get_session_draft_v2',
+            { p_session_token: state.sessionToken }
+        )
+
+        if (error) throw error
+
+        const draft = Array.isArray(data) ? data[0] : data
+
+        if (draft && Array.isArray(draft.cart) && draft.cart.length) {
+            applyDraft(draft)
+            saveDraftLocal(draft)
+            return
+        }
+    } catch (error) {
+        console.warn('Restore session draft server error:', error)
+    }
+
+    // Local fallback
+    const key = sessionDraftKey()
+    if (!key) return
+
+    try {
+        const raw = localStorage.getItem(key)
+        if (!raw) return
+        applyDraft(JSON.parse(raw))
+    } catch (error) {
+        console.warn('Restore self-order local draft error:', error)
+    }
+}
+
+function clearSessionDraft() {
+    const key = sessionDraftKey()
+
+    if (state.draftSaveTimer) {
+        clearTimeout(state.draftSaveTimer)
+        state.draftSaveTimer = null
+    }
+
+    if (key) {
+        try { localStorage.removeItem(key) } catch (_) {}
+    }
+
+    if (state.sessionToken) {
+        supabase.rpc(
+            'self_order_clear_session_draft_v1',
+            { p_session_token: state.sessionToken }
+        ).then(({ error }) => {
+            if (error) console.warn('Clear session draft server error:', error)
+        })
+    }
+}
+
+async function recoverSubmittedOrder(order) {
+    if (!order?.public_token) return false
+
+    state.submittedOrder = order
+    stopSessionCountdown()
+    el.sessionCountdownCard.classList.add('hidden')
+    state.cart.clear()
+    clearSessionDraft()
+    renderCart()
+
+    try {
+        sessionStorage.setItem(
+            'chaixi_self_order_last',
+            JSON.stringify({
+                public_token: order.public_token,
+                order_no: order.order_no,
+                total: order.total,
+                payment_status: order.payment_status || 'pending'
+            })
+        )
+    } catch (_) {}
+
+    if (order.status === 'cancelled' || order.status === 'expired') {
+        showFatalError(
+            order.status === 'cancelled'
+                ? 'ออเดอร์นี้ถูกยกเลิกแล้ว'
+                : 'ออเดอร์นี้หมดอายุแล้ว'
+        )
+        return true
+    }
+
+    if (order.payment_status === 'paid') {
+        el.pendingOrderNo.textContent = `เลขออเดอร์ ${order.order_no}`
+        el.pendingTotalText.textContent = money(order.total)
+        el.slipInput.value = ''
+        el.slipInput.disabled = true
+        el.slipPreviewWrap.classList.add('hidden')
+        el.verifySlipBtn.classList.add('hidden')
+        el.paidSuccessBox.classList.remove('hidden')
+        msg(el.paymentMessage, 'ชำระเงินสำเร็จแล้ว')
+        el.pendingModal.classList.remove('hidden')
+        startPickupPolling()
+        return true
+    }
+
+    await openPaymentForOrder(order)
+    return true
+}
+
 function cartItems() {
     return [...state.cart.values()]
 }
@@ -432,7 +646,41 @@ function showFatalError(text) {
     msg(el.errorText, text)
 }
 
-async function beginOrResumeSession(){const e=getSessionTokenFromUrl();if(e){const {data,error}=await supabase.rpc('self_order_get_session_v1',{p_session_token:e});if(error)throw error;const r=Array.isArray(data)?data[0]:data;state.sessionToken=r.session_token;state.sessionExpiresAt=r.expires_at;state.context=r.context||null;return}const s=getScanTokenFromUrl();if(!s)throw new Error('STORE_QR_REQUIRED');const {data,error}=await supabase.rpc('self_order_begin_session_v1',{p_scan_token:s});if(error)throw error;const r=Array.isArray(data)?data[0]:data;state.sessionToken=r.session_token;state.sessionExpiresAt=r.expires_at;state.context=r.context||null;replaceUrlWithSession(r.session_token)}
+async function beginOrResumeSession() {
+    const existingSession = getSessionTokenFromUrl()
+
+    if (existingSession) {
+        const { data, error } = await supabase.rpc(
+            'self_order_get_session_v1',
+            { p_session_token: existingSession }
+        )
+        if (error) throw error
+
+        const r = Array.isArray(data) ? data[0] : data
+        state.sessionToken = r.session_token
+        state.sessionExpiresAt = r.expires_at
+        state.context = r.context || null
+        state.recoveredOrder = r.submitted_order || null
+        return
+    }
+
+    const scanToken = getScanTokenFromUrl()
+    if (!scanToken) throw new Error('STORE_QR_REQUIRED')
+
+    const { data, error } = await supabase.rpc(
+        'self_order_begin_session_v1',
+        { p_scan_token: scanToken }
+    )
+    if (error) throw error
+
+    const r = Array.isArray(data) ? data[0] : data
+    state.sessionToken = r.session_token
+    state.sessionExpiresAt = r.expires_at
+    state.context = r.context || null
+    state.recoveredOrder = r.submitted_order || null
+
+    replaceUrlWithSession(r.session_token)
+}
 function stopSessionCountdown(){if(state.sessionTimer){clearInterval(state.sessionTimer);state.sessionTimer=null}}
 function expireCustomerSession(){if(state.submittedOrder||state.sessionExpired)return;state.sessionExpired=true;stopSessionCountdown();state.cart.clear();renderCart();el.submitOrderBtn.disabled=true;el.mobileCartBar.classList.add('hidden');el.sessionCountdownCard.classList.add('expired');el.sessionCountdownText.textContent='00:00';showFatalError('หมดเวลาสั่งอาหารแล้ว กรุณาสแกน QR ที่หน้าร้านใหม่อีกครั้ง')}
 function startSessionCountdown(){if(!state.sessionExpiresAt||state.submittedOrder)return;stopSessionCountdown();el.sessionCountdownCard.classList.remove('hidden','expired');const tick=()=>{const r=Math.max(0,Math.ceil((new Date(state.sessionExpiresAt).getTime()-Date.now())/1000)),m=Math.floor(r/60),s=r%60;el.sessionCountdownText.textContent=`${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;el.sessionCountdownCard.classList.toggle('warning',r<=300&&r>0);if(r<=0)expireCustomerSession()};tick();state.sessionTimer=setInterval(tick,1000)}
@@ -659,6 +907,7 @@ function addModifierItemToCart() {
 
     el.modifierModal.classList.add('hidden')
     renderCart()
+    flushSessionDraft()
 }
 
 function renderCart() {
@@ -700,6 +949,8 @@ function renderCart() {
             </div>
         </div>
     `).join('')
+
+    saveSessionDraft()
 }
 
 function updateCartItem(key, action) {
@@ -725,6 +976,7 @@ function updateCartItem(key, action) {
 
     msg(el.cartMessage, '')
     renderCart()
+    flushSessionDraft()
 }
 
 async function submitOrder() {
@@ -735,6 +987,8 @@ async function submitOrder() {
     msg(el.cartMessage, '')
 
     try {
+        await flushSessionDraft()
+
         const payloadCart = cartItems().map(item => ({
             product_id: item.product_id,
             quantity: item.quantity,
@@ -763,6 +1017,7 @@ async function submitOrder() {
         stopSessionCountdown()
         el.sessionCountdownCard.classList.add('hidden')
         state.cart.clear()
+        clearSessionDraft()
         renderCart()
         el.cartModal.classList.add('hidden')
 
@@ -838,6 +1093,18 @@ el.cartItems.addEventListener('click', event => {
     const button = event.target.closest('[data-cart-action]')
     if (!button) return
     updateCartItem(button.dataset.cartKey, button.dataset.cartAction)
+})
+
+for (const field of [
+    el.customerNameInput,
+    el.customerPhoneInput,
+    el.customerNoteInput
+]) {
+    field?.addEventListener('input', saveSessionDraft)
+}
+
+window.addEventListener('pagehide', () => {
+    saveSessionDraft()
 })
 
 el.submitOrderBtn.addEventListener('click', submitOrder)
@@ -951,5 +1218,35 @@ for (const modal of [el.modifierModal, el.cartModal]) {
     })
 }
 
-async function init(){try{await beginOrResumeSession();startSessionCountdown();await loadContextAndMenu()}catch(error){console.error('Self order init error:',error);let text=error.message||'เปิดเมนูไม่สำเร็จ';if(text.includes('STORE_QR_REQUIRED'))text='กรุณาสแกน QR สั่งกลับบ้านที่หน้าร้าน';else if(text.includes('STORE_QR_EXPIRED')||text.includes('STORE_QR_NOT_FOUND')||text.includes('SELF_ORDER_SESSION_EXPIRED'))text='QR หรือเวลาสั่งอาหารหมดอายุแล้ว กรุณาสแกน QR ที่หน้าร้านใหม่';showFatalError(text)}finally{el.menuLoading.classList.add('hidden')}}
+async function init() {
+    try {
+        await beginOrResumeSession()
+
+        if (state.recoveredOrder) {
+            await recoverSubmittedOrder(state.recoveredOrder)
+        } else {
+            startSessionCountdown()
+            await loadContextAndMenu()
+            await restoreSessionDraft()
+        }
+
+    } catch (error) {
+        console.error('Self order init error:', error)
+        let text = error.message || 'เปิดเมนูไม่สำเร็จ'
+
+        if (text.includes('STORE_QR_REQUIRED')) {
+            text = 'กรุณาสแกน QR สั่งกลับบ้านที่หน้าร้าน'
+        } else if (
+            text.includes('STORE_QR_EXPIRED') ||
+            text.includes('STORE_QR_NOT_FOUND') ||
+            text.includes('SELF_ORDER_SESSION_EXPIRED')
+        ) {
+            text = 'QR หรือเวลาสั่งอาหารหมดอายุแล้ว กรุณาสแกน QR ที่หน้าร้านใหม่'
+        }
+
+        showFatalError(text)
+    } finally {
+        el.menuLoading.classList.add('hidden')
+    }
+}
 init()
