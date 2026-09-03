@@ -143,3 +143,69 @@ button,input,textarea{font:inherit}button{cursor:pointer}button:disabled{cursor:
     font-size:17px;
     font-weight:900;
 }
+
+
+/* =========================================================
+   PHASE 4.4.1 — READY ALERT / SOUND / VIBRATION / POPUP
+   ========================================================= */
+.ready-alert-modal{
+    z-index:250;
+    align-items:center;
+}
+.ready-alert-card{
+    width:min(430px,100%);
+    padding:26px 20px 20px;
+    border-radius:24px;
+    background:#fff;
+    text-align:center;
+    box-shadow:0 24px 70px rgba(0,0,0,.28);
+    animation:readyAlertPop .24s ease-out;
+}
+.ready-alert-icon{
+    display:grid;
+    width:72px;
+    height:72px;
+    margin:0 auto 10px;
+    place-items:center;
+    border-radius:50%;
+    background:#e8f5ec;
+    font-size:38px;
+}
+.ready-alert-card>small{
+    color:var(--muted);
+    font-weight:800;
+}
+.ready-alert-card h2{
+    margin-top:7px;
+    color:#147333;
+    font-size:27px;
+}
+.ready-alert-card>p{
+    margin-top:8px;
+    color:var(--muted);
+    line-height:1.5;
+}
+.ready-alert-card #readyAlertQueueText{
+    color:var(--text);
+    font-size:34px;
+    font-weight:900;
+}
+.ready-alert-code{
+    margin-top:12px;
+    padding:12px;
+    border:1px solid #cfe3d4;
+    border-radius:14px;
+    background:#f2faf4;
+    color:#46624d;
+}
+.ready-alert-code strong{
+    display:block;
+    margin-top:3px;
+    color:#147333;
+    font-size:31px;
+    letter-spacing:2px;
+}
+@keyframes readyAlertPop{
+    from{transform:scale(.92);opacity:0}
+    to{transform:scale(1);opacity:1}
+}
