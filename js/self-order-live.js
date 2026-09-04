@@ -326,7 +326,12 @@ function bucket(row) {
 function activeRows() {
     return state.rows.filter(row => {
         const b = bucket(row)
-        return b !== 'completed' && b !== 'problem' && row.status !== 'cancelled'
+        return (
+            b !== 'completed' &&
+            b !== 'problem' &&
+            !['cancelled', 'expired'].includes(row.status) &&
+            row.payment_status !== 'expired'
+        )
     })
 }
 
@@ -794,6 +799,9 @@ async function saveSlaSettings() {
 
 async function load() {
     msg('กำลังอัปเดต...')
+
+    const { error: expireError } = await supabase.rpc('self_order_expire_unpaid_v1')
+    if (expireError) console.warn('Expire unpaid self orders:', expireError)
 
     const { data, error } = await supabase.rpc('self_order_live_center_v1')
 
